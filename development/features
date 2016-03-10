@@ -1,19 +1,7 @@
 sophomorix4 is the next generation sophomorix
-This file is relevant only IF THERE IS A REWRITE of sophomorix
-
-Consider this:
-------------------------------------------------------------
-- Usig ldap instead of postgres
-  (Avoid)
-- Use Python (or other) instead of perl
-  + no need to upgrade to perl 6
-  + python 3 is new and popular
-  - rewrite, 
-  - Python lerning
 
 What leads towards a rewrite (instead of fixing old code)
 ------------------------------------------------------------
-- change from Perl to Python (or other)
 - no need to remove bind-mount code in sophomorix2
 - no need to remove goups-of-groups-code in sophomorix2
   use function in the end that fixes everything
