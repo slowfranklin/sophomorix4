@@ -1,0 +1,14 @@
+Installing old users/groups from linuxmuster6 (paedML 5.x?)
+
+- create database dump
+- use old id an gid
+- Firstname, Surmane, Description, ...
+  - changes:
+     old: ASCII-Encoded in postgres/openldap
+     new: utf8 encoded in ldb
+     upload the nonexistent information (utf8 encoded stuff) 
+       on next sync from schueler.txt files into ldap
+  - save old ASCIIised Values in Firstname and Surname
+    (For creation of Dirnames, Mailadresses, ...)
+
+   

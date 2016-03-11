@@ -3,6 +3,7 @@ sophomorix4 is the next generation sophomorix
 What leads towards a rewrite (instead of fixing old code)
 ------------------------------------------------------------
 - no need to remove bind-mount code in sophomorix2
+- no need to remove webmin code in sophomorix2
 - no need to remove goups-of-groups-code in sophomorix2
   use function in the end that fixes everything
 - add multiple schools support (better to do this from scratch)

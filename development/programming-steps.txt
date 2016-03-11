@@ -1,0 +1,42 @@
+############################################################
+General:
+############################################################
+
+A) Add and Manage users in samba4 ldap
+B) Create move, ... files (Homedirs, sharedirs, ..)
+   probably on a different server
+C) ... cyrus(), ....
+
+
+
+
+
+
+
+############################################################
+Steps
+############################################################
+
+
+1) sophomorix-add
+   prepare file for sophomorix-add in utf8
+
+   - add the users to ldap like samba-tools
+   - check if the accounts work
+   - add sophomorix schema fields
+   - add fields to sophomorix.add for multischool
+     - add list of schools (usually one, for techers sometimes 2)
+
+2) sophomorix-kill
+   - user entfernen aus ldap
+
+3) sophomorix-check
+   - read sophomorix users from ldap
+   - read other users from ldap
+   - sort out what has to be done
+     - multischool:
+       move user to different school
+       add teacher (One person=One account) to multiple schools, 
+          when identical entries in abc.lehrer.txt
+       create double accounts for students in
+       multiple schools 

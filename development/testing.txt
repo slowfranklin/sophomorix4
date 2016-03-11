@@ -1,0 +1,7 @@
+############################################################
+General
+############################################################
+
+- write to add move, ... users
+- add test to move users from school to school
+- add test with different encoded files
