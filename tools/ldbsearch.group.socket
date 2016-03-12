@@ -1,0 +1,2 @@
+#!/bin/sh
+ldbsearch -H ldapi:///var/lib/samba/private/ldap_priv/ldapi "(& (objectClass=group) (CN=$1))" $2 $3 $4 $5 $6 $7 $8 $9

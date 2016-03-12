@@ -1,0 +1,7 @@
+#!/bin/sh
+samba-tool group delete teachers
+samba-tool group delete abc-teachers
+samba-tool group delete def-teachers
+
+samba-tool user delete lordjo 
+samba-tool user delete gillania 

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# add 3 teacher groups
+samba-tool group add teachers
+samba-tool group add abc-teachers
+samba-tool group add def-teachers
+
+# Loginname is lordjo, Password is Muster!
+samba-tool user create lordjo Muster! --given-name=Jon --surname=Lord
+samba-tool user create gillania Muster! --given-name=Ian --surname=Gillan
+
+
+# addusers to groups
+samba-tool group addmembers teachers lordjo
+samba-tool group addmembers abc-teachers lordjo
+samba-tool group addmembers def-teachers lordjo
+
+samba-tool group addmembers teachers gillania
+samba-tool group addmembers abc-teachers gillania
+samba-tool group addmembers def-teachers gillania
