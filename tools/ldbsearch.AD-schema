@@ -1,0 +1,2 @@
+#!/bin/sh
+ldbsearch -H /var/lib/samba/private/sam.ldb -b 'cn=Schema,cn=Configuration,dc=linuxmuster,dc=local' -s base objectVersion
