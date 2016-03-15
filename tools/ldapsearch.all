@@ -1,0 +1,2 @@
+#!/bin/sh
+ldapsearch -H ldap://localhost -b "dc=linuxmuster,dc=local" -D "cn=Administrator,cn=Users,DC=linuxmuster,DC=local" -Uadministrator -w Muster! $1 $2 $3 $4 $5 $6 $7 $8 $9
