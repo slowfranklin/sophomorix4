@@ -1,0 +1,7 @@
+
+Variables:
+
+- rename from german to english
+- remove the following variabbles
+  $DevelConf::testen=0;
+  $DevelConf::system=0;
