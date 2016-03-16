@@ -51,7 +51,7 @@ DEVELCONF=$(DESTDIR)/usr/share/sophomorix
 #ENCODING=$(DESTDIR)/usr/share/sophomorix/encoding-data
 
 # Language
-#LANGUAGE=$(DESTDIR)/usr/share/sophomorix/lang
+LANGUAGE=$(DESTDIR)/usr/share/sophomorix/lang
 
 # Filter
 #FILTER=$(DESTDIR)/usr/share/sophomorix/filter
@@ -169,9 +169,9 @@ install-samba:
 #	@install -oroot -groot --mode=0600 sophomorix-base/config-devel/repairhome.examaccount $(DEVELCONF)/devel
 #	@install -oroot -groot --mode=0600 sophomorix-base/config-devel/repairhome.attic $(DEVELCONF)/devel
 #	@install -oroot -groot --mode=0600 sophomorix-base/config-devel/repairhome.domcomp $(DEVELCONF)/devel
-#	@install -d -m755 -oroot -groot $(LANGUAGE)
-#	@install -oroot -groot --mode=0644 sophomorix-base/lang/sophomorix-lang.*[a-z] $(LANGUAGE)
-#	@install -oroot -groot --mode=0644 sophomorix-base/lang/errors.*[a-z] $(LANGUAGE)
+	@install -d -m755 -oroot -groot $(LANGUAGE)
+	@install -oroot -groot --mode=0644 sophomorix-samba/lang/sophomorix-lang.*[a-z] $(LANGUAGE)
+	@install -oroot -groot --mode=0644 sophomorix-samba/lang/errors.*[a-z] $(LANGUAGE)
 #	@install -d -m755 -oroot -groot $(LANGUAGE)/latex-templates
 #	@install -oroot -groot --mode=0644 sophomorix-base/latex-templates/*.tex $(LANGUAGE)/latex-templates
 # Encoding-data
