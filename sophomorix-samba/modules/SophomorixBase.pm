@@ -29,6 +29,7 @@ require Exporter;
             log_script_exit
             backup_amku_file
             get_passwd_charlist
+            get_plain_password
             check_options
             );
 
@@ -393,11 +394,50 @@ sub get_passwd_charlist {
                 'w','x','y','z',
                 'A','B','D','E','F','G','H','L','M','N','Q','R','T',
                 '2','3','4','5','6','7','8','9',
+                '!','§','$','%','&','/','(',')','=','?'
                 );
    return @zeichen;
 }
 
 
+sub get_plain_password {
+    my $gruppe=shift;
+    my @password_chars=@_;
+    my $password="";
+    my $i;
+    if ($gruppe eq ${DevelConf::teacher}) {
+        # Teacher
+        if ($Conf::teacher_password_random eq "yes") {
+	    $password=&create_plain_password($Conf::teacher_password_random_charnumber,@password_chars);
+        } else {
+            $password=$DevelConf::student_password_default;
+	}
+    } else {
+        # Student
+        if ($Conf::student_password_random eq "yes") {
+	    $password=&create_plain_password($Conf::student_password_random_charnumber,@password_chars);
+        } else {
+            $password=$DevelConf::teacher_password_default;;
+        }
+    }
+    return $password;
+}
+
+
+sub create_plain_password {
+    my ($num)=shift;
+    my @password_chars=@_;
+    my $password="";
+    until ($password=~m/[!,§,\$,%,&,\/,\(,\),",?]/){
+        $password="";
+        for ($i=1;$i<=$num;$i++){
+            $password=$password.$password_chars[int (rand $#password_chars)];
+        }
+	print "Password to test: $password\n";
+    }
+    print "Password OK: $password\n";
+    return $password;
+}
 
 
 

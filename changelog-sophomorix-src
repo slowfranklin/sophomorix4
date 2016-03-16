@@ -16,3 +16,8 @@
         sophomorix.conf (was ISO_8859-1)
 	errors.de (was ISO_8859-1)
 	errors.en (was ASCII)
+      - sophomorix.conf
+        - utf8
+        - new variable names
+        - New default password LinuxMuster! (was linux)
+        - longer random passwords (students: 8, teachers: 10)

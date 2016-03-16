@@ -6,6 +6,12 @@ What logins should be forbidden?
 
 sophomorix-add:   call sophomorix-print correctly 
 
+password generation:
+
+check for capital letters,
+check for small letters
+check for Sonderzeichen
+
 
 sophomorix.add:
 -> are the umlaute in sophomorix.add at the moment?

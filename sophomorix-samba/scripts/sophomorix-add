@@ -25,6 +25,7 @@ use Sophomorix::SophomorixBase qw(
                                  log_script_exit
                                  backup_amku_file
                                  get_passwd_charlist
+                                 get_plain_password
                                  check_options
                                  );
 use Sophomorix::SophomorixSambaAD qw(
