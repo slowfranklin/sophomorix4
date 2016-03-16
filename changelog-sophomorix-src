@@ -1,0 +1,18 @@
+#     Hey, EMACS: -*- text -*-
+# 
+
+============SOPHOMORIX4 CHANGELOG ====================================
+
+4.0.0-1 (2016-??-??)
+
+
+
+3.0.0-1 (2016-03-??)
+      All files
+      - code cleanup
+      - use english for vars
+      - use english for comments
+      - Files with new utf8 encoding
+        sophomorix.conf (was ISO_8859-1)
+	errors.de (was ISO_8859-1)
+	errors.en (was ASCII)
