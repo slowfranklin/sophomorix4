@@ -22,13 +22,13 @@ use Sophomorix::SophomorixBase qw(
                                  check_options
                                  );
 use Sophomorix::SophomorixSambaAD qw(
-                                   );
+                                    );
 
 my @arguments = @ARGV;
 
-my $zeit=&time_stamp_file();
+my $time_stamp_file=&time_stamp_file();
 my $time_stamp_AD=&time_stamp_AD();
-my $user_nummer=0;
+my $user_count=0;
 
 my $identifier;
 my $nachname;
@@ -55,6 +55,9 @@ my %forbidden_login_hash=();
 
 my $dev_null="1>/dev/null 2>/dev/null";
 
+my $add_file=${DevelConf::path_result}."/sophomorix.add";
+my $add_file_new=${DevelConf::path_result}."/sophomorix.add.new";
+
 # ===========================================================================
 # Optionen verarbeiten
 # ==========================================================================
@@ -72,7 +75,6 @@ my $unlock=0;
 
 # Parsen der Optionen
 my $testopt=GetOptions(
-           "test|t" => \$DevelConf::testen,
            "users|user|u=s" => \$loginname,
            "class|classes|c=s" => \$gruppe,
            "verbose|v+" => \$Conf::log_level,
@@ -130,7 +132,8 @@ if ($lock==1) {
 # --info
 if ($info==1) {
    my $count=0;
-   if (not -e "${DevelConf::path_result}/sophomorix.add"){
+   if (not -e "$add_file"){
+       print "$add_file does not exist!\n"; 
        print "Nothing to add: sophomorix.add does not exist!\n"; 
        exit;
    }
@@ -147,7 +150,7 @@ if ($info==1) {
           "Old-Pass",
           "unid";
 
-   open(SOPHOMORIXADD,"${DevelConf::path_result}/sophomorix.add") || 
+   open(SOPHOMORIXADD,"$add_file") || 
              die "ERROR: sophomorix.add not found!";
 
    &print_line;
@@ -241,15 +244,15 @@ my $dbh=&db_connect();
 # ===========================================================================
 # Abbruch, wenn sophomorix.add fehlt oder leer
 # ===========================================================================
-if (not (-s "${DevelConf::path_result}/sophomorix.add")) {
+if (not (-s "$add_file")) {
   &log_script_exit("No users to add!",1,1,0,@arguments);
 }
 
 
 # backup database
-&backup_user_database($zeit, "before-add.sql");
+&backup_user_database($time_stamp_file, "before-add.sql");
 # sophomorix.add mitloggen
-&backup_amk_file($zeit,"add","before");
+&backup_amk_file($time_stamp_file,"add","before");
 
 my @passwort_zeichen=&get_passwd_charlist();
 
@@ -260,9 +263,9 @@ my @passwort_zeichen=&get_passwd_charlist();
 %forbidden_login_hash=&forbidden_login_hash();
 
 # Datei mit den Schülern, die nicht angelegt wurden
-open(NOCHANLEGEN,">${DevelConf::path_result}/sophomorix.add.new") 
+open(NOCHANLEGEN,">$add_file_new") 
     || die "Fehler: $!";
-open(SOPHOMORIXADD,"${DevelConf::path_result}/sophomorix.add") 
+open(SOPHOMORIXADD,"$add_file") 
     || die "Fehler: $!";
 while(<SOPHOMORIXADD>){
    chomp();
@@ -297,7 +300,7 @@ while(<SOPHOMORIXADD>){
     $vorname_login=~s/-//g;
     $vorname_login=&recode_to_ascii($vorname_login);
 
-    # vorneme+nachname oder nachname+vorname
+    # vorname+nachname oder nachname+vorname
     if (defined $Conf::reverse_loginname_creation
         and $Conf::reverse_loginname_creation eq "yes"){
         $login_teil_2=substr($nachname_login,0,$Conf::schueler_login_nachname_zeichen);
@@ -370,12 +373,12 @@ while(<SOPHOMORIXADD>){
    }
 
    # Nun wird der User angelegt
-   $user_nummer++;
+   $user_count++;
 
    # Ermittelte Daten ausgeben
    if($Conf::log_level>=1){
       print "\n";
-      &titel("Creating User $user_nummer :");
+      &titel("Creating User $user_count :");
       print("Nachname:         $nachname\n");
       print("Vorname:          $vorname\n");
       print("Geburtsdatum:     $gebdat\n");
@@ -442,19 +445,7 @@ while(<SOPHOMORIXADD>){
 close(SOPHOMORIXADD);
 close(NOCHANLEGEN);
 
-# webmin
-# dont restart webmin
-# this is not needed anymore
-#&do_falls_nicht_testen("sophomorix-webmin --modules --no-restart");
-
-
-# Webmin neu starten
-#if (-e "/etc/init.d/webmin"){
-#   &do_falls_nicht_testen("/etc/init.d/webmin restart");
-#}
-
-
-if ($user_nummer==0){ 
+if ($user_count==0){ 
     &titel("NOT creating userlists (0 users added)");
 } else {
     &sophomorix_print();
@@ -462,45 +453,30 @@ if ($user_nummer==0){
 
 
 # sophomorix.add moven, damit sie nicht nochmal eingelesen werden kann
-&backup_amk_file($zeit,"add","after","mv");
+&backup_amk_file($time_stamp_file,"add","after","mv");
 
 # ===========================================================================
 # add.pdf, add.csv mitloggen
 # ===========================================================================
-&do_falls_nicht_testen(
-    "cp ${DevelConf::druck_pfad}/add.pdf ${DevelConf::log_pfad}/${zeit}.add.pdf",
-    "chmod 600 ${DevelConf::log_pfad}/${zeit}.add.pdf",
-    "chown root:root ${DevelConf::log_pfad}/${zeit}.add.pdf",
-
-    "cp ${DevelConf::druck_pfad}/add.csv ${DevelConf::log_pfad}/${zeit}.add.csv",
-    "chown root:root ${DevelConf::log_pfad}/${zeit}.add.pdf"
-		     );
-
-
-
-# Falls nur getestet wird, darf die Datei nicht ersetzt werden
-if ($DevelConf::testen==0) {
-   # Kein Test
-   rename("${DevelConf::path_result}/sophomorix.add.new",
-          "${DevelConf::path_result}/sophomorix.add" );
-} else {
-   # Test
-   system("rm -f ${DevelConf::path_result}/sophomorix.add.new > /dev/null");
-}
-
+system("cp ${DevelConf::druck_pfad}/add.pdf ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
+system("chmod 600 ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
+system("chown root:root ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
+system("cp ${DevelConf::druck_pfad}/add.csv ${DevelConf::log_pfad}/${time_stamp_file}.add.csv");
+system("chown root:root ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
+rename("$add_file_new","$add_file" );
 
 # Setting Quota
 if ($Conf::use_quota eq "yes" 
-    and $user_nummer>0
-    and $user_nummer<101) {
+    and $user_count>0
+    and $user_count<101) {
     my $users=join(",",@users_for_quota);
     system("${DevelConf::executable_pfad}/sophomorix-quota --skiplock --users $users --noninteractive");
     &nscd_stop();
-} elsif ($Conf::use_quota eq "yes" and $user_nummer>100){
+} elsif ($Conf::use_quota eq "yes" and $user_count>100){
     system("${DevelConf::executable_pfad}/sophomorix-quota --skiplock --students --teachers --noninteractive");
     &nscd_stop();
 } else {
-    if ($user_nummer==0){ 
+    if ($user_count==0){ 
         &titel("NOT setting quota (0 users added)");
     } else {
         &titel("NOT setting quota");
@@ -508,7 +484,7 @@ if ($Conf::use_quota eq "yes"
 }
 
 # Creating Mailing Aliases and Lists
-if ($user_nummer>0) {
+if ($user_count>0) {
     system("${DevelConf::executable_pfad}/sophomorix-mail --skiplock");
     &nscd_stop();
 } else {
@@ -520,7 +496,7 @@ if ($user_nummer>0) {
 &db_disconnect($dbh);
 #&imap_disconnect($imap);
 
-&titel("$user_nummer users added");
+&titel("$user_count users added");
 &log_script_end(@arguments);
 
 
@@ -533,14 +509,9 @@ if ($user_nummer>0) {
 # sophomorix-print aufrufen
 # ===========================================================================
 sub sophomorix_print {
-   if ($DevelConf::testen==0) {
       # Mit 1mal sophomorix-print aufrufen sollte es tun, tut es aber nicht
       system("$DevelConf::executable_pfad/sophomorix-print --skiplock");
-      &nscd_stop();
-   } else {
-       &titel("NOT generating print data (Test)");
-#      print "\n\nDruckdaten werden NICHT erzeugt: Testmodus\n\n"; 
-   }
+      #&nscd_stop();
 }
 
 

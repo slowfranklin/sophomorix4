@@ -16,8 +16,13 @@ Variables:
   $DevelConf::$ergebnis_pfad -> $path_result
 
 
-- changed sub names
+subs
 
+- removed subs
+  do_falls_nicht_testen
+  --> just run the commands in this list with system("");
+
+- changed sub names
   &SophomorixBase::zeit_stempel -> &SophomorixBase::time_stamp_file
   &SophomorixBase::pg_timestamp -> &SophomorixBase::time_stamp_AD
   &SophomorixBase::titel -> &SophomorixBase::print_title
