@@ -13,8 +13,8 @@ Variables:
   $Conf::lehrer_per_ssh
 
 - rename the following variables
-  $DevelConf::$ergebnis_pfad -> $path_result
-
+  $DevelConf::ergebnis_pfad -> $path_result
+  $DevelConf::$log_pfad -> path_log_user
 
 subs
 
@@ -27,3 +27,4 @@ subs
   &SophomorixBase::pg_timestamp -> &SophomorixBase::time_stamp_AD
   &SophomorixBase::titel -> &SophomorixBase::print_title
   &SophomorixBase::linie -> &SophomorixBase::print_line
+  &SophomorixBase::backup_amk_file -> &SophomorixBase::backup_amku_file (also backup sophomorix.update)

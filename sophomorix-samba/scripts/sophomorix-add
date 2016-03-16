@@ -12,16 +12,23 @@ Getopt::Long::Configure ("bundling");
 use Sophomorix::SophomorixConfig;
 #use IMAP::Admin;
 #use DBI;
-#use Net::LDAP;
+use Net::LDAP;
 use Sophomorix::SophomorixBase qw(
                                  print_line
+                                 print_title
                                  time_stamp_AD
                                  time_stamp_file
                                  unlock_sophomorix
                                  lock_sophomorix
+                                 log_script_start
+                                 log_script_end
+                                 log_script_exit
+                                 backup_amku_file
+                                 get_passwd_charlist
                                  check_options
                                  );
 use Sophomorix::SophomorixSambaAD qw(
+                                    AD_check_connection
                                     );
 
 my @arguments = @ARGV;
@@ -200,7 +207,6 @@ if ($info==1) {
    exit;
 }
 
-exit;
 
 
 
@@ -216,18 +222,28 @@ if ($gruppe ne "") {
   print "Gruppe/Klasse $gruppe angegeben.\n";
 }
 
-&check_connections();
+&AD_check_connection();
+
 &log_script_start(@arguments);
 
 
 ################################################################################
 # Start
 ################################################################################
+# ===========================================================================
+# Abbruch, wenn sophomorix.add fehlt oder leer
+# ===========================================================================
+if (not (-s "$add_file") ) {
+  &log_script_exit("No users to add!",1,1,0,@arguments);
+}
+
 my $epoche_jetzt=time;
    print "Epochenzeit:                                 ",
          "$epoche_jetzt (right now)\n";
 
-my $dbh=&db_connect();
+
+
+#my $dbh=&db_connect();
 #my $imap=&imap_connect("localhost",${DevelConf::imap_admin});
 
 ################################################################################
@@ -235,26 +251,29 @@ my $dbh=&db_connect();
 ################################################################################
 
 # repair.directories einlesen ???
-&get_alle_verzeichnis_rechte();
+#&get_alle_verzeichnis_rechte();
 
 # fetch permission for all homes
-&fetch_repairhome();
-
-
-# ===========================================================================
-# Abbruch, wenn sophomorix.add fehlt oder leer
-# ===========================================================================
-if (not (-s "$add_file")) {
-  &log_script_exit("No users to add!",1,1,0,@arguments);
-}
-
+#&fetch_repairhome();
 
 # backup database
-&backup_user_database($time_stamp_file, "before-add.sql");
+#&backup_user_database($time_stamp_file, "before-add.sql");
+# ??????????????????????
+
 # sophomorix.add mitloggen
-&backup_amk_file($time_stamp_file,"add","before");
+&backup_amku_file($time_stamp_file,"add","before");
+
+
+
+
+
 
 my @passwort_zeichen=&get_passwd_charlist();
+
+print "DONE\n";
+exit;
+
+
 
 
 # ===========================================================================
@@ -453,7 +472,8 @@ if ($user_count==0){
 
 
 # sophomorix.add moven, damit sie nicht nochmal eingelesen werden kann
-&backup_amk_file($time_stamp_file,"add","after","mv");
+&backup_amk_file($time_stamp_file,"add","after");
+#&backup_amk_file($time_stamp_file,"add","after","mv");
 
 # ===========================================================================
 # add.pdf, add.csv mitloggen
@@ -493,7 +513,7 @@ if ($user_count>0) {
 
 
 
-&db_disconnect($dbh);
+#&db_disconnect($dbh);
 #&imap_disconnect($imap);
 
 &titel("$user_count users added");
