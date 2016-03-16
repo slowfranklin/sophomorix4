@@ -14,7 +14,12 @@ Variables:
 
 - rename the following variables
   $DevelConf::ergebnis_pfad -> $path_result
-  $DevelConf::$log_pfad -> path_log_user
+  $DevelConf::log_pfad -> path_log_user
+  $DevelConf::users_pfad -> path_conf_user
+  $DevelConf::executable_pfad   -> $path_sbin
+
+
+
 
 subs
 
@@ -28,3 +33,4 @@ subs
   &SophomorixBase::titel -> &SophomorixBase::print_title
   &SophomorixBase::linie -> &SophomorixBase::print_line
   &SophomorixBase::backup_amk_file -> &SophomorixBase::backup_amku_file (also backup sophomorix.update)
+  &SophomorixBase::forbidden_login_hash   -> &get_forbidden_logins

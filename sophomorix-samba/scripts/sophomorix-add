@@ -29,6 +29,7 @@ use Sophomorix::SophomorixBase qw(
                                  );
 use Sophomorix::SophomorixSambaAD qw(
                                     AD_check_connection
+                                    get_forbidden_logins
                                     );
 
 my @arguments = @ARGV;
@@ -238,9 +239,10 @@ if (not (-s "$add_file") ) {
 }
 
 my $epoche_jetzt=time;
-   print "Epochenzeit:                                 ",
+if($Conf::log_level>=2){
+   print "Epoch:                                 ",
          "$epoche_jetzt (right now)\n";
-
+}
 
 
 #my $dbh=&db_connect();
@@ -263,23 +265,12 @@ my $epoche_jetzt=time;
 # sophomorix.add mitloggen
 &backup_amku_file($time_stamp_file,"add","before");
 
-
-
-
-
-
 my @passwort_zeichen=&get_passwd_charlist();
 
-print "DONE\n";
-exit;
+# ?????????????? more to forbid
+%forbidden_login_hash=&get_forbidden_logins();
 
 
-
-
-# ===========================================================================
-# Alle vorhandenen Loginnamen einlesen 
-# ===========================================================================
-%forbidden_login_hash=&forbidden_login_hash();
 
 # Datei mit den Schülern, die nicht angelegt wurden
 open(NOCHANLEGEN,">$add_file_new") 
@@ -288,7 +279,7 @@ open(SOPHOMORIXADD,"$add_file")
     || die "Fehler: $!";
 while(<SOPHOMORIXADD>){
    chomp();
-   # absplitten von Wunschlogin und Wunschpasswort
+   # split data
    ($new_admin_group,
     $identifier,
     $wunsch_login,
@@ -313,20 +304,19 @@ while(<SOPHOMORIXADD>){
     # remove - from login
     my $nachname_login=$nachname;
     $nachname_login=~s/-//g;
-    $nachname_login=&recode_to_ascii($nachname_login);
+    #$nachname_login=&recode_to_ascii($nachname_login);
 
     my $vorname_login=$vorname;
     $vorname_login=~s/-//g;
-    $vorname_login=&recode_to_ascii($vorname_login);
+    #$vorname_login=&recode_to_ascii($vorname_login);
 
     # vorname+nachname oder nachname+vorname
-    if (defined $Conf::reverse_loginname_creation
-        and $Conf::reverse_loginname_creation eq "yes"){
-        $login_teil_2=substr($nachname_login,0,$Conf::schueler_login_nachname_zeichen);
-        $login_teil_1=substr($vorname_login,0,$Conf::schueler_login_vorname_zeichen);
+    if ($Conf::reverse_loginname_creation eq "yes"){
+        $login_teil_2=substr($nachname_login,0,$Conf::student_login_surname_charnum);
+        $login_teil_1=substr($vorname_login,0,$Conf::student_login_firstname_charnum);
     } else {
-        $login_teil_1=substr($nachname_login,0,$Conf::schueler_login_nachname_zeichen);
-        $login_teil_2=substr($vorname_login,0,$Conf::schueler_login_vorname_zeichen);
+        $login_teil_1=substr($nachname_login,0,$Conf::student_login_surname_charnum);
+        $login_teil_2=substr($vorname_login,0,$Conf::student_login_firstname_charnum);
     }
 
     # Zu prüfender Loginname
@@ -397,28 +387,29 @@ while(<SOPHOMORIXADD>){
    # Ermittelte Daten ausgeben
    if($Conf::log_level>=1){
       print "\n";
-      &titel("Creating User $user_count :");
-      print("Nachname:         $nachname\n");
-      print("Vorname:          $vorname\n");
-      print("Geburtsdatum:     $gebdat\n");
-      print("Identifier:       $identifier\n");
-      print("AdminClass:       $new_admin_group\n"); # lehrer oder klasse
+      &print_title("Creating User $user_count :");
+      print("Surname:            $nachname\n");
+      print("Firstname:          $vorname\n");
+      print("Birthday:           $gebdat\n");
+      print("Identifier:         $identifier\n");
+      print("AdminClass:         $new_admin_group\n"); # lehrer oder klasse
       if ($wunsch_gid ne "---"){
-         print("Unix-gid:         $wunsch_gid\n"); # lehrer oder klasse
+         print("Unix-gid:           $wunsch_gid\n"); # lehrer oder klasse
       }
-      print("GECOS:            $gecos\n");
-      print("Login (prüfen):   $login_name_to_check\n");
-      print("Login (OK):       $login_name_ok\n");
-      print("Passwort:         $klartext_passwort\n");
+      print("GECOS:              $gecos\n");
+      print("Login (to check):   $login_name_to_check\n");
+      print("Login (check OK):   $login_name_ok\n");
+      print("Password:           $klartext_passwort\n");
+      print("Unid:               $unid\n");
       if ($wunsch_id ne "---"){
-         print("Unix-id:          $wunsch_id\n");
+         print("Unix-id:            $wunsch_id\n");
       }
       if ($new_admin_group eq ${DevelConf::teacher}) {
          # Es ist ein Lehrer
-         print("Shell (teachers):  $shell\n"); 
+         print("Shell (teachers):   $shell\n"); 
       } else {
          # Es ist ein Schüler
-         print("Shell (students):  $shell\n"); 
+         print("Shell (students):   $shell\n"); 
       }
    }
 
@@ -465,15 +456,21 @@ close(SOPHOMORIXADD);
 close(NOCHANLEGEN);
 
 if ($user_count==0){ 
-    &titel("NOT creating userlists (0 users added)");
+    &print_title("NOT creating userlists (0 users added)");
 } else {
     &sophomorix_print();
 }
 
 
-# sophomorix.add moven, damit sie nicht nochmal eingelesen werden kann
-&backup_amk_file($time_stamp_file,"add","after");
-#&backup_amk_file($time_stamp_file,"add","after","mv");
+# ??????????? sophomorix.add moven, damit sie nicht nochmal eingelesen werden kann
+&backup_amku_file($time_stamp_file,"add","after");
+#&backup_amku_file($time_stamp_file,"add","after","mv");
+
+print "DONE\n";
+exit;
+
+
+
 
 # ===========================================================================
 # add.pdf, add.csv mitloggen
@@ -497,9 +494,9 @@ if ($Conf::use_quota eq "yes"
     &nscd_stop();
 } else {
     if ($user_count==0){ 
-        &titel("NOT setting quota (0 users added)");
+        &print_title("NOT setting quota (0 users added)");
     } else {
-        &titel("NOT setting quota");
+        &print_title("NOT setting quota");
     }
 }
 
@@ -508,7 +505,7 @@ if ($user_count>0) {
     system("${DevelConf::executable_pfad}/sophomorix-mail --skiplock");
     &nscd_stop();
 } else {
-    &titel("NOT creating mailaliases/lists (0 users added)");
+    &print_title("NOT creating mailaliases/lists (0 users added)");
 }
 
 
@@ -516,7 +513,7 @@ if ($user_count>0) {
 #&db_disconnect($dbh);
 #&imap_disconnect($imap);
 
-&titel("$user_count users added");
+&print_title("$user_count users added");
 &log_script_end(@arguments);
 
 
@@ -530,7 +527,7 @@ if ($user_count>0) {
 # ===========================================================================
 sub sophomorix_print {
       # Mit 1mal sophomorix-print aufrufen sollte es tun, tut es aber nicht
-      system("$DevelConf::executable_pfad/sophomorix-print --skiplock");
+      #system("$DevelConf::path_sbin/sophomorix-print --skiplock");
       #&nscd_stop();
 }
 

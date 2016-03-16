@@ -1,0 +1,16 @@
+get_forbidden_logins in SophomorixSambaAD:
+
+What logins should be forbidden?
+
+
+
+sophomorix-add:   call sophomorix-print correctly 
+
+
+sophomorix.add:
+-> are the umlaute in sophomorix.add at the moment?
+- expect sophomorix.add as utf8 encoded with umlaute and others
+
+-> Additional fields 
+     add :: for unid
+     add multischool-data ou, ... 

@@ -368,8 +368,8 @@ sub backup_amku_file {
     if (not defined $command){
 	$command="cp";
     }
-    my $input=${DevelConf::path_result}."/sophomorix.".${str};
-    my $output=${DevelConf::path_log_user}."/".${time}.".sophomorix.".${str}."-".${str2};
+    my $input=${DevelConf::path_result}."/sophomorix.".$str;
+    my $output=${DevelConf::path_log_user}."/".$time.".sophomorix.".$str."-".$str2;
     # Verarbeitete Datei mit Zeitstempel versehen
 
     if (-e "${input}"){
