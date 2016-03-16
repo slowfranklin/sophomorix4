@@ -24,13 +24,13 @@ DESTDIR=
 #USERROOT=$(DESTDIR)/root
 
 # Data
-#LIBDIR=$(DESTDIR)/var/lib/sophomorix
+LIBDIR=$(DESTDIR)/var/lib/sophomorix
 
 # Cache
 #CACHEDIR=$(DESTDIR)/var/cache/sophomorix
 
 # Logs
-#LOGDIR=$(DESTDIR)/var/log/sophomorix
+LOGDIR=$(DESTDIR)/var/log/sophomorix
 
 # Perl modules
 PERLMOD=$(DESTDIR)/usr/share/perl5/Sophomorix
@@ -121,13 +121,13 @@ deb:
 install-samba:
 	### install-samba
 # some dirs
-#	@install -d -m700 -oroot -groot $(LIBDIR)
-#	@install -d -m700 -oroot -groot $(LIBDIR)/tmp
-#	@install -d -m700 -oroot -groot $(LIBDIR)/lock
-#	@install -d -m700 -oroot -groot $(LIBDIR)/print-data
+	@install -d -m700 -oroot -groot $(LIBDIR)
+	@install -d -m700 -oroot -groot $(LIBDIR)/tmp
+	@install -d -m700 -oroot -groot $(LIBDIR)/lock
+	@install -d -m700 -oroot -groot $(LIBDIR)/print-data
 #	@install -d -m755 -oroot -groot $(CACHEDIR)
-#	@install -d -m700 -oroot -groot $(LOGDIR)
-#	@install -d -m700 -oroot -groot $(LOGDIR)/user
+	@install -d -m700 -oroot -groot $(LOGDIR)
+	@install -d -m700 -oroot -groot $(LOGDIR)/user
 #	@install -d -m700 -oroot -groot $(CTEMPDIR)
 #	@install -d -m700 -oroot -groot $(CTEMPDIR)/samba/netlogon
 #	@install -d -m700 -oroot -groot $(CTEMPDIR)/apache

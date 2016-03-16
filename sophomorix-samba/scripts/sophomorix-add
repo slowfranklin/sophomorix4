@@ -6,21 +6,28 @@
 
 # Bibliotheken
 use strict;
-use Quota;
+#use Quota;
 use Getopt::Long;
 Getopt::Long::Configure ("bundling");
 use Sophomorix::SophomorixConfig;
-use Sophomorix::SophomorixBase;
 #use IMAP::Admin;
 #use DBI;
 #use Net::LDAP;
-use Sophomorix::SophomorixSamba qw(
+use Sophomorix::SophomorixBase qw(
+                                 print_line
+                                 time_stamp_AD
+                                 time_stamp_file
+                                 unlock_sophomorix
+                                 lock_sophomorix
+                                 check_options
+                                 );
+use Sophomorix::SophomorixSambaAD qw(
                                    );
 
 my @arguments = @ARGV;
 
-my $zeit=&zeit_stempel();
-my $pg_timestamp=&pg_timestamp();
+my $zeit=&time_stamp_file();
+my $time_stamp_AD=&time_stamp_AD();
 my $user_nummer=0;
 
 my $identifier;
@@ -40,7 +47,7 @@ my $login_name_to_check_mod="";
 my $login_name_ok="";
 my $klartext_passwort="";
 my $new_admin_group="";
-my $shell="";
+my $shell="/bin/false";
 
 
 my @users_for_quota=();
@@ -69,13 +76,13 @@ my $testopt=GetOptions(
            "users|user|u=s" => \$loginname,
            "class|classes|c=s" => \$gruppe,
            "verbose|v+" => \$Conf::log_level,
-           "system|s" => \$DevelConf::system,
            "password" => \$password,
            "info|i" => \$info,
            "lock" => \$lock,
            "unlock" => \$unlock,
            "help|h" => \$help
           );
+
 
 # Prüfen, ob Optionen erkannt wurden, sonst Abbruch
 &check_options($testopt);
@@ -119,9 +126,15 @@ if ($lock==1) {
 }
 
 
+
 # --info
 if ($info==1) {
    my $count=0;
+   if (not -e "${DevelConf::path_result}/sophomorix.add"){
+       print "Nothing to add: sophomorix.add does not exist!\n"; 
+       exit;
+   }
+
    # Ausgabe der Anlegbaren user
    print "\nThe following users can be added:\n";
    print "(Fields with --- are automatically created by sophomorix-add):\n\n";
@@ -133,11 +146,11 @@ if ($info==1) {
           "gid",
           "Old-Pass",
           "unid";
-   &linie;
 
-   open(SOPHOMORIXADD,"${DevelConf::ergebnis_pfad}/sophomorix.add") || 
-             die "Fehler: sophomorix.add not found!";
+   open(SOPHOMORIXADD,"${DevelConf::path_result}/sophomorix.add") || 
+             die "ERROR: sophomorix.add not found!";
 
+   &print_line;
    my @lines=();
    while(<SOPHOMORIXADD>){
        push @lines, $_;
@@ -179,10 +192,13 @@ if ($info==1) {
               "$wunsch_passwort",
               "$unid";
    }
-   &linie;
+   &print_line;
    print "$count users can be added\n";
    exit;
 }
+
+exit;
+
 
 
 # --loginname
@@ -209,7 +225,7 @@ my $epoche_jetzt=time;
          "$epoche_jetzt (right now)\n";
 
 my $dbh=&db_connect();
-my $imap=&imap_connect("localhost",${DevelConf::imap_admin});
+#my $imap=&imap_connect("localhost",${DevelConf::imap_admin});
 
 ################################################################################
 # User (Schüler und Lehrer) anlegen aus sophomorix.add
@@ -225,7 +241,7 @@ my $imap=&imap_connect("localhost",${DevelConf::imap_admin});
 # ===========================================================================
 # Abbruch, wenn sophomorix.add fehlt oder leer
 # ===========================================================================
-if (not (-s "${DevelConf::ergebnis_pfad}/sophomorix.add")) {
+if (not (-s "${DevelConf::path_result}/sophomorix.add")) {
   &log_script_exit("No users to add!",1,1,0,@arguments);
 }
 
@@ -244,9 +260,9 @@ my @passwort_zeichen=&get_passwd_charlist();
 %forbidden_login_hash=&forbidden_login_hash();
 
 # Datei mit den Schülern, die nicht angelegt wurden
-open(NOCHANLEGEN,">${DevelConf::ergebnis_pfad}/sophomorix.add.new") 
+open(NOCHANLEGEN,">${DevelConf::path_result}/sophomorix.add.new") 
     || die "Fehler: $!";
-open(SOPHOMORIXADD,"${DevelConf::ergebnis_pfad}/sophomorix.add") 
+open(SOPHOMORIXADD,"${DevelConf::path_result}/sophomorix.add") 
     || die "Fehler: $!";
 while(<SOPHOMORIXADD>){
    chomp();
@@ -335,9 +351,6 @@ while(<SOPHOMORIXADD>){
        $klartext_passwort=$wunsch_passwort
    }
 
-   # Shell
-   $shell=&shell_ermitteln($new_admin_group);
-
    # Abbruch, wenn nicht der richtige loginname angelegt wird
    if ($loginname ne "") {
      if ($login_name_to_check ne $loginname) {
@@ -391,39 +404,39 @@ while(<SOPHOMORIXADD>){
    push @users_for_quota, $login_name_ok;
 
    # 1. Entry in sophomorix database and auth system
-   &create_user_db_entry($nachname,
-                         $vorname,
-                         $gebdat,
-                         $new_admin_group,
-                         $login_name_ok,
-                         $klartext_passwort,
-                         $shell,
-                         "",
-                         $unid,
-                         $epoche_jetzt,
-                         $pg_timestamp,
-                         "",
-                         $wunsch_id,
-                         undef,
-                         undef,
-                         undef,
-                         $wunsch_gid
-                        );
+   #&create_user_db_entry($nachname,
+   #                      $vorname,
+   #                      $gebdat,
+   #                      $new_admin_group,
+   #                      $login_name_ok,
+   #                      $klartext_passwort,
+   #                      $shell,
+   #                      "",
+   #                      $unid,
+   #                      $epoche_jetzt,
+   #                      $pg_timestamp,
+   #                      "",
+   #                      $wunsch_id,
+   #                      undef,
+   #                      undef,
+   #                      undef,
+   #                      $wunsch_gid
+   #                     );
 
   # 2. Add the class (db and dirs,links, ...)
-  &provide_class_files($new_admin_group);
+  #&provide_class_files($new_admin_group);
 
   # 3. set a password
-  &set_sophomorix_passwd($login_name_ok,$klartext_passwort);
+  #&set_sophomorix_passwd($login_name_ok,$klartext_passwort);
 
   # 4. Creating dirs, links for the user
-  &provide_user_files($login_name_ok,$new_admin_group);
+  #&provide_user_files($login_name_ok,$new_admin_group);
 
   # 5. Add user to all groups she is in (files must exist to create links)
-  &add_newuser_to_her_projects($login_name_ok,$new_admin_group);
+  #&add_newuser_to_her_projects($login_name_ok,$new_admin_group);
 
   # 6. Add a mailbox for the user
-  &imap_create_mailbox($imap,$login_name_ok);
+  #&imap_create_mailbox($imap,$login_name_ok);
 }
 
 close(SOPHOMORIXADD);
@@ -468,11 +481,11 @@ if ($user_nummer==0){
 # Falls nur getestet wird, darf die Datei nicht ersetzt werden
 if ($DevelConf::testen==0) {
    # Kein Test
-   rename("${DevelConf::ergebnis_pfad}/sophomorix.add.new",
-          "${DevelConf::ergebnis_pfad}/sophomorix.add" );
+   rename("${DevelConf::path_result}/sophomorix.add.new",
+          "${DevelConf::path_result}/sophomorix.add" );
 } else {
    # Test
-   system("rm -f ${DevelConf::ergebnis_pfad}/sophomorix.add.new > /dev/null");
+   system("rm -f ${DevelConf::path_result}/sophomorix.add.new > /dev/null");
 }
 
 
@@ -505,7 +518,7 @@ if ($user_nummer>0) {
 
 
 &db_disconnect($dbh);
-&imap_disconnect($imap);
+#&imap_disconnect($imap);
 
 &titel("$user_nummer users added");
 &log_script_end(@arguments);
@@ -531,30 +544,6 @@ sub sophomorix_print {
 }
 
 
-# ===========================================================================
-# Shell ermitteln
-# ===========================================================================
-sub shell_ermitteln {
-   my ($gruppe)=@_;
-   my $login_shell;
-   # Shell ermitteln (Lehrer <> Schüler)
-      if ($gruppe eq ${DevelConf::teacher}) {
-         # Es ist ein Lehrer
-         if ($Conf::lehrer_per_ssh eq "yes") {
-             $login_shell="/bin/bash";
-           } else {
-             $login_shell="/bin/false";
-           }
-       } else {
-         # Es ist ein Schüler
-         if ($Conf::schueler_per_ssh eq "yes") {
-             $login_shell="/bin/bash";
-           } else {
-             $login_shell="/bin/false";
-	   }
-       }
- return $login_shell;
-}
 
 
 

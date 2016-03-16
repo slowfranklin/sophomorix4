@@ -2,6 +2,23 @@
 Variables:
 
 - rename from german to english
-- remove the following variabbles
+  Conf:
+  $schul_name  --> $school_name
+
+
+- remove the following variables
   $DevelConf::testen=0;
   $DevelConf::system=0;
+  $Conf::schueler_per_ssh
+  $Conf::lehrer_per_ssh
+
+- rename the following variables
+  $DevelConf::$ergebnis_pfad -> $path_result
+
+
+- changed sub names
+
+  &SophomorixBase::zeit_stempel -> &SophomorixBase::time_stamp_file
+  &SophomorixBase::pg_timestamp -> &SophomorixBase::time_stamp_AD
+  &SophomorixBase::titel -> &SophomorixBase::print_title
+  &SophomorixBase::linie -> &SophomorixBase::print_line
