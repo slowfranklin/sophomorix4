@@ -20,3 +20,11 @@ sophomorix.add:
 -> Additional fields 
      add :: for unid
      add multischool-data ou, ... 
+
+
+sophomorix-print:
+
+     - Full utf8 support
+       (Firstnames, Surnames will be utf8 encoded)
+     - add support for templates
+       see pull requests for sophomorix2
