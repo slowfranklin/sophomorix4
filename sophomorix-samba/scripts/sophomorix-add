@@ -29,9 +29,10 @@ use Sophomorix::SophomorixBase qw(
                                  check_options
                                  );
 use Sophomorix::SophomorixSambaAD qw(
-                                    AD_bind_admin
-                                    AD_unbind_admin
-                                    get_forbidden_logins
+                                 AD_bind_admin
+                                 AD_unbind_admin
+                                 AD_user_create
+                                 get_forbidden_logins
                                     );
 
 my @arguments = @ARGV;
@@ -41,9 +42,9 @@ my $time_stamp_AD=&time_stamp_AD();
 my $user_count=0;
 
 my $identifier;
-my $nachname;
-my $vorname;
-my $gebdat;
+my $surname;
+my $firstname;
+my $birthdate;
 my $gecos="";
 my $wunsch_login;
 my $wunsch_passwort;
@@ -54,10 +55,9 @@ my $login_teil_1="";
 my $login_teil_2="";
 my $login_name_to_check="";
 my $login_name_to_check_mod="";
-my $login_name_ok="";
-my $klartext_passwort="";
-my $new_admin_group="";
-my $shell="/bin/false";
+my $login_check_ok="";
+my $plain_password="";
+my $class_group="";
 
 
 my @users_for_quota=();
@@ -187,7 +187,7 @@ if ($info==1) {
    foreach my $line (@sorted_lines){
        chomp($line);
        $count++;
-       ($new_admin_group,
+       ($class_group,
        $identifier,
        $wunsch_login,
        $wunsch_passwort,
@@ -197,7 +197,7 @@ if ($info==1) {
 
        my $identifier_cut=substr($identifier,0,28);
        printf "%-11s%-29s%-10s%-6s%-6s%-10s%-10s\n",
-              "$new_admin_group",
+              "$class_group",
               "$identifier_cut",
               "$wunsch_login",
               "$wunsch_id", 
@@ -282,7 +282,7 @@ open(SOPHOMORIXADD,"$add_file")
 while(<SOPHOMORIXADD>){
    chomp();
    # split data
-   ($new_admin_group,
+   ($class_group,
     $identifier,
     $wunsch_login,
     $wunsch_passwort,
@@ -294,9 +294,9 @@ while(<SOPHOMORIXADD>){
        $unid="";
    }
 
-   ($nachname,$vorname,$gebdat)=split(";", $identifier);
+   ($surname,$firstname,$birthdate)=split(";", $identifier);
    # GECOS-Feld:
-   $gecos=$vorname." ".$nachname; 
+   $gecos=$firstname." ".$surname; 
 
    # Falls Wunsch-Login-Namen gegeben, diesen benutzen
    if ($wunsch_login ne "---"){
@@ -304,21 +304,21 @@ while(<SOPHOMORIXADD>){
    } else {
     # Sonst: Login-Name bilden
     # remove - from login
-    my $nachname_login=$nachname;
-    $nachname_login=~s/-//g;
-    #$nachname_login=&recode_to_ascii($nachname_login);
+    my $surname_login=$surname;
+    $surname_login=~s/-//g;
+    #$surname_login=&recode_to_ascii($surname_login);
 
-    my $vorname_login=$vorname;
-    $vorname_login=~s/-//g;
-    #$vorname_login=&recode_to_ascii($vorname_login);
+    my $firstname_login=$firstname;
+    $firstname_login=~s/-//g;
+    #$firstname_login=&recode_to_ascii($firstname_login);
 
-    # vorname+nachname oder nachname+vorname
+    # firstname+surname oder surname+firstname
     if ($Conf::reverse_loginname_creation eq "yes"){
-        $login_teil_2=substr($nachname_login,0,$Conf::student_login_surname_charnum);
-        $login_teil_1=substr($vorname_login,0,$Conf::student_login_firstname_charnum);
+        $login_teil_2=substr($surname_login,0,$Conf::student_login_surname_charnum);
+        $login_teil_1=substr($firstname_login,0,$Conf::student_login_firstname_charnum);
     } else {
-        $login_teil_1=substr($nachname_login,0,$Conf::student_login_surname_charnum);
-        $login_teil_2=substr($vorname_login,0,$Conf::student_login_firstname_charnum);
+        $login_teil_1=substr($surname_login,0,$Conf::student_login_surname_charnum);
+        $login_teil_2=substr($firstname_login,0,$Conf::student_login_firstname_charnum);
     }
 
     # Zu prüfender Loginname
@@ -330,12 +330,12 @@ while(<SOPHOMORIXADD>){
    if (not exists($forbidden_login_hash{$login_name_to_check})){
        # Wenn der zu prüfende Login-Name nicht schon vorhanden
        # Kann er benutzt werden 
-       $login_name_ok=$login_name_to_check;
+       $login_check_ok=$login_name_to_check;
    } elsif ($wunsch_login ne "---"){
        # Wunsch-Login angegeben
        # Abbrechen, Wunsch-Login soll nicht verändert werden
        print "\nERROR:\n";
-       print "Cannot add user   $vorname $nachname \n";
+       print "Cannot add user   $firstname $surname \n";
        print "Login   $wunsch_login   exists in the system",
              "/is a forbidden name!\n\n";
        next;
@@ -349,20 +349,18 @@ while(<SOPHOMORIXADD>){
           $i=$i+1;
        }
        # Nun kann modifizierter Loginname benutzt werden
-       $login_name_ok=$login_name_to_check_mod;
+       $login_check_ok=$login_name_to_check_mod;
    }
-
 
    # Login-Name des anzulegenden users darf ab jetzt nicht mehr verwendet werden,
    # deshalb dem Hash mit vorhandenen Loginnamen hinzufügen
-   $forbidden_login_hash{$login_name_ok}="neu";
-
+   $forbidden_login_hash{$login_check_ok}="neu";
 
    # Klartext-Passwort
    if ($wunsch_passwort eq "---") {
-       $klartext_passwort=&get_plain_password($new_admin_group,@passwort_zeichen);
+       $plain_password=&get_plain_password($class_group,@passwort_zeichen);
    } else {
-       $klartext_passwort=$wunsch_passwort
+       $plain_password=$wunsch_passwort
    }
 
    # Abbruch, wenn nicht der richtige loginname angelegt wird
@@ -376,60 +374,49 @@ while(<SOPHOMORIXADD>){
 
    # Abbruch, wenn nicht die richtige klasse angelegt wird
    if ($gruppe ne "") {
-     if ($new_admin_group ne $gruppe) {
-        print "$login_name_to_check ($new_admin_group) wird nicht angelegt!\n";
+     if ($class_group ne $gruppe) {
+        print "$login_name_to_check ($class_group) wird nicht angelegt!\n";
         print NOCHANLEGEN "$_\n";
         next;
      }
    }
 
+   # 0. rember login to set quota later
+   push @users_for_quota, $login_check_ok;
+
    # Nun wird der User angelegt
+   ##############################
    $user_count++;
 
-   # Ermittelte Daten ausgeben
-   if($Conf::log_level>=1){
-      print "\n";
-      &print_title("Creating User $user_count :");
-      print("Surname:            $nachname\n");
-      print("Firstname:          $vorname\n");
-      print("Birthday:           $gebdat\n");
-      print("Identifier:         $identifier\n");
-      print("AdminClass:         $new_admin_group\n"); # lehrer oder klasse
-      if ($wunsch_gid ne "---"){
-         print("Unix-gid:           $wunsch_gid\n"); # lehrer oder klasse
-      }
-      print("GECOS:              $gecos\n");
-      print("Login (to check):   $login_name_to_check\n");
-      print("Login (check OK):   $login_name_ok\n");
-      print("Password:           $klartext_passwort\n");
-      print("Unid:               $unid\n");
-      if ($wunsch_id ne "---"){
-         print("Unix-id:            $wunsch_id\n");
-      }
-      if ($new_admin_group eq ${DevelConf::teacher}) {
-         # Es ist ein Lehrer
-         print("Shell (teachers):   $shell\n"); 
-      } else {
-         # Es ist ein Schüler
-         print("Shell (students):   $shell\n"); 
-      }
-   }
-
-   # 0. rember login to set quota later
-   push @users_for_quota, $login_name_ok;
+   # 1. Entry in AD
+   &AD_user_create($ldap,
+                   $user_count,
+                   $identifier,
+                   $login_check_ok,
+                   $class_group,
+                   $firstname,
+                   $surname,
+                   $birthdate,
+                   $plain_password,
+                   $unid,
+                   $wunsch_id,
+                   $wunsch_gid,
+#                   $epoche_jetzt,
+#                   $time_stamp_AD,
+                  );
 
    # 1. Entry in sophomorix database and auth system
-   #&create_user_db_entry($nachname,
-   #                      $vorname,
-   #                      $gebdat,
-   #                      $new_admin_group,
-   #                      $login_name_ok,
-   #                      $klartext_passwort,
+   #&create_user_db_entry($surname,
+   #                      $firstname,
+   #                      $birthdate,
+   #                      $class_group,
+   #                      $login_check_ok,
+   #                      $plain_password,
    #                      $shell,
    #                      "",
    #                      $unid,
    #                      $epoche_jetzt,
-   #                      $pg_timestamp,
+   #                      $time_stamp_AD,
    #                      "",
    #                      $wunsch_id,
    #                      undef,
@@ -439,19 +426,19 @@ while(<SOPHOMORIXADD>){
    #                     );
 
   # 2. Add the class (db and dirs,links, ...)
-  #&provide_class_files($new_admin_group);
+  #&provide_class_files($class_group);
 
   # 3. set a password
-  #&set_sophomorix_passwd($login_name_ok,$klartext_passwort);
+  #&set_sophomorix_passwd($login_check_ok,$plain_password);
 
   # 4. Creating dirs, links for the user
-  #&provide_user_files($login_name_ok,$new_admin_group);
+  #&provide_user_files($login_check_ok,$class_group);
 
   # 5. Add user to all groups she is in (files must exist to create links)
-  #&add_newuser_to_her_projects($login_name_ok,$new_admin_group);
+  #&add_newuser_to_her_projects($login_check_ok,$class_group);
 
   # 6. Add a mailbox for the user
-  #&imap_create_mailbox($imap,$login_name_ok);
+  #&imap_create_mailbox($imap,$login_check_ok);
 }
 
 close(SOPHOMORIXADD);

@@ -11,6 +11,8 @@ require Exporter;
 #use Time::localtime;
 #use Quota;
 #use Sys::Filesystem ();
+use Unicode::Map8;
+use Unicode::String qw(utf16);
 use Net::LDAP;
 
 @ISA = qw(Exporter);
@@ -19,6 +21,7 @@ use Net::LDAP;
 @EXPORT = qw(
             AD_bind_admin
             AD_unbind_admin
+            AD_user_create
             get_forbidden_logins
             );
 
@@ -41,11 +44,82 @@ sub AD_bind_admin {
 }
 
 
+
 sub AD_unbind_admin {
     my ($ldap) = @_;
     my $mesg = $ldap->unbind();
     #  show errors from unbind
     $mesg->code && die $mesg->error;
+}
+
+
+
+sub AD_user_create {
+    my ($ldap,
+        $user_count,
+        $identifier,
+        $login,
+        $class_group,
+        $firstname,
+        $surname,
+        $birthdate,
+        $plain_password,
+        $unid,
+        $wunsch_id,
+        $wunsch_gid,
+#        $epoche_jetzt,
+#       $time_stamp_AD,
+       ) = @_;
+
+    #calculate
+    my $shell="/bin/false";
+    my $display_name = $firstname." ".$surname;
+    my $user_principal_name = $login."\@"."linuxmuster.local";
+    my $dn = "cn=".$login.", CN=Users, DC=linuxmuster,DC=local";
+    # password generation
+    # build the conversion map from your local character set to Unicode    
+    my $charmap = Unicode::Map8->new('latin1')  or  die;
+    # surround the PW with double quotes and convert it to UTF-16
+    my $uni_password = $charmap->tou('"'.$plain_password.'"')->byteswap()->utf16();
+
+    if($Conf::log_level>=1){
+        print "\n";
+        &Sophomorix::SophomorixBase::print_title("Creating User $user_count :");
+        print("Surname:            $surname\n");
+        print("Firstname:          $firstname\n");
+        print("Birthday:           $birthdate\n");
+        print("Identifier:         $identifier\n");
+        print("AdminClass:         $class_group\n"); # lehrer oder klasse
+        print("Unix-gid:           $wunsch_gid\n"); # lehrer oder klasse
+        #print("GECOS:              $gecos\n");
+        #print("Login (to check):   $login_name_to_check\n");
+        print("Login (check OK):   $login\n");
+        print("Password:           $plain_password\n");
+        print("Unid:               $unid\n");
+        print("Unix-id:            $wunsch_id\n");
+        if ($class_group eq ${DevelConf::teacher}) {
+            # Es ist ein Lehrer
+            print("Shell (teachers):   $shell\n"); 
+        } else {
+            # Es ist ein Schüler
+            print("Shell (students):   $shell\n"); 
+        }
+    }
+    my $result = $ldap->add( $dn,
+                   attr => [
+                   'sAMAccountName' => $login,
+                   'givenName'   => $firstname,
+                   'sn'   => $surname,
+                   'displayName'   => [$display_name],
+                   'userPrincipalName' => $user_principal_name,
+                   'unicodePwd' => $uni_password, 
+                   'userAccountControl' => '512',
+                   'objectclass' => ['top', 'person',
+                                     'organizationalPerson',
+                                     'user' ],
+                           ]
+                           );
+    $result->code && warn "failed to add entry: ", $result->error ;
 }
 
 

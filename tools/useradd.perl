@@ -12,7 +12,7 @@ $Data::Dumper::Terse = 1;
 my $firstname="Rüdiger";
 my $surname="Beck";
 my $login="beckro6";
-my $password="Muster!";
+my $plain_password="Muster!";
 
 
 # calculate from config
@@ -26,7 +26,7 @@ my $dn = "cn=".$login.", CN=Users, DC=linuxmuster,DC=local";
 # build the conversion map from your local character set to Unicode
 my $charmap = Unicode::Map8->new('latin1')  or  die;
 # surround the PW with double quotes and convert it to UTF-16
-my $uni_password = $charmap->tou('"'.$password.'"')->byteswap()->utf16();
+my $uni_password = $charmap->tou('"'.$plain_password.'"')->byteswap()->utf16();
 
 
 my $ldap = Net::LDAP->new('ldaps://localhost')  or  die "$@";
