@@ -1,6 +1,5 @@
 SophomorixSambaAD:
-   AD_bind_admin
-     -password aus Datei
+   AD_get_passwd
      - CN=Administrator,CN=Users,DC=linuxmuster,DC=local aus ...
 
 get_forbidden_logins in 

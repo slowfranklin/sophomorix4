@@ -26,18 +26,38 @@ use Net::LDAP;
             );
 
 
+sub AD_get_passwd {
+    my $smb_pwd="";
+    my $smb_rootdn="DC=linuxmuster,DC=local";
+    if (-e $DevelConf::file_samba_pwd) {
+        open (SECRET, $DevelConf::file_samba_pwd);
+        while(<SECRET>){
+            $smb_pwd=$_;
+            chomp($smb_pwd);
+        }
+        close(SECRET);
+    } else {
+        print "Password of samba Administrator must ",
+               "be in $DevelConf::file_samba_pwd\n";
+        exit;
+    }
+    return($smb_pwd,$smb_rootdn);
+}
+
 
 sub AD_bind_admin {
+    my ($smb_pwd,$smb_rootdn)=&AD_get_passwd();
+    my $admin_dn="CN=Administrator,CN=Users,".$smb_rootdn;
     # check connection to Samba4 AD
     if($Conf::log_level>=3){
         print "   Checking Samba4 AD connection ...\n";
     }
     #my $ldap = Net::LDAP->new('ldaps://localhost')  or  die "$@";
     my $ldap = Net::LDAP->new('ldaps://localhost')  or  
-         &Sophomorix::SophomorixBase::log_script_exit("No connection to Samba4 AD!",
+         &Sophomorix::SophomorixBase::log_script_exit(
+                            "No connection to Samba4 AD!",
          1,1,0,@arguments);
-    my $mesg = $ldap->bind('CN=Administrator,CN=Users,DC=linuxmuster,DC=local',
-                      password => 'Muster!');
+    my $mesg = $ldap->bind($admin_dn, password => $smb_pwd);
     # show errors from bind
     $mesg->code && die $mesg->error;
     return $ldap;
