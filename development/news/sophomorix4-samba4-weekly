@@ -1,24 +1,32 @@
-##### Template for the german weekly mail #####
-##### For the archive, see weekly.mail #####
+### All weeklys are on github (read from Button to top):
+### https://github.com/linuxmuster/sophomorix4/blob/xenial/development/news/sophomorix4-samba4-weekly
 
 
-
-
-Hallo sophomorix4/Samba4 weekly Nr. 1  (xx.yy.2015)
+############################################################
+sophomorix4/Samba4 weekly Nr. 1  (xx.yy.2015)
+############################################################
 
 Der Umstieg von Samba3/postgres/openldap
 
+
+
+Info über Enwicklungs-Entscheidungen
+------------------------------------------------------------
+ - Testpasswörter (Testserver):
+   'muster' geht nicht mehr, weil zu wenig komplex, 
+   daher: 'Muster!'
+ - Defaultpasswort für Schulen ('linux' ist zu wenig komplex):
+   'LinuxMuster!'
 
 
 Enwicklungs-Entscheidungen, die bald anstehen/Diskussion
 ------------------------------------------------------------
  - Dateisystem (wichtig für journaling Quota, ACL, immutble bit)
    --> ich würde gerne bei ext4 bleiben, 
-       - weil das am wenigsten Aufwand
-       - obige Anforderungen unterstützt
-       - ext3 hier erwähnt wird
+       - weil das am wenigsten Aufwand ist
+       - obige Anforderungen werden unterstützt
+       - ext4 hier erwähnt wird:
        https://wiki.samba.org/index.php/Operating_system_requirements/File_system_support
-
 
 
 
@@ -57,3 +65,28 @@ http://www.linuxmuster.net/wiki/entwicklung:techsheets:samba4_testinstall?&#samb
 
 sophomorix4-Paket kommt noch
 
+
+
+############################################################
+sophomorix4/Samba4 weekly Nr. 0  (xx.yy.2015)
+############################################################
+
+Der Umstieg von Samba3/postgres/openldap auf samba4 wird einige
+Änderungen bringen.
+
+Deshalb habe ich mich entschlossen euch mit dem sophomorix4/Samba4
+weekly per Mail an developer@lists.linuxmuster.net über den
+Fortschritt zu informieren.
+
+Bitte achtet darauf, ob euch diese Änderungen betreffen.  Falls ich
+etwas übersehen habe, dann antwortet auf die weekly mail an die
+Entwicklerliste.
+
+'Weekly' ist nicht wörtlich zu nehmen. Es kann auch mal länger dauern,
+bis sich etwas ergeben hat.
+
+Rüdiger
+
+
+### Die weeklys finden sich auf github (von unten nach oben lesen):
+### https://github.com/linuxmuster/sophomorix4/blob/xenial/development/news/sophomorix4-samba4-weekly
