@@ -29,7 +29,8 @@ use Sophomorix::SophomorixBase qw(
                                  check_options
                                  );
 use Sophomorix::SophomorixSambaAD qw(
-                                    AD_check_connection
+                                    AD_bind_admin
+                                    AD_unbind_admin
                                     get_forbidden_logins
                                     );
 
@@ -224,7 +225,7 @@ if ($gruppe ne "") {
   print "Gruppe/Klasse $gruppe angegeben.\n";
 }
 
-&AD_check_connection();
+my $ldap = &AD_bind_admin();
 
 &log_script_start(@arguments);
 
@@ -269,7 +270,7 @@ if($Conf::log_level>=2){
 my @passwort_zeichen=&get_passwd_charlist();
 
 # ?????????????? more to forbid
-%forbidden_login_hash=&get_forbidden_logins();
+%forbidden_login_hash=&get_forbidden_logins($ldap);
 
 
 
@@ -467,47 +468,43 @@ if ($user_count==0){
 &backup_amku_file($time_stamp_file,"add","after");
 #&backup_amku_file($time_stamp_file,"add","after","mv");
 
-print "DONE\n";
-exit;
-
-
 
 
 # ===========================================================================
 # add.pdf, add.csv mitloggen
 # ===========================================================================
-system("cp ${DevelConf::druck_pfad}/add.pdf ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
-system("chmod 600 ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
-system("chown root:root ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
-system("cp ${DevelConf::druck_pfad}/add.csv ${DevelConf::log_pfad}/${time_stamp_file}.add.csv");
-system("chown root:root ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
-rename("$add_file_new","$add_file" );
+#system("cp ${DevelConf::druck_pfad}/add.pdf ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
+#system("chmod 600 ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
+#system("chown root:root ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
+#system("cp ${DevelConf::druck_pfad}/add.csv ${DevelConf::log_pfad}/${time_stamp_file}.add.csv");
+#system("chown root:root ${DevelConf::log_pfad}/${time_stamp_file}.add.pdf");
+#rename("$add_file_new","$add_file" );
 
-# Setting Quota
-if ($Conf::use_quota eq "yes" 
-    and $user_count>0
-    and $user_count<101) {
-    my $users=join(",",@users_for_quota);
-    system("${DevelConf::executable_pfad}/sophomorix-quota --skiplock --users $users --noninteractive");
-    &nscd_stop();
-} elsif ($Conf::use_quota eq "yes" and $user_count>100){
-    system("${DevelConf::executable_pfad}/sophomorix-quota --skiplock --students --teachers --noninteractive");
-    &nscd_stop();
-} else {
-    if ($user_count==0){ 
-        &print_title("NOT setting quota (0 users added)");
-    } else {
-        &print_title("NOT setting quota");
-    }
-}
+# # Setting Quota
+# if ($Conf::use_quota eq "yes" 
+#     and $user_count>0
+#     and $user_count<101) {
+#     my $users=join(",",@users_for_quota);
+#     system("${DevelConf::executable_pfad}/sophomorix-quota --skiplock --users $users --noninteractive");
+#     &nscd_stop();
+# } elsif ($Conf::use_quota eq "yes" and $user_count>100){
+#     system("${DevelConf::executable_pfad}/sophomorix-quota --skiplock --students --teachers --noninteractive");
+#     &nscd_stop();
+# } else {
+#     if ($user_count==0){ 
+#         &print_title("NOT setting quota (0 users added)");
+#     } else {
+#         &print_title("NOT setting quota");
+#     }
+# }
 
-# Creating Mailing Aliases and Lists
-if ($user_count>0) {
-    system("${DevelConf::executable_pfad}/sophomorix-mail --skiplock");
-    &nscd_stop();
-} else {
-    &print_title("NOT creating mailaliases/lists (0 users added)");
-}
+# # Creating Mailing Aliases and Lists
+# if ($user_count>0) {
+#     system("${DevelConf::executable_pfad}/sophomorix-mail --skiplock");
+#     &nscd_stop();
+# } else {
+#     &print_title("NOT creating mailaliases/lists (0 users added)");
+# }
 
 
 
@@ -515,6 +512,9 @@ if ($user_count>0) {
 #&imap_disconnect($imap);
 
 &print_title("$user_count users added");
+
+&AD_unbind_admin($ldap);
+
 &log_script_end(@arguments);
 
 

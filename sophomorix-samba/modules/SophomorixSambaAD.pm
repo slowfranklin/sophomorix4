@@ -11,19 +11,20 @@ require Exporter;
 #use Time::localtime;
 #use Quota;
 #use Sys::Filesystem ();
-
+use Net::LDAP;
 
 @ISA = qw(Exporter);
 
 @EXPORT_OK = qw( );
 @EXPORT = qw(
-            AD_check_connection
+            AD_bind_admin
+            AD_unbind_admin
             get_forbidden_logins
             );
 
 
 
-sub AD_check_connection {
+sub AD_bind_admin {
     # check connection to Samba4 AD
     if($Conf::log_level>=3){
         print "   Checking Samba4 AD connection ...\n";
@@ -32,27 +33,44 @@ sub AD_check_connection {
     my $ldap = Net::LDAP->new('ldaps://localhost')  or  
          &Sophomorix::SophomorixBase::log_script_exit("No connection to Samba4 AD!",
          1,1,0,@arguments);
+    my $mesg = $ldap->bind('CN=Administrator,CN=Users,DC=linuxmuster,DC=local',
+                      password => 'Muster!');
+    # show errors from bind
+    $mesg->code && die $mesg->error;
+    return $ldap;
+}
+
+
+sub AD_unbind_admin {
+    my ($ldap) = @_;
+    my $mesg = $ldap->unbind();
+    #  show errors from unbind
+    $mesg->code && die $mesg->error;
 }
 
 
 
-
 sub  get_forbidden_logins{
+    my ($ldap) = @_;
     my %forbidden_logins = %DevelConf::forbidden_logins;
  
-  #my $dbh=&db_connect();
+    # users from ldap
+    $mesg = $ldap->search( # perform a search
+                   base   => "CN=Users,DC=linuxmuster,DC=local",
+                   scope => 'sub',
+                   filter => '(objectClass=user)',
+                   attr => ['sAMAccountName']
+                         );
+    my $max_user = $mesg->count; 
+    for( my $index = 0 ; $index < $max_user ; $index++) {
+        my $entry = $mesg->entry($index);
+        my @values = $entry->get_value( 'sAMAccountName' );
+        foreach my $login (@values){
+            $forbidden_logins{$login}="login in AD";
+        }
+    }
 
-   # # users in db
-   # my $sth= $dbh->prepare( "SELECT uid FROM userdata" );
-   # $sth->execute();
-   # my $array_ref = $sth->fetchall_arrayref();
-   # foreach my $row (@$array_ref){
-   #    my ($login) = @$row;
-   #    $forbidden_logins{$login}="login in db";
-
-   # }
-
-   # users in /etc/passwd
+    # users in /etc/passwd
     if (-e "/etc/passwd"){
         open(PASS, "/etc/passwd");
         while(<PASS>) {
@@ -76,29 +94,23 @@ sub  get_forbidden_logins{
          close(STUDENTS);
     }
 
-   # # groups in db
-   # my $sth2= $dbh->prepare( "SELECT gid FROM classdata" );
-   # $sth2->execute();
-   # my $array_ref_2 = $sth2->fetchall_arrayref();
+    # groups from ldap
+    $mesg = $ldap->search( # perform a search
+                   base   => "CN=Users,DC=linuxmuster,DC=local",
+                   scope => 'sub',
+                   filter => '(objectClass=group)',
+                   attr => ['sAMAccountName']
+                         );
+    my $max_group = $mesg->count; 
+    for( my $index = 0 ; $index < $max_group ; $index++) {
+        my $entry = $mesg->entry($index);
+        my @values = $entry->get_value( 'sAMAccountName' );
+        foreach my $group (@values){
+            $forbidden_logins{$group}="group in AD";
+        }
+    }
 
-   # foreach my $row (@$array_ref_2){
-   #    my ($group) = @$row;
-   #    $forbidden_logins{$group}="unix group in db";
-
-   # }
-
-   # # project longnames in db
-   # my $sth3= $dbh->prepare( "SELECT longname FROM projectdata" );
-   # $sth3->execute();
-   # my $array_ref_3 = $sth3->fetchall_arrayref();
-
-   # foreach my $row (@$array_ref_3){
-   #    my ($longname) = @$row;
-   #    $forbidden_logins{$longname}="project longname in db";
-
-   # }
-
-   # groups in /etc/group
+    # groups in /etc/group
     if (-e "/etc/group"){
         open(GROUP, "/etc/group");
         while(<GROUP>) {
@@ -108,19 +120,17 @@ sub  get_forbidden_logins{
         close(GROUP);
     }
 
-   # &db_disconnect($dbh);
-   # output forbidden logins:
-   if($Conf::log_level>=3){
-       print("Login-Name:                    ",
-             "                                   Status:\n");
-       print("================================",
-             "===========================================\n");
-       while (($k,$v) = each %forbidden_logins){
-           printf "%-60s %3s\n","$k","$v";
-       }
-   }
-
-   return %forbidden_logins;
+    # output forbidden logins:
+    if($Conf::log_level>=3){
+        print("Login-Name:                    ",
+              "                                   Status:\n");
+        print("================================",
+              "===========================================\n");
+        while (($k,$v) = each %forbidden_logins){
+            printf "%-50s %3s\n","$k","$v";
+        }
+    }
+    return %forbidden_logins;
 }
 
 

@@ -1,6 +1,10 @@
-get_forbidden_logins in SophomorixSambaAD:
+SophomorixSambaAD:
+   AD_bind_admin
+     -password aus Datei
+     - CN=Administrator,CN=Users,DC=linuxmuster,DC=local aus ...
 
-What logins should be forbidden?
+get_forbidden_logins in 
+   What logins should be forbidden?
 
 
 
