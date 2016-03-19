@@ -7,6 +7,10 @@ get_forbidden_logins in
 
 
 
+sophomorix-useradd
+  - replace default password 'linux' with 'LinuxMuster!'
+  - maybe put all options for adding users  to sophomorix-add
+
 sophomorix-add:   call sophomorix-print correctly 
 
 password generation:
