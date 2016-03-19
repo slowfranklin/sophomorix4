@@ -1,0 +1,20 @@
+Source: sophomorix4-1.0.0
+Section: unknown
+Priority: optional
+Maintainer: jeff <jeffbeck@web.de>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.4
+Homepage: <insert the upstream URL, if relevant>
+#Vcs-Git: git://git.debian.org/collab-maint/sophomorix4-1.0.0.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/sophomorix4-1.0.0.git;a=summary
+
+Package: sophomorix4-1.0.0
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
+
+Package: sophomorix4-1.0.0-doc
+Architecture: all
+Description: documentation for sophomorix4-1.0.0
+ <insert long description, indented with spaces>
