@@ -1,3 +1,8 @@
+after install:
+
+zless /usr/share/doc/sophomorix4/changelog-sophomorix-src.gz
+
+
 SophomorixSambaAD:
    AD_get_passwd
      - CN=Administrator,CN=Users,DC=linuxmuster,DC=local aus ...

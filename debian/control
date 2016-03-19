@@ -1,20 +1,35 @@
-Source: sophomorix4-1.0.0
-Section: unknown
+Source: sophomorix4
+Section: admin
 Priority: optional
-Maintainer: jeff <jeffbeck@web.de>
-Build-Depends: debhelper (>= 8.0.0)
+Maintainer: Rüdiger Beck <jeffbeck@web.de>
+Build-Depends: debhelper (>= 8.0.0), devscripts
 Standards-Version: 3.9.4
-Homepage: <insert the upstream URL, if relevant>
-#Vcs-Git: git://git.debian.org/collab-maint/sophomorix4-1.0.0.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/sophomorix4-1.0.0.git;a=summary
 
-Package: sophomorix4-1.0.0
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
 
-Package: sophomorix4-1.0.0-doc
+Package: sophomorix4
 Architecture: all
-Description: documentation for sophomorix4-1.0.0
- <insert long description, indented with spaces>
+Depends: libnet-ldap-perl, libunicode-map8-perl
+Description: Sophomorix for Samba 4
+ sophomorix4 is a user amanagement tool for Samba 4
+
+
+#Package: sophomorix4-devel
+#Architecture: all
+#Depends:  sophomorix4 (>=3.0.0)
+#Description: Test suite for sophomorix
+# Scripts to test sophomorix on a runnig system. These scripts can screw up 
+# your server!
+
+
+#Package: sophomorix4--doc-html
+#Architecture: all
+#Depends: 
+#Description: Html documentation for sophomorix4
+# This Package contains the documentation for sophomori4
+
+
+#Package: sophomorix4-virusscan
+#Architecture: all
+#Depends: sophomorix2 (>=3.0.0), clamav
+#Description: script to scan large amounts of data for viruses with clamscan
+

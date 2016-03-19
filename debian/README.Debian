@@ -1,6 +1,11 @@
-sophomorix4-1.0.0 for Debian
+sophomorix4 for Debian
 ----------------------------
 
-<possible notes regarding this package - if none, delete this file>
+Sophomorix (> upstream version 3.0.0) was developed for Ubuntu Xenial.
+
+For the upstream changelog use:
+
+zless /usr/share/doc/sophomorix4/changelog-sophomorix-src.gz
+
 
  -- jeff <jeffbeck@web.de>  Sat, 19 Mar 2016 16:00:44 +0100

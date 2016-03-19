@@ -1,5 +1,5 @@
-sophomorix4-1.0.0 (1.0.0-1) unstable; urgency=low
+sophomorix4 (3.0.0-1) xenial-unstable; urgency=medium
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial release  (4.0.0 will be the first full featured release)
 
  -- jeff <jeffbeck@web.de>  Sat, 19 Mar 2016 16:00:44 +0100

@@ -99,13 +99,9 @@ help:
 
 
 deb:
-	### Prepare to build an ubuntu package
-	cp sophomorix-pgldap/config-pg/sophomorix-admin.sql.ubuntu sophomorix-pgldap/config-pg/sophomorix-admin.sql
-	cp debian/control.ubuntu debian/control
-	cp sophomorix-pgldap/config-ldap/ldap.conf.template.ubuntu sophomorix-pgldap/config-ldap/ldap.conf.template
-	cp sophomorix-pgldap/config-ldap/slapd-standalone.conf.template.ubuntu sophomorix-pgldap/config-ldap/slapd-standalone.conf.template
+	### Prepare to build an ubuntu xenial package
 	@echo 'Did you do a dch -i ?'
-	@sleep 8
+	@sleep 2
 	dpkg-buildpackage -tc -uc -us -sa -rfakeroot
 	@echo ''
 	@echo 'Do not forget to tag this version with: git tag V-x.y.z'

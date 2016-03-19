@@ -1,6 +1,6 @@
 # all
-libnet-ldap-perl              # Net::ldap
-libunicode-map8-perl          # password generation
+DONE:libnet-ldap-perl              # Net::ldap
+DONE libunicode-map8-perl          # password generation
 
 # developer
 ldap-utils
