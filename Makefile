@@ -107,11 +107,11 @@ deb:
 	@echo 'Do not forget to tag this version with: git tag V-x.y.z'
 	@echo ''
 
-#clean: clean-doc clean-debian
+clean: clean-doc clean-debian
 
-#clean-debian:
-#	rm -rf  debian/sophomorix
-#	rm -rf  debian/sophomorix-virusscan
+clean-debian:
+	rm -rf  debian/sophomorix
+	rm -rf  debian/sophomorix-virusscan
 
 # sophomorix-samba
 install-samba:
