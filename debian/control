@@ -10,7 +10,7 @@ Package: sophomorix4
 Architecture: all
 Depends: libnet-ldap-perl, libunicode-map8-perl
 Description: Sophomorix for Samba 4
- sophomorix4 is a user amanagement tool for Samba 4
+ sophomorix4 is a user management tool for Samba 4
 
 
 #Package: sophomorix4-devel

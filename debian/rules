@@ -1,12 +1,151 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
 
 # Uncomment this to turn on verbose mode.
-export DH_VERBOSE=1
+#export DH_VERBOSE=1
 
-# This has to be exported to make some magic below work.
-#export DH_OPTIONS
-export DH_OPTIONS=-v
+# This is the debhelper compatibility version to use.
+# moved to debian/compat
+# export DH_COMPAT=3
 
-%:
-	dh $@ 
+
+
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -g
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	touch configure-stamp
+
+
+build: build-stamp
+
+build-stamp: configure-stamp 
+	dh_testdir
+
+	# Add here commands to compile the package.
+#	$(MAKE)
+	#/usr/bin/docbook-to-man debian/sophomorix.sgml > sophomorix.1
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) clean
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	@# dh_clean -k # deprecated, use dh_prep instead
+	dh_prep
+	dh_installdirs
+
+	# Add here commands to install the package into debian/sophomorix4.
+	$(MAKE) install-sophomorix4 DESTDIR=$(CURDIR)/debian/sophomorix4
+#	$(MAKE) install-files DESTDIR=$(CURDIR)/debian/sophomorix4
+#	$(MAKE) install-sys-files DESTDIR=$(CURDIR)/debian/sophomorix4
+#	$(MAKE) install-pgldap DESTDIR=$(CURDIR)/debian/sophomorix4
+#	$(MAKE) install-sys-pgldap DESTDIR=$(CURDIR)/debian/sophomorix4
+#	$(MAKE) install-developer DESTDIR=$(CURDIR)/debian/sophomorix4
+#	$(MAKE) install-virusscan DESTDIR=$(CURDIR)/debian/sophomorix4
+#	$(MAKE) doc DESTDIR=$(CURDIR)/debian/sophomorix4
+
+
+# Build architecture-independent files here.
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_installdebconf	
+	dh_installchangelogs
+# install debian/copyright file in every package:
+	dh_installdocs
+	dh_installdocs -psophomorix4 changelog-sophomorix-src
+#	dh_installdocs -psophomorix-doc-html sophomorix-doc/html
+#	dh_installexamples
+#	dh_installmenu
+	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_installinit
+	dh_installcron
+# # Install manpages for sophomorix-base
+# 	dh_installman -psophomorix4 sophomorix4/man/de/sophomorix.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/en/sophomorix-check.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix.conf.de.5
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/schueler.txt.de.5
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/lehrer.txt.de.5
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/italcrooms.conf.de.5
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-check.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-add.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-move.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-kill.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-print.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-subclass.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-project.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-class.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-user.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-useradd.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-usermod.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-groupadd.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-groupdel.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-room.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-setup.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-quota.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-mail.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-repair.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-teach-in.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-passwd.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-www.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-workstation.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-support.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-janitor.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-imp-expand-fromaddress.de.8
+# 	dh_installman -psophomorix-base sophomorix-base/man/de/sophomorix-teacher.de.1
+# # Install manpages for sophomorix-pgldap
+# 	dh_installman -psophomorix-pgldap sophomorix-pgldap/man/de/sophomorix-setup-pgldap.de.8
+# 	dh_installman -psophomorix-pgldap sophomorix-pgldap/man/de/sophomorix-dump-pg2ldap.de.8
+# 	dh_installman -psophomorix-pgldap sophomorix-pgldap/man/de/sophomorix-sync-check.de.8
+# # Install manpages for sophomorix-developer
+# 	dh_installman -psophomorix-developer sophomorix-developer/man/de/sophomorix-test.de.8
+# 	dh_installman -psophomorix-developer sophomorix-developer/man/de/sophomorix-test-unid.de.8
+# 	dh_installman -psophomorix-developer sophomorix-developer/man/de/sophomorix-test-bunchofusers.de.8
+# # Install manpages for sophomorix-virusscan
+# 	dh_installman -psophomorix-virusscan sophomorix-virusscan/man/de/sophomorix-virusscan.de.8
+# 	dh_installman -psophomorix-virusscan sophomorix-virusscan/man/de/sophomorix-virusscan.conf.de.5
+# 	dh_installman -psophomorix-virusscan sophomorix-virusscan/man/de/sophomorix-virusscan-excludes.conf.de.5
+#	dh_installinfo
+#	dh_undocumented
+#	dh_install --sourcedir=debian/sophomorix4
+	dh_link
+#	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_makeshlibs
+	dh_installdeb
+#	dh_perl
+#	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+
+# Build architecture-dependent files here.
+binary-arch: build install
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

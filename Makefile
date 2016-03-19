@@ -111,11 +111,11 @@ deb:
 clean: clean-debian
 
 clean-debian:
-	rm -rf  debian/sophomorix
-	rm -rf  debian/sophomorix-virusscan
+	rm -rf  debian/sophomorix4
+#	rm -rf  debian/sophomorix4-virusscan
 
-# sophomorix-samba
-install-samba:
+# sophomorix4
+install-sophomorix4:
 	### install-samba
 # some dirs
 	@install -d -m700 -oroot -groot $(LIBDIR)
@@ -134,8 +134,6 @@ install-samba:
 # Install the modules
 	@install -d -m755 -oroot -groot $(PERLMOD)
 	@install -oroot -groot --mode=0644 sophomorix-samba/modules/Sophomorix*[a-z1-9.]pm $(PERLMOD)
-
-
 # group owner is changed in postinst-script to lehrer
 #	@install -oroot -groot --mode=4750 sophomorix-base/scripts-teacher/sophomorix-*[a-z1-9] $(DESTDIR)/usr/bin
 # installing configs for root
@@ -260,7 +258,7 @@ install-pgldap:
 	@install -oroot -groot --mode=0644 sophomorix-pgldap/config-bdb/slapd-standalone.DB_CONFIG $(CTEMPDIR)/bdb/
 
 
-install-virusscan:
+#install-virusscan:
 #	### install-virusscan
 #	@install -d -m755 -oroot -groot $(CONF)/virusscan
 #	@install sophomorix-virusscan/config/sophomorix-virusscan.conf $(CONF)/virusscan
