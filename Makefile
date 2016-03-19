@@ -107,7 +107,8 @@ deb:
 	@echo 'Do not forget to tag this version with: git tag V-x.y.z'
 	@echo ''
 
-clean: clean-doc clean-debian
+#clean: clean-doc clean-debian
+clean: clean-debian
 
 clean-debian:
 	rm -rf  debian/sophomorix
