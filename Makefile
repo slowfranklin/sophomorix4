@@ -77,7 +77,7 @@ LANGUAGE=$(DESTDIR)/usr/share/sophomorix/lang
 #TOOLS=$(DESTDIR)/root/sophomorix-developer
 
 
-all: install-samba install-virusscan
+all: install-sophomorix-samba install-virusscan
 
 help:
 	@echo ' '
@@ -90,7 +90,13 @@ help:
 	@echo '   make | make all'
 	@echo '      make an installation of files to the local ubuntu xenial'
 	@echo ' '
-	@echo '   make developer'
+	@echo '   make install-virusscan'
+	@echo '      create a debian package'
+	@echo ' '
+	@echo '   make install-sophomorix-samba'
+	@echo '      create a debian package'
+	@echo ' '
+	@echo '   make install-developer'
 	@echo '      create a debian package'
 	@echo ' '
 	@echo '   make deb'
@@ -114,8 +120,8 @@ clean-debian:
 	rm -rf  debian/sophomorix4
 #	rm -rf  debian/sophomorix4-virusscan
 
-# sophomorix4
-install-sophomorix4:
+# sophomorix-samba
+install-sophomorix-samba:
 	### install-samba
 # some dirs
 	@install -d -m700 -oroot -groot $(LIBDIR)
@@ -189,7 +195,7 @@ install-sophomorix4:
 
 
 install-pgldap:
-	### install-pgldap
+#	### install-pgldap
 # patch sophomorix.sql.template BEFORE installation
 # ./buildhelper/sopho-sqldbmod
 # installing lib for managing the user database in pgldap
@@ -258,8 +264,8 @@ install-pgldap:
 	@install -oroot -groot --mode=0644 sophomorix-pgldap/config-bdb/slapd-standalone.DB_CONFIG $(CTEMPDIR)/bdb/
 
 
-#install-virusscan:
-#	### install-virusscan
+install-virusscan:
+	### install-virusscan
 #	@install -d -m755 -oroot -groot $(CONF)/virusscan
 #	@install sophomorix-virusscan/config/sophomorix-virusscan.conf $(CONF)/virusscan
 #	@install sophomorix-virusscan/config/sophomorix-virusscan-excludes.conf $(CONF)/virusscan
@@ -274,7 +280,7 @@ install-pgldap:
 
 
 
-#install-developer:
+install-developer:
 	### install-developer
 ### installing test and developement tools
 #	@install -d $(DESTDIR)/usr/sbin
