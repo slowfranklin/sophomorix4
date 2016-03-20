@@ -17,6 +17,13 @@ Info über Enwicklungs-Entscheidungen
    daher: 'Muster!'
  - Defaultpasswort für Schulen ('linux' ist zu wenig komplex):
    'LinuxMuster!'
+ - neue sophomorix-Paketnamen
+   Quellpaket: sophomorix4
+    Daraus erstellte Palkete:
+     sophomorix-samba (alles für die Benutzerverwaltung)
+     sophomorix-doc-html (später, mini-Daku (Link auf wiki))
+     sophomorix-developer (installiert tools, Beispiele und Testscripte)
+     sophomorix-virusscan (später, Virenscanner)
 
 
 Enwicklungs-Entscheidungen, die bald anstehen/Diskussion
@@ -33,8 +40,9 @@ Enwicklungs-Entscheidungen, die bald anstehen/Diskussion
 Was habe ich seit dem letzten Weekly erledigt/verändert?
 ----------------------------------------------------------------------
 sophomorix.add legt Benutzer an wie samba-tool
-
-
+Erste Pakete:
+  sophomorix-samba
+  sophomorix-developer
 Was mache ich als nächstes?
 ----------------------------------------------------------------------
 - Schemaeinbindung
