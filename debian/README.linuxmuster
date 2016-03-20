@@ -1,0 +1,62 @@
+Create a personal test package for linuxmuster 7.x/xenial:
+=======================================================
+1. make deb
+2. dpkg -i /path/to/deb
+
+
+Create an official package for linuxmuster 7.x/xenial:
+=======================================================
+
+1. # checkout the branch 'xenial'
+   git checkout xenial
+
+
+2. git status
+   # If there is rubbish: clean last build
+   git reset --hard HEAD
+   git clean -f -d 
+
+
+3. # update versions in debian/control
+   # i.e. replace 3.0.1 with 3.0.2
+
+
+4. # update changelog file:
+   cd sophomorix4
+   dch -i 
+     -> set version number (example: 3.0.2-1)
+     -> add a comment to the changelog
+     -> set a repo like xenial OR xenial-testing OR xenial-unstable
+        (this determines, in which repo the package will be uploaded)
+
+
+5. # Check in modified files (use the jeffbeck ssh-key):
+   cd sophomorix2
+   git add debian/control.ubuntu debian/changelog
+   git commit -m "prepared new package 3.0.2-1"
+   git push
+
+
+6. # create the package
+   make deb
+
+
+7. # If the package was successfully created:
+   # Tag the stuff with annotated, unsigned tag
+   git tag V-3.0.2-1
+   # push the tag to the github server
+   git push --tags
+
+
+8. # upload the packages to linuxmuster.net
+   dput -f -c ./dput.cf linuxmuster.net sophomorix4_3.0.2-1.changes
+
+   # With dput.cf
+   [linuxmuster.net]
+   fqdn = linuxmuster.net
+   method = scp
+   ssh_config_options = IdentityFile ~/.ssh/>>keyfile<<
+   login = >>username<<
+   incoming = ~/incoming
+   post_upload_command = ssh -i ~/.ssh/>>keyfile<< >>username<<@linuxmuster.net mini-dinstall -b
+   allow_unsigned_uploads = true
