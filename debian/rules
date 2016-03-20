@@ -55,12 +55,12 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/sophomorix4.
-	$(MAKE) install-sophomorix4 DESTDIR=$(CURDIR)/debian/sophomorix4
+	$(MAKE) install-sophomorix-samba DESTDIR=$(CURDIR)/debian/sophomorix-samba
 #	$(MAKE) install-files DESTDIR=$(CURDIR)/debian/sophomorix4
 #	$(MAKE) install-sys-files DESTDIR=$(CURDIR)/debian/sophomorix4
 #	$(MAKE) install-pgldap DESTDIR=$(CURDIR)/debian/sophomorix4
 #	$(MAKE) install-sys-pgldap DESTDIR=$(CURDIR)/debian/sophomorix4
-#	$(MAKE) install-developer DESTDIR=$(CURDIR)/debian/sophomorix4
+	$(MAKE) install-developer DESTDIR=$(CURDIR)/debian/sophomorix-developer
 #	$(MAKE) install-virusscan DESTDIR=$(CURDIR)/debian/sophomorix4
 #	$(MAKE) doc DESTDIR=$(CURDIR)/debian/sophomorix4
 

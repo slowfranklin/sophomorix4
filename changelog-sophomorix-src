@@ -7,7 +7,10 @@
 
 
 
-3.0.0-1 (2016-03-??)
+3.0.1-2 (2016-03-20)
+      Packaging works for:
+        sophomorix-samba
+        sophomorix-developer
       All files
       - code cleanup
       - use english for vars

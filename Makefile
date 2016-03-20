@@ -68,7 +68,8 @@ LANGUAGE=$(DESTDIR)/usr/share/sophomorix/lang
 #CTEMPDIR=$(DESTDIR)/usr/share/sophomorix/config-templates
 
 # Testfiles
-#DEVELOPERDIR=$(DESTDIR)/usr/share/sophomorix-developer
+DEVELOPERDIR=$(DESTDIR)/usr/share/sophomorix-developer
+DEVELEX=$(DESTDIR)/usr/share/sophomorix-developer/examples
 
 # sophomorix-virusscan
 #VIRUSSCAN=$(DESTDIR)/usr/share/sophomorix-virusscan
@@ -283,13 +284,19 @@ install-virusscan:
 install-developer:
 	### install-developer
 ### installing test and developement tools
-#	@install -d $(DESTDIR)/usr/sbin
+	@install -d $(DESTDIR)/usr/sbin
 #	@install -oroot -groot --mode=0744 sophomorix-developer/scripts/sophomorix-test $(DESTDIR)/usr/sbin
 #	@install -oroot -groot --mode=0744 sophomorix-developer/scripts/sophomorix-*[a-z1-9] $(DESTDIR)/usr/sbin
 # copying perl developer modules
 #	@install -d -m755 -oroot -groot $(PERLMOD)
 #	@install -oroot -groot --mode=0644 sophomorix-developer/modules/Sophomorix*[a-z1-9] $(PERLMOD)
 # tools for developing
+# installing sophomorix.add example
+	@install -d $(DEVELOPERDIR)
+	@install -d $(DEVELEX)
+	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.add $(DEVELEX)/sophomorix.add 
+	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.move $(DEVELEX)/sophomorix.move
+	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.kill $(DEVELEX)/sophomorix.kill
 # installing sources.list examples
 #	@install -d $(TOOLS)/apt/s-lists
 #	@install -oroot -groot --mode=0644 sophomorix-developer/tools/apt/s-lists/*sources.list $(TOOLS)/apt/s-lists
