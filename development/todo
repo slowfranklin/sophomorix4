@@ -3,6 +3,22 @@ after install:
 zless /usr/share/doc/sophomorix4/changelog-sophomorix-src.gz
 
 
+sophomorix-add:
+  add user to group (samba-tool)
+sophomorix-move
+  use samba tool for group change
+sophomorix-kill
+  use samba tool
+
+document format of
+sophomorix.add, .move, .kill
+   - use utf8 in 
+
+
+function with lot of parameters (i.e.adding users):
+  do not use list for parameters, use hash
+
+
 SophomorixSambaAD:
    AD_get_passwd
      - CN=Administrator,CN=Users,DC=linuxmuster,DC=local aus ...
