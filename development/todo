@@ -26,9 +26,6 @@ sophomorix.add, .move, .kill
    - use utf8 in these files 
 
 
-function with lot of parameters (i.e.adding users):
-  do not use list for parameters, use hash
-
 
 SophomorixSambaAD:
    AD_get_passwd

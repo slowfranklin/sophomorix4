@@ -388,21 +388,19 @@ while(<SOPHOMORIXADD>){
    $user_count++;
 
    # 1. Entry in AD
-   &AD_user_create($ldap,
-                   $user_count,
-                   $identifier,
-                   $login_check_ok,
-                   $class_group,
-                   $firstname,
-                   $surname,
-                   $birthdate,
-                   $plain_password,
-                   $unid,
-                   $wunsch_id,
-                   $wunsch_gid,
-#                   $epoche_jetzt,
-#                   $time_stamp_AD,
-                  );
+   &AD_user_create({ldap=>$ldap, 
+                    user_count=>$user_count,
+                    identifier=>$identifier,
+                    login=>$login_check_ok,
+                    class_group=>$class_group,
+                    firstname=>$firstname,
+                    surname=>$surname,
+                    birthdate=>$birthdate,
+                    plain_password=>$plain_password,
+                    unid=>$unid,
+                    wunsch_id=>$wunsch_id,
+                    wunsch_gid=>$wunsch_gid,
+                  });
 
    # 1. Entry in sophomorix database and auth system
    #&create_user_db_entry($surname,

@@ -77,21 +77,19 @@ sub AD_unbind_admin {
 
 
 sub AD_user_create {
-    my ($ldap,
-        $user_count,
-        $identifier,
-        $login,
-        $class_group,
-        $firstname,
-        $surname,
-        $birthdate,
-        $plain_password,
-        $unid,
-        $wunsch_id,
-        $wunsch_gid,
-#        $epoche_jetzt,
-#       $time_stamp_AD,
-       ) = @_;
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $user_count = $arg_ref->{user_count};
+    my $identifier = $arg_ref->{identifier};
+    my $login = $arg_ref->{login};
+    my $class_group = $arg_ref->{class_group};
+    my $firstname = $arg_ref->{firstname};
+    my $surname = $arg_ref->{surname};
+    my $birthdate = $arg_ref->{birthdate};
+    my $plain_password = $arg_ref->{plain_password};
+    my $unid = $arg_ref->{unid};
+    my $wunsch_id = $arg_ref->{wunsch_id};
+    my $wunsch_gid = $arg_ref->{wunsch_gid};
 
     #calculate
     my $shell="/bin/false";
