@@ -22,6 +22,7 @@ use Net::LDAP;
             AD_bind_admin
             AD_unbind_admin
             AD_user_create
+            AD_group_create
             get_forbidden_logins
             );
 
@@ -71,7 +72,6 @@ sub AD_unbind_admin {
     #  show errors from unbind
     $mesg->code && die $mesg->error;
 }
-
 
 
 sub AD_user_create {
@@ -142,6 +142,47 @@ sub AD_user_create {
     $result->code && warn "failed to add entry: ", $result->error ;
 }
 
+
+
+sub AD_group_create {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $group = $arg_ref->{group};
+
+    # calculate missing Attributes
+    my $base="CN=Users, DC=linuxmuster,DC=local";
+    my $dn = "cn=".$group.",".$base;
+
+    # check if group exists
+    my $filter="(cn=".$group.")";
+    $mesg = $ldap->search( # perform a search
+                   base   => $base,
+                   scope => 'sub',
+                   filter => $filter,
+                   attr => [ 'objectClass' => ['group']]
+                         );
+
+    my $count = $mesg->count; 
+    if ($count>0){
+        print "\nGroup $group exists already ($count results)\n\n";
+        return;
+    }
+
+    # adding the group
+    &Sophomorix::SophomorixBase::print_title("Creating Group:");
+    print("Group:    $group\n");
+    print("dn:       $dn\n");
+    my $result = $ldap->add( $dn,
+                           attr => [
+                             'cn'   => $group,
+                             'sAMAccountName' => $group,
+                             'objectclass' => ['top',
+                                               'group' ],
+                                   ]
+                           );
+    $result->code && warn "failed to add entry: ", $result->error ;
+    return;
+}
 
 
 sub  get_forbidden_logins{

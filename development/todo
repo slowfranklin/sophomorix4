@@ -10,9 +10,20 @@ sophomorix-move
 sophomorix-kill
   use samba tool
 
+
+Attributes for a group
+
+DN: CN=teachers,CN=Users,DC=linuxmuster,DC=local
+...
+
+
+
+
+
+
 document format of
 sophomorix.add, .move, .kill
-   - use utf8 in 
+   - use utf8 in these files 
 
 
 function with lot of parameters (i.e.adding users):
@@ -33,13 +44,6 @@ sophomorix-useradd
   - maybe put all options for adding users  to sophomorix-add
 
 sophomorix-add:   call sophomorix-print correctly 
-
-password generation:
-
-check for capital letters,
-check for small letters
-check for Sonderzeichen
-
 
 sophomorix.add:
 -> are the umlaute in sophomorix.add at the moment?
