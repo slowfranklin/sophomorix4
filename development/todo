@@ -1,10 +1,6 @@
-after install:
-
-zless /usr/share/doc/sophomorix4/changelog-sophomorix-src.gz
-
 
 sophomorix-add:
-  add user to group (samba-tool)
+  add user to group (samba-tool) DONE
 sophomorix-move
   use samba tool for group change
 sophomorix-kill

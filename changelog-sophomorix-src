@@ -7,6 +7,15 @@
 
 
 
+3.0.2-1 (2016-03-xx)
+      - code cleanup: use hash for options of a function with lots of 
+        Parameters (insetaed of list)
+      - sohomorix-groupadd:
+        - add groups and users to groups
+      - sophomorix-add:
+        - put users in their groups
+        - add the group when not existing
+
 3.0.1-2 (2016-03-20)
       Packaging works for:
         sophomorix-samba
