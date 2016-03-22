@@ -23,6 +23,8 @@ use Net::LDAP;
             AD_unbind_admin
             AD_user_create
             AD_group_create
+            AD_group_addmembers
+            AD_group_removemembers
             get_forbidden_logins
             );
 
@@ -143,18 +145,39 @@ sub AD_user_create {
 }
 
 
+sub AD_get_base {
+    # ?????
+    return "DC=linuxmuster,DC=local";
+}
 
-sub AD_group_create {
-    my ($arg_ref) = @_;
-    my $ldap = $arg_ref->{ldap};
-    my $group = $arg_ref->{group};
 
-    # calculate missing Attributes
-    my $base="CN=Users, DC=linuxmuster,DC=local";
-    my $dn = "cn=".$group.",".$base;
 
+sub AD_user_test_exist {
+    my ($ldap,$user) = @_;
+    # check if user exists
+    my $filter="(cn=".$user.")";
+    my $base=&AD_get_base();
+    my $mesg = $ldap->search( # perform a search
+                      base   => $base,
+                      scope => 'sub',
+                      filter => $filter,
+                      attr => [ 'objectClass' => ['user']]
+                            );
+
+    my $count = $mesg->count;
+    if ($count > 0){
+        return $count;
+    } else {
+        return 0;
+    }
+}
+
+
+sub AD_group_test_exist {
+    my ($ldap,$group) = @_;
     # check if group exists
     my $filter="(cn=".$group.")";
+    my $base=&AD_get_base();
     $mesg = $ldap->search( # perform a search
                    base   => $base,
                    scope => 'sub',
@@ -164,14 +187,33 @@ sub AD_group_create {
 
     my $count = $mesg->count; 
     if ($count>0){
-        print "\nGroup $group exists already ($count results)\n\n";
+        return $count;
+    } else {
+        return 0;
+    }
+}
+
+
+
+sub AD_group_create {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $group = $arg_ref->{group};
+
+    # calculate missing Attributes
+    my $base=&AD_get_base();
+    # my $base = "CN=Users,DC=linuxmuster,DC=local";
+    my $dn = "cn=".$group.",CN=Users,".$base;
+
+    if ($count=&AD_group_test_exist($ldap,$group) > 0){
+        print "   * Group $group exists already ($count results)\n";
         return;
     }
 
     # adding the group
     &Sophomorix::SophomorixBase::print_title("Creating Group:");
-    print("Group:    $group\n");
-    print("dn:       $dn\n");
+    print("   Group:    $group\n");
+    print("   dn:       $dn\n");
     my $result = $ldap->add( $dn,
                            attr => [
                              'cn'   => $group,
@@ -183,6 +225,51 @@ sub AD_group_create {
     $result->code && warn "failed to add entry: ", $result->error ;
     return;
 }
+
+
+
+sub AD_group_addmembers {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $group = $arg_ref->{group};
+    my $user = $arg_ref->{addmembers};
+
+    my $count=&AD_user_test_exist($ldap,$user);
+    if ($count > 0){
+        print "   * User $user exists ($count results)\n";
+        print "Adding $user to $group\n";
+        my $command="samba-tool group addmembers ". $group." ".$user;
+        print "   # $command\n";
+        system($command);
+        return;
+    } else {
+        print "   * User $user nonexisting ($count results)\n";
+        return;
+    }
+}
+
+
+
+sub AD_group_removemembers {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $group = $arg_ref->{group};
+    my $user = $arg_ref->{removemembers};
+    print "US $user $group\n";
+    my $count=&AD_user_test_exist($ldap,$user);
+    if ($count > 0){
+        print "   * User $user exists ($count results)\n";
+        print "Removing $user from $group\n";
+        my $command="samba-tool group removemembers ". $group." ".$user;
+        print "   # $command\n";
+        system($command);
+        return;
+    } else {
+        print "   * User $user nonexisting ($count results)\n";
+        return;
+    }
+}
+
 
 
 sub  get_forbidden_logins{

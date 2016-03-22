@@ -25,15 +25,10 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_bind_admin
                                  AD_unbind_admin
                                  AD_group_create
+                                 AD_group_addmembers
+                                 AD_group_removemembers
                                  get_forbidden_logins
                                     );
-
-use Data::Dumper;
-$Data::Dumper::Indent = 1;
-$Data::Dumper::Sortkeys = 1;
-$Data::Dumper::Useqq = 1;
-$Data::Dumper::Terse = 1; 
-
 
 my @arguments = @ARGV;
 
@@ -52,13 +47,9 @@ my $info=0;
 $Conf::log_level=1;
 
 my $group="";
-my $gid_number=-1;
+my $addmembers="";
+my $removemembers="";
 
-my $domain_group=0;
-my $local_group=0;
-my $room_group=0;
-
-my $explanation="";
 my $skiplock=0;
 
 my $type=-1; # 3: domain group
@@ -67,19 +58,15 @@ my $type=-1; # 3: domain group
 my $testopt=GetOptions(
            "help|h" => \$help,
            "info|i" => \$info,
-           "domain" => \$domain_group,
-           "local" => \$local_group,
-           "room" => \$room_group,
            "group=s" => \$group,
-           "gidnumber=i" => \$gid_number,
+           "addmembers=s" => \$addmembers,
+           "removemembers=s" => \$removemembers,
            "skiplock" => \$skiplock,
           );
 
 # Prüfen, ob Optionen erkannt wurden, sonst Abbruch
 &check_options($testopt);
 
-my $ldap = &AD_bind_admin();
-#&check_connections();
 
 
 # --help
@@ -96,7 +83,8 @@ Options
   -v  / --verbose
   -vv / --verbose --verbose
   -i  / --info (unused)
-  --skiplock
+  --addmembers member
+  --removemembers member
   --group name
 
 Please see the sophomorix-groupadd(8) man pages for full documentation
@@ -124,8 +112,31 @@ if ($group eq ""){
 
 &log_script_start(@arguments);
 
+
+my $ldap = &AD_bind_admin();
+
+# make sure group exists
 &AD_group_create({ldap=>$ldap, 
                  group=>$group,
                 });
+
+
+# --removemembers member
+if ($removemembers ne ""){
+    &AD_group_removemembers({ldap => $ldap, 
+                             group => $group,
+                             removemembers => $removemembers,
+                           });   
+}
+
+
+# --addmembers member
+if ($addmembers ne ""){
+    &AD_group_addmembers({ldap => $ldap, 
+                          group => $group,
+                          addmembers => $addmembers,
+                        });   
+}
+
 
 &log_script_end(@arguments);
