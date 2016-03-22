@@ -82,7 +82,7 @@ sub AD_user_create {
     my $user_count = $arg_ref->{user_count};
     my $identifier = $arg_ref->{identifier};
     my $login = $arg_ref->{login};
-    my $class_group = $arg_ref->{class_group};
+    my $group = $arg_ref->{group};
     my $firstname = $arg_ref->{firstname};
     my $surname = $arg_ref->{surname};
     my $birthdate = $arg_ref->{birthdate};
@@ -109,7 +109,7 @@ sub AD_user_create {
         print("Firstname:          $firstname\n");
         print("Birthday:           $birthdate\n");
         print("Identifier:         $identifier\n");
-        print("AdminClass:         $class_group\n"); # lehrer oder klasse
+        print("AdminClass:         $group\n"); # lehrer oder klasse
         print("Unix-gid:           $wunsch_gid\n"); # lehrer oder klasse
         #print("GECOS:              $gecos\n");
         #print("Login (to check):   $login_name_to_check\n");
@@ -117,7 +117,7 @@ sub AD_user_create {
         print("Password:           $plain_password\n");
         print("Unid:               $unid\n");
         print("Unix-id:            $wunsch_id\n");
-        if ($class_group eq ${DevelConf::teacher}) {
+        if ($group eq ${DevelConf::teacher}) {
             # Es ist ein Lehrer
             print("Shell (teachers):   $shell\n"); 
         } else {
