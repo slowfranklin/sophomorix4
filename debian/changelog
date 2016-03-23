@@ -1,6 +1,6 @@
 sophomorix4 (3.0.2-1) xenial-unstable; urgency=medium
 
-  * sophomorix-add adds users to group
+  * sophomorix-add/move/kill add/move/kill users 
 
  -- jeff <bz@adler>  Wed, 23 Mar 2016 00:02:23 +0100
 
