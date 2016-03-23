@@ -365,16 +365,13 @@ sub log_script_exit {
 # optopn 4: cp should be correct
 #  what is this mv for: &backup_amku_file($zeit,"add","after","mv");
 sub backup_amku_file {
-    my ($time, $str, $str2, $command) = @_;
-    if (not defined $command){
-	$command="cp";
-    }
+    my ($time, $str, $str2) = @_;
     my $input=${DevelConf::path_result}."/sophomorix.".$str;
     my $output=${DevelConf::path_log_user}."/".$time.".sophomorix.".$str."-".$str2;
-    # Verarbeitete Datei mit Zeitstempel versehen
 
+    # Verarbeitete Datei mit Zeitstempel versehen
     if (-e "${input}"){
-        system("$command ${input} ${output}");
+        system("cp ${input} ${output}");
         system("chown root:root ${output}");
         system("chmod 600 ${output}");
     }

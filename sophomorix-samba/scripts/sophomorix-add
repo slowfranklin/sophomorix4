@@ -456,10 +456,8 @@ if ($user_count==0){
 }
 
 
-# ??????????? sophomorix.add moven, damit sie nicht nochmal eingelesen werden kann
 &backup_amku_file($time_stamp_file,"add","after");
-#&backup_amku_file($time_stamp_file,"add","after","mv");
-
+rename("$add_file_new","$add_file" );
 
 
 # ===========================================================================
