@@ -1,11 +1,5 @@
-
-sophomorix-add:
-  add user to group (samba-tool) DONE
-sophomorix-move
-  use samba tool for group change
-sophomorix-kill
-  use samba tool
-
+add/move/kill
+-> log adding, deletion, killing
 
 Attributes for a group
 
