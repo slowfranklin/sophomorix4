@@ -235,7 +235,7 @@ sub AD_group_addmembers {
     my $count=&AD_user_test_exist($ldap,$user);
     if ($count > 0){
         print "   * User $user exists ($count results)\n";
-        print "Adding $user to $group\n";
+        print "Adding $user to group $group\n";
         my $command="samba-tool group addmembers ". $group." ".$user;
         print "   # $command\n";
         system($command);
@@ -253,11 +253,10 @@ sub AD_group_removemembers {
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
     my $user = $arg_ref->{removemembers};
-    print "US $user $group\n";
     my $count=&AD_user_test_exist($ldap,$user);
     if ($count > 0){
         print "   * User $user exists ($count results)\n";
-        print "Removing $user from $group\n";
+        print "Removing $user from group $group\n";
         my $command="samba-tool group removemembers ". $group." ".$user;
         print "   # $command\n";
         system($command);

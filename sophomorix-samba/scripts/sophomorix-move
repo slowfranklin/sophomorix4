@@ -1,0 +1,444 @@
+#!/usr/bin/perl -w
+# This script (sophomorix-move) is maintained by Rüdiger Beck
+# It is Free Software (License GPLv3)
+# If you find errors, contact the author
+# jeffbeck@web.de  or  jeffbeck@linuxmuster.net
+
+
+# Bibliotheken
+use strict;
+use Getopt::Long;
+Getopt::Long::Configure ("bundling");
+use Sophomorix::SophomorixConfig;
+use Sophomorix::SophomorixBase;
+use Net::LDAP;
+use Sophomorix::SophomorixBase qw(
+                                 print_line
+                                 print_title
+                                 time_stamp_AD
+                                 time_stamp_file
+                                 log_script_start
+                                 log_script_end
+                                 log_script_exit
+                                 backup_amku_file
+                                 check_options
+                                 );
+
+use Sophomorix::SophomorixSambaAD qw(
+                                 AD_bind_admin
+                                 AD_unbind_admin
+                                 AD_group_create
+                                 AD_group_addmembers
+                                 AD_group_removemembers
+                                    );
+my @arguments = @ARGV;
+
+#&check_connections();
+
+#my $zeit=&zeit_stempel;
+my $time_stamp_file=&time_stamp_file();
+my $user_nummer=0;
+
+my $alte_klasse;
+my $neue_klasse;
+my $login_versetzen;
+my $old_status;
+my $identifier;
+my $alte_zeile="";
+my $neue_zeile="";
+my $new_home="";
+my $new_homedir_above="";
+my $old_home="";
+
+my $altes_www="";
+my $neues_www="";
+my $www_link="";
+
+
+my @users_for_quota=();
+
+my $k;
+my $v;
+my $key;
+
+my $move_file=${DevelConf::path_result}."/sophomorix.move";
+my $move_file_new=${DevelConf::path_result}."/sophomorix.move.new";
+
+# ===========================================================================
+# Optionen verarbeiten
+# ==========================================================================
+
+# Variablen für Optionen
+$Conf::log_level=1;
+my $help=0;
+my $info=0;
+my $alt_gruppe="";
+my $neu_gruppe="";
+my $loginname="";
+my $lock=0;
+my $unlock=0;
+
+
+# Parsen der Optionen
+my $testopt=GetOptions(
+           "verbose|v+" => \$Conf::log_level,
+           "user|u=s" => \$loginname,
+           "oldclass|o=s" => \$alt_gruppe,
+           "newclass|n=s" => \$neu_gruppe,
+           "lock" => \$lock,
+           "unlock" => \$unlock,
+           "info|i" => \$info,           
+           "help|h" => \$help
+          );
+
+# Prüfen, ob Optionen erkannt wurden, sonst Abbruch
+&check_options($testopt);
+
+
+# --help
+if ($help==1) {
+   # Scriptname ermitteln
+   my @list = split(/\//,$0);
+   my $scriptname = pop @list;
+   # Befehlsbeschreibung
+   print('
+sophomorix-move moves a user to a different AdminClass
+
+Options
+  -h  / --help
+  -v  / --verbose
+  -vv / --verbose --verbose
+  -i  / --info
+  -u user / --user user
+  -o class / --oldclass class
+  -n class / --newclass class
+  --lock / --unlock
+
+Please see the sophomorix-move(8) man pages for full documentation
+');
+   print "\n";
+   exit;
+}
+
+
+# --loginname
+if ($loginname ne "") {
+  #
+  print "Loginname $loginname angegeben.\n";
+}
+
+
+# --altgruppe
+if ($alt_gruppe ne "") {
+  #
+  print "Alte Gruppe/Klasse $alt_gruppe angegeben.\n";
+}
+
+
+# --neugruppe
+if ($neu_gruppe ne "") {
+  #
+  print "Neue Gruppe/Klasse $neu_gruppe angegeben.\n";
+}
+
+
+# --unlock
+if ($unlock==1) {
+    &unlock_sophomorix();
+    exit;
+}
+
+
+# --lock
+if ($lock==1) {
+    &lock_sophomorix("lock",0,@arguments);
+    exit;
+}
+
+
+# ===========================================================================
+# Abbruch, wenn sophomorix.move fehlt oder leer
+# ===========================================================================
+
+
+# --info
+if ($info==1) {
+    my $count=0;
+   if (not -e "$move_file"){
+       print "$move_file does not exist!\n"; 
+       print "Nothing to move: sophomorix.move does not exist!\n"; 
+       exit;
+   }
+    open(USERVERSETZEN,"$move_file") 
+            || die "Fehler: $!";
+    print "\nThe following users can be moved:\n\n";
+    printf "%-12s %-18s %-18s %-18s \n","Login",
+             "Old AdminClass","New AdminClass","Old Status";
+    &print_line;
+
+    my @lines=();
+    while(<USERVERSETZEN>){
+       push @lines, $_;
+    }
+    close(USERVERSETZEN);
+
+    my @sorted_lines = sort {
+        my @a_fields = split /::/, $a;
+        my @b_fields = split /::/, $b;
+ 
+        $a_fields[1] cmp $b_fields[1]  # string sort on 1st field, then
+          ||
+        $a_fields[0] cmp $b_fields[0]  # string sort on 2nd field
+    } @lines;
+
+    foreach my $line (@sorted_lines){
+       chomp($line);
+       $count++;
+       ($login_versetzen,
+        $alte_klasse,
+        $neue_klasse,
+        $old_status)=split(/::/,$line);
+       if (not defined $old_status){$old_status=""};
+       # Ausgabe
+       printf "%-12s %-18s %-18s %-18s \n",
+              "$login_versetzen","$alte_klasse","$neue_klasse", $old_status;
+    }
+
+    &print_line;
+    print "$count users can be moved\n";
+    &log_script_exit("",1,1,0,@arguments);
+}
+
+
+
+
+# ===========================================================================
+# start
+# ===========================================================================
+my $ldap = &AD_bind_admin();
+
+&log_script_start(@arguments);
+
+# repair.directories einlesen
+#&get_alle_verzeichnis_rechte();
+
+# fetch permission for all homes
+#&fetch_repairhome();
+
+# sophomorix database sichern
+#&backup_user_database($time_stamp_file, "before-move.sql");
+
+# sophomorix.move mitloggen
+&backup_amku_file($time_stamp_file,"move","before");
+
+
+# Datei mit den Schülern, die nicht versetzt wurden
+open(NOCHVERSETZEN,">$move_file_new") 
+     || die "Fehler: $!";
+
+open(USERVERSETZEN,"$move_file") 
+     || die "Fehler: $!";
+while(<USERVERSETZEN>){
+   chomp();
+#   $user_nummer++;
+   ($login_versetzen, $alte_klasse, $neue_klasse,$old_status)=split(/::/);
+   if (not defined $old_status){$old_status=""};
+   # Home ermitteln
+   # altes home ermiteln
+   #my ($old_home)=
+   #    &Sophomorix::SophomorixPgLdap::fetchdata_from_account($login_versetzen);
+   #my $home_share_dir=$old_home."/".$Language::share_dir;
+   #my $home_task_dir=$old_home."/".$Language::task_dir;
+
+   #if ($neue_klasse eq ${DevelConf::teacher}) {
+   #   # in klasse lehrer versetzten
+   #   $new_home="${DevelConf::homedir_teacher}/${login_versetzen}";
+   #   $new_homedir_above="${DevelConf::homedir_teacher}";
+   #} elsif ($neue_klasse eq "attic"){
+   #   # move to attic
+   #   $new_home="${DevelConf::attic}/${login_versetzen}";
+   #   $new_homedir_above="${DevelConf::attic}";
+   #} else {
+   #   # in andere Klasse versetzten (ohne attic)
+   #   $new_home="${DevelConf::homedir_pupil}/${neue_klasse}/${login_versetzen}";
+   #   $new_homedir_above="${DevelConf::homedir_pupil}/${neue_klasse}";
+   #} 
+
+   # Abbruch, wenn nicht der richtige loginname versetzt wird
+   if ($loginname ne "") {
+     if ($login_versetzen ne $loginname) {
+        print "##### $login_versetzen wird nicht versetzt\n";
+        print NOCHVERSETZEN "$_\n";
+        next;
+     }
+   }
+   # Abbruch, wenn nicht aus der richtigen Alt-Klasse versetzt wird
+   if ($alt_gruppe ne "") {
+     if ($alte_klasse ne $alt_gruppe) {
+        print "##### $login_versetzen wird NICHT aus $alt_gruppe versetzt!\n";
+        print NOCHVERSETZEN "$_\n";
+        next;
+     }
+   }
+   # Abbruch, wenn nicht in die richtige Neu-Klasse versetzt wird
+   if ($neu_gruppe ne "") {
+     if ($neue_klasse ne $neu_gruppe) {
+        print "##### $login_versetzen wird NICHT nach $neu_gruppe vesetzt!\n";
+        print NOCHVERSETZEN "$_\n";
+        next;
+     }
+   }
+
+
+   #####################################
+   # Ermittelte Daten ausgeben
+   #####################################
+   $user_nummer++;
+   if($Conf::log_level>=1){
+      print "\n";
+      &print_title("Moving User $login_versetzen ($user_nummer) to another class:");
+      print("Group (Old):      $alte_klasse\n");
+      print("Group (New):      $neue_klasse\n");
+      print("Old Homedir:      $old_home\n");
+      print("New Home:         $new_home\n");
+      print("New Homedir:      $new_homedir_above\n");
+      print("Old Status:       $old_status\n");
+      #print("Share Directory:   $home_share_dir\n");
+      #print("Task Directory:    $home_task_dir\n");
+   }
+
+   # 0. rember login to set quota later
+   #push @users_for_quota, $login_versetzen;
+
+   ## die Daten aus dem Tausch-Verzeichnis dem Schüler in sein home moven
+   #&save_tausch_klasse($login_versetzen, $alte_klasse);
+
+
+   # Sicherstellen dass neue Klasse (Linux-Gruppe) existiert
+   &AD_group_create({ldap=>$ldap,group=>$neue_klasse});
+
+
+   #if ($neue_klasse ne ${DevelConf::teacher}) {
+   #  # first create sb entry, then create files (db_entry needed)
+   #  &create_class_db_entry($neue_klasse);
+   #  &provide_class_files($neue_klasse);
+   #}
+
+   ## removing bind mounts if necessary
+   #if ($DevelConf::share_pointer_type eq "bind"){
+   #    &delete_bind_to_all_subdirs($home_share_dir);
+   #    &delete_bind_to_all_subdirs($home_task_dir);
+   #}
+
+   # alte links/dirs entfernen
+   #&remove_share_pointer($login_versetzen, $alte_klasse,$alte_klasse,"adminclass");
+   #&remove_share_directory($login_versetzen, 
+   #                        $alte_klasse,$alte_klasse,"adminclass");
+
+   ## move home directory
+   #&move_immutable_tree($old_home,$new_homedir_above);
+   ## change primary group
+   ## neue gruppe anlegen und gidnumber holen, falls erforderlich
+   #my $gidnumber=&create_class_db_entry($neue_klasse);
+
+   # ehemals testen
+   #system("find $new_home -group $alte_klasse -print0 | xargs --no-run-if-empty -0 chown .$neue_klasse");
+
+   # user in samba AD updaten
+    &AD_group_addmembers({ldap => $ldap,
+                          group => $neue_klasse,
+                          addmembers => $login_versetzen,
+                        });   
+    &AD_group_removemembers({ldap => $ldap, 
+                             group => $alte_klasse,
+                             removemembers => $login_versetzen,
+                           });   
+   # samba4 todo: ??????????????????????????????????????????????????????????
+   # update exitadminclass
+
+
+   ## user in db updaten
+   #    if ($neue_klasse eq "attic"){
+   #       &update_user_db_entry($login_versetzen,
+   #                   "AdminClass=$neue_klasse",
+   #                   "Gid=$neue_klasse",
+   #                   "ExitAdminClass=$alte_klasse");
+   #    } elsif ($old_status eq "A") {
+   #       &update_user_db_entry($login_versetzen,
+   #                   "AdminClass=$neue_klasse",
+   #                   "Gid=$neue_klasse",
+   #                   "Status=U",
+   #                   "TolerationDate=",
+   #                   "DeactivationDate=");
+   #    } else {
+   #       &update_user_db_entry($login_versetzen,
+   #                   "AdminClass=$neue_klasse",
+   #                   "Gid=$neue_klasse");
+   #    }
+
+
+
+
+   ## links/dirs anlegen 
+   #&create_share_link($login_versetzen, $neue_klasse,$neue_klasse,"adminclass");
+
+   ## the following command must repair ALL dirs under $HOME
+   ## because of chown -R .group $HOME above
+   #&create_share_directory($login_versetzen, 
+   #                        $neue_klasse,$neue_klasse,"adminclass");
+
+   #&deleteuser_from_all_projects($login_versetzen,0);
+   #&add_newuser_to_her_projects($login_versetzen,$neue_klasse);
+   
+   ## repair all binds if necessary
+   ##&Sophomorix::SophomorixBase::repair_all_binds($login_versetzen);
+}
+
+
+
+close(USERVERSETZEN);
+close(NOCHVERSETZEN);
+
+
+# sophomorix.move mitloggen
+&backup_amku_file($time_stamp_file,"move","after");
+
+
+
+# ===========================================================================
+# Nicht verarbeitete User nach sophomorix.move kopieren
+# ===========================================================================
+rename("$move_file_new","$move_file" );
+
+# Setting Quota
+#if ($Conf::use_quota eq "yes" 
+#    and $user_nummer>0
+#    and $user_nummer<101) {
+#    my $users=join(",",@users_for_quota);
+#    system("${DevelConf::executable_pfad}/sophomorix-quota --skiplock --users $users --noninteractive");
+#    &nscd_stop();
+#} elsif ($Conf::use_quota eq "yes" and $user_nummer>100){
+#    system("${DevelConf::executable_pfad}/sophomorix-quota --skiplock --students --teachers --noninteractive");
+#    &nscd_stop();
+#} else {
+#    if ($user_nummer==0){ 
+#        &print_title("NOT setting quota (0 users moved)");
+#    } else {
+#        &print_title("NOT setting quota");
+#    }
+#}
+
+# Creating Mailing Aliases and Lists
+#if ($user_nummer>0) {
+#    system("${DevelConf::executable_pfad}/sophomorix-mail --skiplock");
+#    &nscd_stop();
+#} else {
+#    &print_title("NOT creating mailaliases/lists (0 users moved)");
+#}
+
+
+#&print_title("$user_nummer users moved");
+
+&AD_unbind_admin($ldap);
+
+&log_script_end(@arguments);

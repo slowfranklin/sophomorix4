@@ -2,7 +2,7 @@
 # This script (sophomorix-add) is maintained by Rüdiger Beck
 # It is Free Software (License GPLv3)
 # If you find errors, contact the author
-# jeffbeck@web.de  or  jeffbeck@gmx.de
+# jeffbeck@web.de  or  jeffbeck@linuxmuster.net
 
 # Bibliotheken
 use strict;
