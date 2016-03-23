@@ -164,7 +164,7 @@ if ($info==1) {
           "AdminClass",
           "Identifier",
           "login",
-          "id",
+          "uid",
           "gid",
           "Old-Pass",
           "unid";
@@ -175,6 +175,9 @@ if ($info==1) {
    &print_line;
    my @lines=();
    while(<SOPHOMORIXADD>){
+       if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+	   next;
+       }
        push @lines, $_;
    }
    close(SOPHOMORIXADD);
@@ -202,17 +205,20 @@ if ($info==1) {
        $wunsch_passwort,
        $wunsch_id,
        $wunsch_gid,
-       $unid)=split("::",$line);
+       $unid,
+       $ou,
+       $school_token,
+       $role)=split("::",$line);
 
        my $identifier_cut=substr($identifier,0,28);
        printf "%-11s%-29s%-10s%-6s%-6s%-10s%-10s\n",
-              "$class_group",
-              "$identifier_cut",
-              "$wunsch_login",
-              "$wunsch_id", 
-	      "$wunsch_gid",
-              "$wunsch_passwort",
-              "$unid";
+              $class_group,
+              $identifier_cut,
+              $wunsch_login,
+              $wunsch_id, 
+	      $wunsch_gid,
+              $wunsch_passwort,
+              $unid;
    }
    &print_line;
    print "$count users can be added\n";

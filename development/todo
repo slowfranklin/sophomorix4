@@ -4,6 +4,12 @@ add/move/kill
      - add a table per OU/token 
      - 
 
+sophomorix-kill:
+  list of groups tha will never be Killed
+  - attic
+  - teachers
+  - students
+  - Windows administrators groups
 
 sophomorix-project
   -> create all groups with role=project
