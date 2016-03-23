@@ -241,12 +241,16 @@ if ($killuser ne ""){
     # killing users from file
     open(KILL,"$kill_file") || die "Fehler: $!";
     while(<KILL>){
-       chomp();
-       ($identifier_to_kill, $login_name_to_kill)=split(/::/);
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+ 	    next;
+        }
+        chomp();
+        ($identifier_to_kill, $login_name_to_kill)=split(/::/);
         &AD_user_kill({ldap=>$ldap,
                        login=>$login_name_to_kill,
                        identifier=>$identifier_to_kill});
-       #&kill_user($login_name_to_kill,$identifier_to_kill);
+        $user_nummer++;
+        #&kill_user($login_name_to_kill,$identifier_to_kill);
     }
     close(KILL);
     close(YETTOKILL);
