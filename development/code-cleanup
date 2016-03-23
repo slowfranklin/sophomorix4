@@ -28,6 +28,7 @@ subs
   --> just run the commands in this list with system("");
 
 - changed sub names
+  check_connections
   &SophomorixBase::zeit_stempel -> &SophomorixBase::time_stamp_file
   &SophomorixBase::pg_timestamp -> &SophomorixBase::time_stamp_AD
   &SophomorixBase::titel -> &SophomorixBase::print_title

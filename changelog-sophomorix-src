@@ -15,6 +15,10 @@
       - sophomorix-add:
         - put users in their groups
         - add the group when not existing
+      - sophomorix-move
+        - moving users
+      - sophomorix-kill
+        - killing users
 
 3.0.1-2 (2016-03-20)
       Packaging works for:

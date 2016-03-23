@@ -1,0 +1,453 @@
+#!/usr/bin/perl -w
+# This script (sophomorix-kill) is maintained by Rüdiger Beck
+# It is Free Software (License GPLv3)
+# If you find errors, contact the author
+# jeffbeck@web.de  or  jeffbeck@linuxmuster.net
+
+
+# Bibliotheken
+use strict;
+#use Quota;
+use Getopt::Long;
+Getopt::Long::Configure ("bundling");
+use Sophomorix::SophomorixConfig;
+use Net::LDAP;
+#use IMAP::Admin;
+use Sophomorix::SophomorixBase qw(
+                                 print_line
+                                 print_title
+                                 time_stamp_AD
+                                 time_stamp_file
+                                 unlock_sophomorix
+                                 lock_sophomorix
+                                 log_script_start
+                                 log_script_end
+                                 log_script_exit
+                                 backup_amku_file
+                                 check_options
+                                 );
+use Sophomorix::SophomorixSambaAD qw(
+                                 AD_bind_admin
+                                 AD_unbind_admin
+                                 AD_user_kill
+                                    );
+
+my @arguments = @ARGV;
+
+my $time_stamp_file=&time_stamp_file();
+my $user_nummer=0;
+
+my $identifier_to_kill="";
+my $login_name_to_kill="";
+my $home_verzeichnis_to_kill="";
+my $linux_gruppe_to_kill="";
+my $public_html_to_kill="";
+my $linie_to_kill="";
+#my %protokoll_hash=();
+
+my $killuser="";
+
+my $k="";
+my $v="";
+
+my $kill_file=${DevelConf::path_result}."/sophomorix.kill";
+my $kill_file_new=${DevelConf::path_result}."/sophomorix.kill.new";
+
+# ===========================================================================
+# Optionen verarbeiten
+# ===========================================================================
+
+# Variablen für Optionen
+$Conf::log_level=1;
+my $help=0;
+my $info=0;
+my $loginname="";
+my $lock=0;
+my $skiplock=0;
+my $unlock=0;
+
+# Parsen der Optionen
+my $testopt=GetOptions(
+           "user|u=s" => \$loginname,
+           "killuser=s" => \$killuser,
+           "verbose|v+" => \$Conf::log_level,
+           "info|i" => \$info,
+           "skiplock" => \$skiplock,
+           "help|h" => \$help,
+           "lock" => \$lock,
+           "unlock" => \$unlock,
+          );
+
+# Prüfen, ob Optionen erkannt wurden, sonst Abbruch
+&check_options($testopt);
+
+
+# --help
+if ($help==1) {
+   # Scriptname ermitteln
+   my @list = split(/\//,$0);
+   my $scriptname = pop @list;
+   # Befehlsbeschreibung
+   print('
+sophomorix-kill removes users from the sophomorix database and deletes their data for good.
+
+Options
+  -h  / --help
+  -v  / --verbose
+  -vv / --verbose --verbose
+  -i  / --info
+  -u  user / --user user
+  --lock / --unlock
+
+  --user user    (Kill only this user, from the list of killable users)
+  --killuser user (Kill a user, even if she is not in sophomorix.kill)
+
+Please see the sophomorix-kill(8) man pages for full documentation
+');
+   print "\n";
+   exit;
+}
+
+
+# --unlock
+if ($unlock==1) {
+    &unlock_sophomorix();
+    exit;
+}
+
+# --lock
+if ($lock==1) {
+    &lock_sophomorix("lock",0,@arguments);
+    exit;
+}
+
+
+# --loginname
+if ($loginname ne "") {
+  #
+  print "Loginname $loginname angegeben.\n";
+}
+
+
+my $ldap = &AD_bind_admin();
+
+&log_script_start(@arguments);
+
+# ===========================================================================
+# Abbruch, wenn sophomorix.kill fehlt oder leer
+# ===========================================================================
+if (not (-s "$kill_file")
+    and $killuser eq "") {
+  &log_script_exit("No users to kill!",1,1,0,@arguments);
+}
+
+
+# --info
+if ($info==1) {
+    my $count=0;
+    # Ausgabe der loeschbaren user
+    print "\nThe following users can be killed:\n\n";
+    print "Loginname   AdminClass   Identifier\n";
+    &print_line;
+
+    my @lines=();
+    open(KILL,"$kill_file") || die "Fehler: $!";
+    while(<KILL>){      
+       chomp();
+       # Klasse ermitteln
+       ($identifier_to_kill, 
+        $login_name_to_kill,
+        $linux_gruppe_to_kill)=split(/::/);
+       #($linux_gruppe_to_kill)=&pg_get_group_list($login_name_to_kill);
+       push @lines, "$_"."::"."$linux_gruppe_to_kill"."\n";
+    }
+    close(KILL);
+
+    my @sorted_lines = sort {
+        my @a_fields = split /::/, $a;
+        my @b_fields = split /::/, $b;
+ 
+        $a_fields[2] cmp $b_fields[2]  # string sort on 1st field, then
+          ||
+        $a_fields[1] cmp $b_fields[1]  # string sort on 2nd field
+    } @lines;
+
+    foreach my $line (@sorted_lines){
+       chomp($line);
+       $count++;
+       ($identifier_to_kill,
+        $login_name_to_kill,
+        $linux_gruppe_to_kill)=split(/::/,$line);
+       printf "%-11s %-12s %-40s\n",
+              "$login_name_to_kill",
+              "$linux_gruppe_to_kill",
+              "$identifier_to_kill";
+    }
+
+    &print_line;
+    print "$count users can be killed\n";
+    &log_script_exit("",1,1,0,@arguments);
+}
+
+
+
+#my $imap=&imap_connect("localhost",${DevelConf::imap_admin});
+
+# sophomorix database sichern
+#&backup_user_database($time_stamp_file, "before-kill.sql");
+# sophomorix.kill mitloggen
+&backup_amku_file($time_stamp_file,"kill","before");
+
+
+
+# ===========================================================================
+# Protokolldatei lesen
+# ===========================================================================
+#%protokoll_hash=&protokoll_linien();
+#%protokoll_hash=&get_protokoll_lines();
+
+
+# ===========================================================================
+# Datei mit den Schülern, die nicht gelöscht wurden
+# ===========================================================================
+if (not -e "$kill_file_new" ){
+    system("mkdir -p ${DevelConf::path_result}");
+    system("touch $kill_file_new");
+}
+open(YETTOKILL,">$kill_file_new") 
+     || die "Fehler: $!";
+
+
+# ===========================================================================
+# Datei mit den zu löschenden Schülern
+# ===========================================================================
+&print_title("Beginn deletion ...");
+
+if ($killuser ne ""){
+    # killing users given by option --killuser
+    print "Killing the following List of users: $killuser\n";
+    my @userlist=split /,/,$killuser;
+    foreach my $user_to_kill (@userlist){
+        print "Killing $user_to_kill\n";
+        &AD_user_kill({ldap=>$ldap,
+                       login=>$user_to_kill,
+                       identifier=>$identifier_to_kill});
+        #&kill_user($user_to_kill,$identifier_to_kill);
+    }
+} else {
+    # killing users from file
+    open(KILL,"$kill_file") || die "Fehler: $!";
+    while(<KILL>){
+       chomp();
+       ($identifier_to_kill, $login_name_to_kill)=split(/::/);
+        &AD_user_kill({ldap=>$ldap,
+                       login=>$login_name_to_kill,
+                       identifier=>$identifier_to_kill});
+       #&kill_user($login_name_to_kill,$identifier_to_kill);
+    }
+    close(KILL);
+    close(YETTOKILL);
+}
+
+
+
+# ===========================================================================
+# Datei-Zustand (NACHHER) mitloggen 
+# ===========================================================================
+# sophomorix.kill mitloggen
+&backup_amku_file($time_stamp_file,"kill","after");
+
+# ===========================================================================
+# Falls nur getestet wird, darf die Datei nicht ersetzt werden
+# ===========================================================================
+rename("$kill_file_new","$kill_file");
+
+
+# Creating Mailing Aliases and Lists
+#if ($user_nummer>0) {
+#    system("${DevelConf::executable_pfad}/sophomorix-mail --skiplock");
+#    &nscd_stop();
+#} else {
+#    &print_title("NOT creating mailaliases/lists (0 users removed)");
+#}
+
+
+#&imap_disconnect($imap);
+
+&print_title("$user_nummer users killed");
+
+&AD_unbind_admin($ldap);
+
+&log_script_end(@arguments);
+
+
+
+
+############################################################
+# subs
+############################################################
+
+# old, unused
+sub kill_user {
+     my ($login_name_to_kill,$identifier_to_kill) = @_;
+     if (not defined $identifier_to_kill){
+         $identifier_to_kill="";
+     }
+     # Home-Verzeichnis,klasse ermitteln
+     my ($home_verzeichnis_to_kill,
+         $type_to_kill,
+         $gecos_to_kill,
+         $linux_gruppe_to_kill,
+         $uidnumber,
+         $sambahomepath,
+         $firstpassword,
+         $sambaacctflags,
+         $exitadminclass,
+         $sambahomedrive,
+         $sambakickofftime,
+         $sambalmpassword,
+         $sambalogofftime,
+         $sambalogontime,
+         $sambantpassword,
+         $sambaprimarygroupsid,
+         $sambapwdcanchange,
+         $sambapwdlastset,
+         $sambapwdmustchange,
+         $sambasid,
+         $surname,
+         $firstname,
+         $userpassword,
+         $loginshell,
+         $gidnumber) = 
+         &fetchdata_from_account($login_name_to_kill);
+     my $home_share_dir=$home_verzeichnis_to_kill."/".$Language::share_dir;
+     my $home_task_dir=$home_verzeichnis_to_kill."/".$Language::task_dir;
+
+
+     if ($home_verzeichnis_to_kill eq ""){
+         print "Cannot kill user $login_name_to_kill (nonexisting?)\n";
+         return 0;
+     }
+
+     if($Conf::log_level>=2){
+         print "Type of user to kill is $type_to_kill\n";
+     }
+
+     my $public_html_to_kill ="";
+     if ($type_to_kill eq "teacher"){
+         $public_html_to_kill = ${DevelConf::www_teachers}.
+                                "/".$login_name_to_kill;
+     } elsif ($type_to_kill eq "student") {
+         $public_html_to_kill = ${DevelConf::www_students}.
+                                "/".$login_name_to_kill;
+     } elsif ($type_to_kill eq "attic") {
+         # find out type before attic
+         if ($exitadminclass eq ${DevelConf::teacher}){
+             # it was a teacher
+             $public_html_to_kill = ${DevelConf::www_teachers}.
+                                    "/".$login_name_to_kill;
+         } else {
+             # it was a student
+             $public_html_to_kill = ${DevelConf::www_students}.
+                                    "/".$login_name_to_kill;
+         }
+     } else {
+         print "Not deleting public_html (Type is $type_to_kill)\n";
+     }
+
+     # Skip when login was specified by option in sophomorix-kill
+     # and user to be killed is not one of these
+     if ($loginname ne "") {
+       if ($login_name_to_kill ne $loginname) {
+          if($Conf::log_level>=2){
+              print "$login_name_to_kill will  NOT ",
+                    "be deleted(not given by option).\n";
+          }
+          # Merken, dass user noch nicht entfernt wird
+          print YETTOKILL "$_\n";
+          return 0;
+       }
+     }
+
+     # Jetzt wird gelöscht
+     # Ermittelte Daten ausgeben
+     $user_nummer++;
+      if($Conf::log_level>=1){
+        &print_title("Removing User $user_nummer:");
+        print("Identifier:          $identifier_to_kill\n");
+        print("Login-Name:          $login_name_to_kill\n");
+        print("Home-Verzeichnis:    $home_verzeichnis_to_kill\n");
+        print("Share Verzeichnis:   $home_share_dir\n");
+        print("Task Verzeichnis:    $home_task_dir\n");
+        print("Klasse:              $linux_gruppe_to_kill\n");
+        print("public_html:         $public_html_to_kill\n");
+      } 
+
+
+      # delete bind mounts ???temporary
+      my $unbind_command="sophomorix-bind --quick --logout ".
+                         "--host unknown --user  $login_name_to_kill".
+                         " --homedir $home_verzeichnis_to_kill";
+      print "$unbind_command\n";
+      system($unbind_command);
+      # end temporary ???
+
+      # kill mailbox
+      #&imap_kill_mailbox($imap,$login_name_to_kill);
+
+      # memberships
+      &deleteuser_from_all_projects($login_name_to_kill);
+
+      # removing bind mounts if necessary
+      if ($DevelConf::share_pointer_type eq "bind"){
+          &delete_bind_to_all_subdirs($home_share_dir);
+          &delete_bind_to_all_subdirs($home_task_dir);
+      }
+
+      
+      if ($home_verzeichnis_to_kill=~/^\/home\//){
+          print "   Removing recursively $home_verzeichnis_to_kill \n";
+          &unlink_immutable_tree("$home_verzeichnis_to_kill"); 
+      }
+
+      # remove public_html in /var/www
+      if ($public_html_to_kill ne ""){
+          print "   Removing recursively $public_html_to_kill \n";
+          system("rm -rf $public_html_to_kill");
+      }
+
+      # Zeile aus user_db entfernen
+      &remove_user_db_entry($login_name_to_kill);
+      &archive_log_entry($login_name_to_kill,$uidnumber,$surname,$firstname);
+ 
+     if ($type_to_kill eq "teacher"){
+
+     } elsif ($type_to_kill eq "student") {
+         # Klassenverzeichnis in denen die Homes sind löschen, falls leer
+         system("rmdir --ignore-fail-on-non-empty ${DevelConf::homedir_pupil}/$linux_gruppe_to_kill > /dev/null");
+         # Klassentauschverzeichnis löschen, falls leer 
+         # (Wird nicht mehr gelöscht, da wenn nichts drinsteht trotzdem nach user in der klasse sein können)
+         #"rmdir --ignore-fail-on-non-empty ${DevelConf::share_classes}/$linux_gruppe_to_kill > /dev/null"
+     } elsif ($type_to_kill eq "examaccount") {
+         system("rmdir --ignore-fail-on-non-empty ${DevelConf::homedir_ws}/$linux_gruppe_to_kill > /dev/null");
+     } else {
+
+     }
+
+      # Sonst noch löschen:
+
+      # find über die Tauschverzeichnisse, löschen (evt. noch aufheben)
+
+      # Wenn letzter Schüler einer Klasse gelöscht wird:
+      # Die Gruppe Klasse löschen (kein Nachteil, wenn die Gruppe erhalten bleibt)
+
+      # Evtl. gefährlich:
+      # Klassentauschverzeichnis löschen, wenn letzter Schüler gelöscht???
+
+      # Logonscript für Klasse entfernen (nicht so wichtig)
+      # Wenns die Klasse wiedergibt, wirds überbügelt
+      # Wenns die Klasse nicht mehr gibt, liegt halt a bissle Müll herum
+}
+
+
+

@@ -22,6 +22,7 @@ use Net::LDAP;
             AD_bind_admin
             AD_unbind_admin
             AD_user_create
+            AD_user_kill
             AD_group_create
             AD_group_addmembers
             AD_group_removemembers
@@ -75,6 +76,24 @@ sub AD_unbind_admin {
     $mesg->code && die $mesg->error;
 }
 
+
+sub AD_user_kill {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $login = $arg_ref->{login};
+    my $identifier = $arg_ref->{identifier};
+
+    my $count=&AD_user_test_exist($ldap,$login);
+    if ($count > 0){
+        my $command="samba-tool user delete ". $login;
+        print "   # $command\n";
+        system($command);
+        return;
+    } else {
+        print "   * User $login nonexisting ($count results)\n";
+        return;
+    }
+}
 
 sub AD_user_create {
     my ($arg_ref) = @_;
