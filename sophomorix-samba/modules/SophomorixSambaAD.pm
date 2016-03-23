@@ -121,10 +121,12 @@ sub AD_user_create {
     my $user_principal_name = $login."\@"."linuxmuster.local";
     # dn
     my $base=&AD_get_base();
-    my $container=&AD_get_container_by_role($role);
-    my $dn = "cn=".$login.",".$container.$ou.",".$base;
-    $group=&AD_get_group_by_token($group,$school_token);
+    my $group_token=&AD_get_group_by_token($group,$school_token);
+    my $container=&AD_get_container_by_role($role,$group_token);
 
+    my $dn_class = $container.$ou.",".$base;
+    my $dn = "cn=".$login.",".$container.$ou.",".$base;
+ 
     # password generation
     # build the conversion map from your local character set to Unicode    
     my $charmap = Unicode::Map8->new('latin1')  or  die;
@@ -142,7 +144,7 @@ sub AD_user_create {
         print("OU:                 $ou\n"); # Organisatinal Unit
         print("School Token:       $school_token\n"); # Organisatinal Unit
         print("Role:               $role\n");
-        print("AdminClass:         $group\n"); # lehrer oder klasse
+        print("AdminClass:         $group ($group_token)\n"); # lehrer oder klasse
         print("Unix-gid:           $wunsch_gid\n"); # lehrer oder klasse
         #print("GECOS:              $gecos\n");
         #print("Login (to check):   $login_name_to_check\n");
@@ -150,14 +152,10 @@ sub AD_user_create {
         print("Password:           $plain_password\n");
         print("Unid:               $unid\n");
         print("Unix-id:            $wunsch_id\n");
-        if ($group eq ${DevelConf::teacher}) {
-            # Es ist ein Lehrer
-            print("Shell (teachers):   $shell\n"); 
-        } else {
-            # Es ist ein Schüler
-            print("Shell (students):   $shell\n"); 
-        }
     }
+
+    $ldap->add($dn_class,attr => ['objectclass' => ['top', 'container']]);
+
     my $result = $ldap->add( $dn,
                    attr => [
                    'sAMAccountName' => $login,
@@ -197,10 +195,11 @@ sub AD_get_group_by_token {
 sub AD_get_container_by_role {
     # returns empty string or container followed by comma
     # i.e. >< OR >CN=Students,< 
-    my ($role) = @_;
+    my ($role,$group) = @_;
+    my $group_strg="CN=".$group.",";
     my $container="";
     if ($role eq "student"){
-        $container=$DevelConf::AD_student_cn;
+        $container=$group_strg.$DevelConf::AD_student_cn;
     }  elsif ($role eq "teacher"){
         $container=$DevelConf::AD_teacher_cn;
     }  elsif ($role eq "class"){
@@ -300,11 +299,11 @@ sub AD_group_create {
     my $role = $arg_ref->{role};
     my $school_token = $arg_ref->{school_token};
 
-    $group=&AD_get_group_by_token($group,$school_token);
+    my $group_token=&AD_get_group_by_token($group,$school_token);
 
     # calculate missing Attributes
     my $base=&AD_get_base();
-    my $container=&AD_get_container_by_role($role);
+    my $container=&AD_get_container_by_role($role,$group_token);
     my $dn = "cn=".$group.",".$container.$ou.",".$base;
 
     if ($count=&AD_group_test_exist($ldap,$group) > 0){
