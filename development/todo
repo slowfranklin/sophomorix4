@@ -1,14 +1,17 @@
 add/move/kill
--> log adding, deletion, killing
+-> logfiles adding, deletion, killing
+-> Option -i: 
+     - add a table per OU/token 
+     - 
 
+
+sophomorix-project
+  -> create all groups with role=project
+ 
 Attributes for a group
 
-DN: CN=teachers,CN=Users,DC=linuxmuster,DC=local
-...
-
-
-
-
+adding users:
+  when role student, then put them in subcontainer CN=class,CN=students
 
 
 document format of
@@ -17,9 +20,6 @@ sophomorix.add, .move, .kill
 
 
 
-SophomorixSambaAD:
-   AD_get_passwd
-     - CN=Administrator,CN=Users,DC=linuxmuster,DC=local aus ...
 
 get_forbidden_logins in 
    What logins should be forbidden?
@@ -33,12 +33,12 @@ sophomorix-useradd
 sophomorix-add:   call sophomorix-print correctly 
 
 sophomorix.add:
--> are there umlaute in sophomorix.add at the moment?
+-> are there umlaute allowed in sophomorix.add at the moment?
 - expect sophomorix.add as utf8 encoded with umlaute and others
 
 -> Additional fields 
-     add :: for unid
-     add multischool-data ou, ... 
+     DONE school_token
+     DONE ou 
 
 
 sophomorix-print:

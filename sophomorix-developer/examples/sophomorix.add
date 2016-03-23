@@ -1,4 +1,5 @@
-7a::Mueller;Gregor;26.01.1992::muellegr::---::---::---::unid2345::
-7a::Maier;Sarina;25.01.1991::maiersa::Muster!::---::---::unid1234::
-7a::Becker;Gregor;02.01.1972::---::---::---::---::unid3456::
-7a::Baier;Sabine;14.02.2002::---::Muster!::---::---::unid4567::
+# comment
+7a::Mueller;Gregor;26.01.1992::muellegr::---::---::---::unid2345::OU=BSZLEO::bsz::student::
+7a::Maier;Sarina;25.01.1991::maiersa::Muster!::---::---::unid1234::OU=BSZLEO::bsz::student::
+7a::Becker;Gregor;02.01.1972::---::---::---::---::unid3456::OU=BSZLEO::bsk::student::
+7a::Baier;Sabine;14.02.2002::---::Muster!::---::---::unid4567::OU=PKS::pks::student::

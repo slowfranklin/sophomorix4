@@ -29,6 +29,7 @@ use Sophomorix::SophomorixBase qw(
                                  check_options
                                  );
 use Sophomorix::SophomorixSambaAD qw(
+                                 AD_ou_add
                                  AD_bind_admin
                                  AD_unbind_admin
                                  AD_user_create
@@ -60,11 +61,16 @@ my $login_name_to_check_mod="";
 my $login_check_ok="";
 my $plain_password="";
 my $class_group="";
-
+my $ou="";
+my $school_token="";
+my $role="unknown";
 
 my @users_for_quota=();
 my %forbidden_login_hash=();
 
+# ou's that have been created in this script
+my %ou_created=();
+$ou_created{$ou}="created";
 
 my $add_file=${DevelConf::path_result}."/sophomorix.add";
 my $add_file_new=${DevelConf::path_result}."/sophomorix.add.new";
@@ -137,6 +143,8 @@ if ($lock==1) {
     &lock_sophomorix("lock",0,@arguments);
     exit;
 }
+
+
 
 
 
@@ -228,6 +236,7 @@ if ($gruppe ne "") {
 
 my $ldap = &AD_bind_admin();
 
+
 &log_script_start(@arguments);
 
 
@@ -289,7 +298,10 @@ while(<SOPHOMORIXADD>){
     $wunsch_passwort,
     $wunsch_id,
     $wunsch_gid,
-    $unid)=split("::");
+    $unid,
+    $ou,
+    $school_token,
+    $role)=split("::");
 
    if (not defined $unid){
        $unid="";
@@ -389,7 +401,16 @@ while(<SOPHOMORIXADD>){
    ##############################
    $user_count++;
 
+
+
    # 1. Entry in AD
+    if (not exists $ou_created{$ou}){
+        # create ou
+        &AD_ou_add($ldap,$ou);
+        # remember ou
+        $ou_created{$ou}="already created";
+   }
+
    &AD_user_create({ldap=>$ldap, 
                     user_count=>$user_count,
                     identifier=>$identifier,
@@ -400,8 +421,11 @@ while(<SOPHOMORIXADD>){
                     birthdate=>$birthdate,
                     plain_password=>$plain_password,
                     unid=>$unid,
+                    ou=>$ou,
                     wunsch_id=>$wunsch_id,
                     wunsch_gid=>$wunsch_gid,
+                    role=>$role,
+                    school_token=>$school_token,
                   });
 
    # 1. Entry in sophomorix database and auth system
@@ -436,10 +460,16 @@ while(<SOPHOMORIXADD>){
 
   # 5. Add user to all groups she is in (files must exist to create links)
   #&add_newuser_to_her_projects($login_check_ok,$class_group);
-  &AD_group_create({ldap=>$ldap,group=>$class_group});
+  &AD_group_create({ldap=>$ldap,
+                    group=>$class_group,
+                    ou=>$ou,
+                    school_token=>$school_token,
+                    role=>"class",
+                  });
   &AD_group_addmembers({ldap => $ldap,
                          group => $class_group,
                          addmembers => $login_check_ok,
+                         school_token=>$school_token,
                        });   
 
   # 6. Add a mailbox for the user

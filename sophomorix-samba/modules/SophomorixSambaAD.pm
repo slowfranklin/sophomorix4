@@ -27,12 +27,14 @@ use Net::LDAP;
             AD_group_addmembers
             AD_group_removemembers
             get_forbidden_logins
+            AD_ou_add
             );
 
 
 sub AD_get_passwd {
     my $smb_pwd="";
-    my $smb_rootdn="DC=linuxmuster,DC=local";
+    my $smb_rootdn=&AD_get_base();
+    #my $smb_rootdn="DC=linuxmuster,DC=local";
     if (-e $DevelConf::file_samba_pwd) {
         open (SECRET, $DevelConf::file_samba_pwd);
         while(<SECRET>){
@@ -109,12 +111,20 @@ sub AD_user_create {
     my $unid = $arg_ref->{unid};
     my $wunsch_id = $arg_ref->{wunsch_id};
     my $wunsch_gid = $arg_ref->{wunsch_gid};
+    my $ou = $arg_ref->{ou};
+    my $school_token = $arg_ref->{school_token};
+    my $role = $arg_ref->{role};
 
     #calculate
     my $shell="/bin/false";
     my $display_name = $firstname." ".$surname;
     my $user_principal_name = $login."\@"."linuxmuster.local";
-    my $dn = "cn=".$login.", CN=Users, DC=linuxmuster,DC=local";
+    # dn
+    my $base=&AD_get_base();
+    my $container=&AD_get_container_by_role($role);
+    my $dn = "cn=".$login.",".$container.$ou.",".$base;
+    $group=&AD_get_group_by_token($group,$school_token);
+
     # password generation
     # build the conversion map from your local character set to Unicode    
     my $charmap = Unicode::Map8->new('latin1')  or  die;
@@ -124,10 +134,14 @@ sub AD_user_create {
     if($Conf::log_level>=1){
         print "\n";
         &Sophomorix::SophomorixBase::print_title("Creating User $user_count :");
+        print("DN:                 $dn\n");
         print("Surname:            $surname\n");
         print("Firstname:          $firstname\n");
         print("Birthday:           $birthdate\n");
         print("Identifier:         $identifier\n");
+        print("OU:                 $ou\n"); # Organisatinal Unit
+        print("School Token:       $school_token\n"); # Organisatinal Unit
+        print("Role:               $role\n");
         print("AdminClass:         $group\n"); # lehrer oder klasse
         print("Unix-gid:           $wunsch_gid\n"); # lehrer oder klasse
         #print("GECOS:              $gecos\n");
@@ -165,6 +179,72 @@ sub AD_user_create {
 sub AD_get_base {
     # ?????
     return "DC=linuxmuster,DC=local";
+}
+
+
+sub AD_get_group_by_token {
+    my ($group,$school_token) = @_;
+    my $groupname="";
+    if ($school_token eq "---" or $school_token eq ""){
+        $groupname=$group;
+    } else {
+        $groupname=$school_token."-".$group;
+    }
+    return $groupname;
+}
+
+
+sub AD_get_container_by_role {
+    # returns empty string or container followed by comma
+    # i.e. >< OR >CN=Students,< 
+    my ($role) = @_;
+    my $container="";
+    if ($role eq "student"){
+        $container=$DevelConf::AD_student_cn;
+    }  elsif ($role eq "teacher"){
+        $container=$DevelConf::AD_teacher_cn;
+    }  elsif ($role eq "class"){
+        $container=$DevelConf::AD_class_cn;
+    }  elsif ($role eq "project"){
+        $container=$DevelConf::AD_project_cn;
+    }  elsif ($role eq "workstation"){
+        $container=$DevelConf::AD_workstation_cn;
+    }  elsif ($role eq "management"){
+        $container=$DevelConf::AD_management_cn;
+    }  elsif ($role eq "printer"){
+        $container=$DevelConf::AD_printer_cn;
+    }
+    # add the comma if necessary
+    if ($container ne ""){
+        $container=$container.",";
+    }
+}
+
+
+sub AD_ou_add {
+    # if $result->code is not given, the add is silent
+    my ($ldap,$ou) = @_;
+    my $base=&AD_get_base();
+    my $dn=$ou.",".$base;
+    # provide that a ou exists
+    my $result = $ldap->add($dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
+    #$result->code && warn "failed to add entry: ", $result->error ;
+    my $student=$DevelConf::AD_student_cn.",".$dn;
+    $result = $ldap->add($student,attr => ['objectclass' => ['top', 'container']]);
+    my $teacher=$DevelConf::AD_teacher_cn.",".$dn;
+    $result = $ldap->add($teacher,attr => ['objectclass' => ['top', 'container']]);
+    my $class=$DevelConf::AD_class_cn.",".$dn;
+    $result = $ldap->add($class,attr => ['objectclass' => ['top', 'container']]);
+    my $project=$DevelConf::AD_project_cn.",".$dn;
+    $result = $ldap->add($project,attr => ['objectclass' => ['top', 'container']]);
+    my $workstation=$DevelConf::AD_workstation_cn.",".$dn;
+    $result = $ldap->add($workstation,attr => ['objectclass' => ['top', 'container']]);
+    my $management=$DevelConf::AD_management_cn.",".$dn;
+    $result = $ldap->add($management,attr => ['objectclass' => ['top', 'container']]);
+    my $printer=$DevelConf::AD_printer_cn.",".$dn;
+    $result = $ldap->add($printer,attr => ['objectclass' => ['top', 'container']]);
+    my $custom=$DevelConf::AD_custom_cn.",".$dn;
+    $result = $ldap->add($custom,attr => ['objectclass' => ['top', 'container']]);
 }
 
 
@@ -216,11 +296,16 @@ sub AD_group_create {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
+    my $ou = $arg_ref->{ou};
+    my $role = $arg_ref->{role};
+    my $school_token = $arg_ref->{school_token};
+
+    $group=&AD_get_group_by_token($group,$school_token);
 
     # calculate missing Attributes
     my $base=&AD_get_base();
-    # my $base = "CN=Users,DC=linuxmuster,DC=local";
-    my $dn = "cn=".$group.",CN=Users,".$base;
+    my $container=&AD_get_container_by_role($role);
+    my $dn = "cn=".$group.",".$container.$ou.",".$base;
 
     if ($count=&AD_group_test_exist($ldap,$group) > 0){
         print "   * Group $group exists already ($count results)\n";
@@ -230,6 +315,7 @@ sub AD_group_create {
     # adding the group
     &Sophomorix::SophomorixBase::print_title("Creating Group:");
     print("   Group:    $group\n");
+    print("   Role:     $role\n");
     print("   dn:       $dn\n");
     my $result = $ldap->add( $dn,
                            attr => [
@@ -250,6 +336,9 @@ sub AD_group_addmembers {
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
     my $user = $arg_ref->{addmembers};
+    my $school_token = $arg_ref->{school_token};
+
+    $group=&AD_get_group_by_token($group,$school_token);
 
     my $count=&AD_user_test_exist($ldap,$user);
     if ($count > 0){
@@ -272,6 +361,10 @@ sub AD_group_removemembers {
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
     my $user = $arg_ref->{removemembers};
+    my $school_token = $arg_ref->{school_token};
+
+    $group=&AD_get_group_by_token($group,$school_token);
+
     my $count=&AD_user_test_exist($ldap,$user);
     if ($count > 0){
         print "   * User $user exists ($count results)\n";
@@ -291,10 +384,12 @@ sub AD_group_removemembers {
 sub  get_forbidden_logins{
     my ($ldap) = @_;
     my %forbidden_logins = %DevelConf::forbidden_logins;
+
+    my $base=&AD_get_base();
  
     # users from ldap
     $mesg = $ldap->search( # perform a search
-                   base   => "CN=Users,DC=linuxmuster,DC=local",
+                   base   => $base,
                    scope => 'sub',
                    filter => '(objectClass=user)',
                    attr => ['sAMAccountName']
@@ -334,7 +429,7 @@ sub  get_forbidden_logins{
 
     # groups from ldap
     $mesg = $ldap->search( # perform a search
-                   base   => "CN=Users,DC=linuxmuster,DC=local",
+                   base   => $base,
                    scope => 'sub',
                    filter => '(objectClass=group)',
                    attr => ['sAMAccountName']
