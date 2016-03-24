@@ -122,7 +122,8 @@ name: Sophomorix-Creation-Date
 objectCategory: CN=Attribute-Schema,<SchemaContainerDN>
 objectClass: top
 objectClass: attributeSchema
-oMSyntax: 23
+oMSyntax: 64
+
 schemaIDGUID:: 4CQA0pa2R5K2yeA8jdHOcQ==
 showInAdvancedViewOnly: TRUE
 searchFlags: 1
@@ -143,7 +144,7 @@ name: Sophomorix-Toleration-Date
 objectCategory: CN=Attribute-Schema,<SchemaContainerDN>
 objectClass: top
 objectClass: attributeSchema
-oMSyntax: 23
+oMSyntax: 64
 schemaIDGUID:: 9v1uthsKRxe1r6OALGk7hw==
 showInAdvancedViewOnly: TRUE
 searchFlags: 1
@@ -164,7 +165,7 @@ name: Sophomorix-Deactivation-Date
 objectCategory: CN=Attribute-Schema,<SchemaContainerDN>
 objectClass: top
 objectClass: attributeSchema
-oMSyntax: 23
+oMSyntax: 64
 schemaIDGUID:: K+im6KJyTi+PbgJ6Z7hxHQ==
 showInAdvancedViewOnly: TRUE
 searchFlags: 1
