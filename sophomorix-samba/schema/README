@@ -1,18 +1,17 @@
 Anleitung:
 
-- Pfad zu den AD Datenbanken suchen:
-  # find /var -name sam.ldb
+(- Pfad zu den AD Datenbanken suchen: # find /var -name sam.ldb)
 
 - Backup der AD Datenbanken, /path/to/dbs/ durch Pfad aus Schritt 1 ersetzen:
-  # find /path/to/dbs/ -name '*.ldb' -exec tdbbackup {} \; 
+  # find /var/lib/samba/private -name '*.ldb' -exec tdbbackup {} \; 
 
 - Samba stoppen
 
 - Schema Änderungen mit Script, base dn DOMAIN NAME anpassen:
 
-  # tar xzf sophomorix.tgz
-  # cd sophomorix
-  # ./sophomorix_schema_add.sh DC=DOMAIN,DC=NAME . -H /path/to/sam.ldb -writechanges
+  (# tar xzf sophomorix.tgz)
+  (# cd sophomorix)
+  # ./sophomorix_schema_add.sh DC=DOMAIN,DC=NAME . -H /var/lib/samba/private/sam.ldb -writechanges
 
 - Samba starten
 
@@ -21,6 +20,6 @@ Backup einspielen:
 - Samba stoppen
 
 - Backup der AD Datenbanken zurückkopieren:
-  find /path/to/ad_ldb_dir/ -name '*.ldb' -exec echo cp {}.bak {} \; 
+  find /var/lib/samba/privat -name '*.ldb' -exec echo cp {}.bak {} \; 
 
 - Samba starten
