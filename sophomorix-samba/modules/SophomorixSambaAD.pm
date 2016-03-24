@@ -190,7 +190,7 @@ sub AD_user_create {
                    'sophomorixRole' => $role,
                    'sophomorixSchoolPrefix' => $school_token,
                    'sophomorixSchoolname' => $ou,
-                   'sophomorixCreationDate' => $creationdate, 
+#                   'sophomorixCreationDate' => $creationdate, 
                    'userAccountControl' => '512',
                    'objectclass' => ['top', 'person',
                                      'organizationalPerson',
