@@ -1,0 +1,102 @@
+#
+# Sophomorix AD Schema: Classes
+#
+
+# <-- User -->
+
+dn: CN=Sophomorix-User,<SchemaContainerDN>
+changetype: add
+adminDescription: Sophomorix-User
+adminDisplayName: Sophomorix-User
+cn: Sophomorix-User
+defaultHidingValue: TRUE
+governsID: 4.6.6.6.2.1
+instanceType: 4
+lDAPDisplayName: sophomorixUser
+name: Sophomorix-User
+objectCategory: CN=Class-Schema,<SchemaContainerDN>
+objectClass: classSchema
+objectClassCategory: 3
+possSuperiors: top
+rDNAttID: cn
+schemaIDGUID:: 2S2X+EAGS6WL4FDnHY+PKw==
+subClassOf: top
+systemOnly: FALSE
+
+dn: CN=Sophomorix-User,<SchemaContainerDN>
+changetype: modify
+replace: mayContain
+mayContain: sophomorixUnid
+mayContain: sophomorixExitUnid
+mayContain: sophomorixQuota
+mayContain: sophomorixMailQuota
+mayContain: sophomorixStatus
+mayContain: sophomorixCreationDate
+mayContain: sophomorixTolerationDate
+mayContain: sophomorixDeactivationDate
+mayContain: sophomorixAdminClass
+mayContain: sophomorixExitAdminClass
+mayContain: sophomorixSubclass
+mayContain: sophomorixFirstPassword
+mayContain: sophomorixFirstnameASCII
+mayContain: sophomorixSurnameASCII
+mayContain: sophomorixRole
+mayContain: sophomorixSchoolPrefix
+mayContain: sophomorixSchoolname
+# <--------------- OK marker, new attrs below ----------------->
+
+
+# <-- Group -->
+
+dn: CN=Sophomorix-Group,<SchemaContainerDN>
+changetype: add
+adminDescription: Sophomorix-Group
+adminDisplayName: Sophomorix-Group
+cn: Sophomorix-Group
+defaultHidingValue: TRUE
+governsID: 4.6.6.6.2.2
+instanceType: 4
+lDAPDisplayName: sophomorixGroup
+name: Sophomorix-Group
+objectCategory: CN=Class-Schema,<SchemaContainerDN>
+objectClass: classSchema
+objectClassCategory: 3
+possSuperiors: top
+rDNAttID: cn
+schemaIDGUID:: FH0uS2isTniC8eXZ4euoDQ==
+subClassOf: top
+systemOnly: FALSE
+
+dn: CN=Sophomorix-Group,<SchemaContainerDN>
+changetype: modify
+replace: mayContain
+mayContain: sophomorixQuota
+mayContain: sophomorixMailQuota
+# <--------------- OK marker, new attrs below ----------------->
+
+# <-- Project -->
+
+dn: CN=Sophomorix-Project,<SchemaContainerDN>
+changetype: add
+adminDescription: Sophomorix-Project
+adminDisplayName: Sophomorix-Project
+cn: Sophomorix-Project
+defaultHidingValue: TRUE
+governsID: 4.6.6.6.2.3
+instanceType: 4
+lDAPDisplayName: sophomorixProject
+name: Sophomorix-Project
+objectCategory: CN=Class-Schema,<SchemaContainerDN>
+objectClass: classSchema
+objectClassCategory: 3
+possSuperiors: top
+rDNAttID: cn
+schemaIDGUID:: pkoov8mDSV6c3ELyXMGM/g
+subClassOf: top
+systemOnly: FALSE
+
+# Reload Schema
+dn:
+changetype: modify
+replace: schemaUpdateNow
+schemaUpdateNow: 1

@@ -1,0 +1,22 @@
+#
+# Sophomorix AD Schema: apply auxiliary classes
+#
+
+dn: CN=User,<SchemaContainerDN>
+changetype: modify
+add: auxiliaryClass
+auxiliaryClass: sophomorixUser
+
+dn: CN=Group,<SchemaContainerDN>
+changetype: modify
+add: auxiliaryClass
+auxiliaryClass: sophomorixGroup
+auxiliaryClass: sophomorixProject
+
+# <--------------- OK marker, new modifications below ----------------->
+
+# Reload Schema
+dn:
+changetype: modify
+replace: schemaUpdateNow
+schemaUpdateNow: 1
