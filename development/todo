@@ -9,7 +9,11 @@ adminDisplayName (tut nicht)
 
 
 Changes:
+creatindate
+tolerationdate
+deactivationdate
 
+oMSyntax 23 (Zeit) --> oMSyntax 64 (utf8 string)
 
 
 

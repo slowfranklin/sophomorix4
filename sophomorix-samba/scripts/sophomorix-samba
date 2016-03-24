@@ -1,0 +1,91 @@
+#!/usr/bin/perl -w
+# This script (sophomorix-samba) is maintained by Rüdiger Beck
+# It is Free Software (License GPLv3)
+# If you find errors, contact the author
+# jeffbeck@web.de  or  jeffbeck@linuxmuster.net
+
+# Bibliotheken
+use strict;
+#use Quota;
+use Getopt::Long;
+Getopt::Long::Configure ("bundling");
+use Sophomorix::SophomorixConfig;
+use Sophomorix::SophomorixBase qw(
+                                 check_options
+                                 );
+use Sophomorix::SophomorixSambaAD qw(
+                                    );
+
+my @arguments = @ARGV;
+
+# ===========================================================================
+# Optionen verarbeiten
+# ==========================================================================
+
+# Variablen für Optionen
+$Conf::log_level=1;
+my $help=0;
+my $info=0;
+my $backup_samba="";
+my $restore_samba="";
+my $schema_load=0;
+
+
+# Parsen der Optionen
+my $testopt=GetOptions(
+           "info|i" => \$info,
+           "help|h" => \$help,
+           "backup-samba=s" => \$backup_samba,
+           "restore-samba=s" => \$restore_samba,
+           "schema-load" => \$schema_load,
+          );
+
+
+# Prüfen, ob Optionen erkannt wurden, sonst Abbruch
+&check_options($testopt);
+
+# --help
+if ($help==1) {
+   # Scriptname ermitteln
+   my @list = split(/\//,$0);
+   my $scriptname = pop @list;
+   # Befehlsbeschreibung
+   print('
+sophomorix-add adds users from the file sophomorix.add to the sophomorix 
+database and the authentification system.
+
+Options
+  -h  / --help
+  --backup-samba suffix    (backups the database)
+  --restore-samba suffix   (restores the database)
+  --schema-load            (loads the sophomorix-schema)
+
+Please see the sophomorix-add(8) man pages for full documentation
+');
+   print "\n";
+   exit;
+}
+
+
+# --backup-samba
+if ($backup_samba ne ""){
+    print "\nBacking up samba databases with suffix -$backup_samba\n\n";
+    system("/usr/share/sophomorix/schema/samba-backup $backup_samba");
+    exit;
+}
+
+
+# --restore-samba
+if ($restore_samba ne ""){
+    print "\nRestoring samba databases with suffix -$restore_samba\n\n";
+    system("/usr/share/sophomorix/schema/samba-restore $restore_samba");
+    exit;
+}
+
+
+# --schema-load
+if ($schema_load==1){
+    print "\nLoading sophomorix schema into ldap\n\n";
+    system("/usr/share/sophomorix/schema/samba-schema-load");
+    exit;
+}
