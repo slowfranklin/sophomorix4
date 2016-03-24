@@ -327,12 +327,14 @@ while(<USERVERSETZEN>){
    #####################################
    # Ermittelte Daten ausgeben
    #####################################
-   $user_nummer++;
    if($Conf::log_level>=1){
+      my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old);
+      my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new);
+
       print "\n";
       &print_title("Moving User $login_versetzen ($user_nummer) to another class:");
-      print("Group (Old):       $alte_klasse\n");
-      print("Group (New):       $neue_klasse\n");
+      print("Group (Old):       $alte_klasse ($group_token_old)\n");
+      print("Group (New):       $neue_klasse ($group_token_new)\n");
       print("Old Homedir:       $old_home\n");
       print("New Home:          $new_home\n");
       print("New Homedir:       $new_homedir_above\n");
