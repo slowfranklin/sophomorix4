@@ -1,7 +1,14 @@
 #!/bin/sh
 
-/etc/init.d/samba stop
+if [ -z "$1" ]; then
+    echo "Give option for the appendix of the backup files"
+else
+    /etc/init.d/samba stop
 
-find /var/lib/samba/private -name '*.ldb' -exec echo cp {}.bak {} \;
+    find /var/lib/samba/private -name '*.ldb' -exec echo cp {}-$1 {} \;
 
-/etc/init.d/samba start
+    /etc/init.d/samba start
+fi
+
+
+
