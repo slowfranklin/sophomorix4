@@ -30,6 +30,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_group_create
                                  AD_group_addmembers
                                  AD_group_removemembers
+                                 AD_get_group_by_token
                                     );
 my @arguments = @ARGV;
 
@@ -177,8 +178,8 @@ if ($info==1) {
     open(USERVERSETZEN,"$move_file") 
             || die "Fehler: $!";
     print "\nThe following users can be moved:\n\n";
-    printf "%-12s %-10s %-10s %-6s \n","Login",
-             "OldClass","NewClass","Stat";
+    printf "%-12s %-14s %-14s %-2s %-15s %-15s \n","Login",
+             "OldClass","NewClass","S","OU-old","OU-new";
     &print_line;
 
     my @lines=();
@@ -211,10 +212,19 @@ if ($info==1) {
         $ou_old,
         $ou_new,
        )=split(/::/,$line);
-       if (not defined $old_status){$old_status=""};
+
+    my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old);
+    my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new);
+
+    if (not defined $old_status){$old_status=""};
        # Ausgabe
-       printf "%-12s %-10s %-10s %-6s \n",
-              "$login_versetzen","$alte_klasse","$neue_klasse", $old_status;
+       printf "%-12s %-14s %-14s %-2s %-15s %-15s \n",
+              $login_versetzen,
+              $group_token_old, 
+              $group_token_new, 
+              $old_status,
+              $ou_old,
+              $ou_new;
     }
 
     &print_line;

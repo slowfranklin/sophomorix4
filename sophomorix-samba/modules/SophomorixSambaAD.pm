@@ -26,6 +26,7 @@ use Net::LDAP;
             AD_group_create
             AD_group_addmembers
             AD_group_removemembers
+            AD_get_group_by_token
             get_forbidden_logins
             AD_ou_add
             );
