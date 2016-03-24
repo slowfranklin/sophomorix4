@@ -299,6 +299,10 @@ open(NOCHANLEGEN,">$add_file_new")
 open(SOPHOMORIXADD,"$add_file") 
     || die "Fehler: $!";
 while(<SOPHOMORIXADD>){
+    if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+        next;
+    }
+
    chomp();
    # split data
    ($class_group,

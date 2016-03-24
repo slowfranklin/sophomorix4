@@ -14,6 +14,11 @@ require Exporter;
 use Unicode::Map8;
 use Unicode::String qw(utf16);
 use Net::LDAP;
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Useqq = 1;
+$Data::Dumper::Terse = 1; 
 
 @ISA = qw(Exporter);
 
@@ -125,8 +130,8 @@ sub AD_user_create {
     my $group_token=&AD_get_group_by_token($group,$school_token);
     my $container=&AD_get_container_by_role($role,$group_token);
 
-    my $dn_class = $container.$ou.",".$base;
-    my $dn = "cn=".$login.",".$container.$ou.",".$base;
+    my $dn_class = $container."OU=".$ou.",".$base;
+    my $dn = "cn=".$login.",".$container."OU=".$ou.",".$base;
  
     # password generation
     # build the conversion map from your local character set to Unicode    
@@ -138,6 +143,7 @@ sub AD_user_create {
         print "\n";
         &Sophomorix::SophomorixBase::print_title("Creating User $user_count :");
         print("DN:                 $dn\n");
+        print("DN (Parent):        $dn_class\n");
         print("Surname:            $surname\n");
         print("Firstname:          $firstname\n");
         print("Birthday:           $birthdate\n");
@@ -225,7 +231,7 @@ sub AD_ou_add {
     # if $result->code is not given, the add is silent
     my ($ldap,$ou) = @_;
     my $base=&AD_get_base();
-    my $dn=$ou.",".$base;
+    my $dn="OU=".$ou.",".$base;
     # provide that a ou exists
     my $result = $ldap->add($dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     #$result->code && warn "failed to add entry: ", $result->error ;
@@ -252,15 +258,14 @@ sub AD_ou_add {
 sub AD_user_test_exist {
     my ($ldap,$user) = @_;
     # check if user exists
-    my $filter="(cn=".$user.")";
+    my $filter="(&(objectclass=user) (cn=".$user."))"; # (&(objectclass=user)(cn=pete)
     my $base=&AD_get_base();
     my $mesg = $ldap->search( # perform a search
                       base   => $base,
                       scope => 'sub',
                       filter => $filter,
-                      attr => [ 'objectClass' => ['user']]
                             );
-
+    #print Dumper(\$mesg);
     my $count = $mesg->count;
     if ($count > 0){
         return $count;
@@ -273,15 +278,14 @@ sub AD_user_test_exist {
 sub AD_group_test_exist {
     my ($ldap,$group) = @_;
     # check if group exists
-    my $filter="(cn=".$group.")";
+    my $filter="(&(objectclass=group) (cn=".$group."))"; # (&(objectclass=group)(cn=7a)
     my $base=&AD_get_base();
     $mesg = $ldap->search( # perform a search
                    base   => $base,
                    scope => 'sub',
                    filter => $filter,
-                   attr => [ 'objectClass' => ['group']]
                          );
-
+    #print Dumper(\$mesg);
     my $count = $mesg->count; 
     if ($count>0){
         return $count;
@@ -305,7 +309,7 @@ sub AD_group_create {
     # calculate missing Attributes
     my $base=&AD_get_base();
     my $container=&AD_get_container_by_role($role,$group_token);
-    my $dn = "cn=".$group_token.",".$container.$ou.",".$base;
+    my $dn = "cn=".$group_token.",".$container."OU=".$ou.",".$base;
 
     if ($count=&AD_group_test_exist($ldap,$group_token) > 0){
         print "   * Group $group_token exists already ($count results)\n";
