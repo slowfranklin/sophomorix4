@@ -1,0 +1,7 @@
+#!/bin/sh
+
+/etc/init.d/samba stop
+
+cd ../sophomorix-samba/schema; ./sophomorix_schema_add.sh DC=linuxmuster,DC=local . -H /var/lib/samba/private/sam.ldb -writechanges; cd ../../tools
+
+/etc/init.d/samba start

@@ -11,7 +11,7 @@ $Data::Dumper::Terse = 1;
 # config these values
 my $firstname="Rüdiger";
 my $surname="Beck";
-my $login="beckro6";
+my $login="beckro19";
 my $plain_password="Muster!";
 
 
@@ -47,7 +47,7 @@ my $result = $ldap->add( $dn,
                          'sn'   => $surname,
                          'displayName'   => [$display_name],
                          'userPrincipalName' => $user_principal_name,
-                         'unicodePwd' => $uni_password, 
+                         'sophomorixExitAdminClass' => "12345678", 
                          'userAccountControl' => '512',
                          'objectclass' => ['top', 'person',
                                            'organizationalPerson',

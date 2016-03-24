@@ -1,0 +1,7 @@
+#!/bin/sh
+
+/etc/init.d/samba stop
+
+find /var/lib/samba/private -name '*.ldb' -exec echo cp {}.bak {} \;
+
+/etc/init.d/samba start

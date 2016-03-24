@@ -1,0 +1,3 @@
+#!/bin/sh
+
+find /var/lib/samba/private -name '*.ldb' -exec tdbbackup {} \;
