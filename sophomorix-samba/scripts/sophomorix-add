@@ -35,6 +35,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_user_create
                                  AD_group_create
                                  AD_group_addmembers
+                                 AD_get_group_by_token
                                  get_forbidden_logins
                                     );
 
@@ -210,9 +211,11 @@ if ($info==1) {
        $school_token,
        $role)=split("::",$line);
 
+       my $group_token=&AD_get_group_by_token($class_group,$school_token);
+
        my $identifier_cut=substr($identifier,0,28);
        printf "%-11s%-29s%-10s%-6s%-6s%-10s%-10s\n",
-              $class_group,
+              $group_token,
               $identifier_cut,
               $wunsch_login,
               $wunsch_id, 

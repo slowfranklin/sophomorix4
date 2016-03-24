@@ -30,6 +30,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_bind_admin
                                  AD_unbind_admin
                                  AD_user_kill
+                                 AD_get_group_by_token
                                     );
 
 my @arguments = @ARGV;
@@ -41,6 +42,8 @@ my $identifier_to_kill="";
 my $login_name_to_kill="";
 my $home_verzeichnis_to_kill="";
 my $linux_gruppe_to_kill="";
+my $school_token="";
+my $ou="";
 my $public_html_to_kill="";
 my $linie_to_kill="";
 #my %protokoll_hash=();
@@ -147,7 +150,11 @@ if ($info==1) {
     my $count=0;
     # Ausgabe der loeschbaren user
     print "\nThe following users can be killed:\n\n";
-    print "Loginname   AdminClass   Identifier\n";
+    printf "%-11s %-16s %-35s %-12s\n",
+           "Loginname",
+           "AdminClass",
+           "Identifier",
+           "OU";
     &print_line;
 
     my @lines=();
@@ -160,7 +167,8 @@ if ($info==1) {
        # Klasse ermitteln
        ($identifier_to_kill, 
         $login_name_to_kill,
-        $linux_gruppe_to_kill)=split(/::/);
+        $linux_gruppe_to_kill,
+        $school_token)=split(/::/);
        #($linux_gruppe_to_kill)=&pg_get_group_list($login_name_to_kill);
        push @lines, "$_"."::"."$linux_gruppe_to_kill"."\n";
     }
@@ -180,11 +188,16 @@ if ($info==1) {
        $count++;
        ($identifier_to_kill,
         $login_name_to_kill,
-        $linux_gruppe_to_kill)=split(/::/,$line);
-       printf "%-11s %-12s %-40s\n",
-              "$login_name_to_kill",
-              "$linux_gruppe_to_kill",
-              "$identifier_to_kill";
+        $linux_gruppe_to_kill,
+        $school_token,
+        $ou)=split(/::/,$line);
+       my $group_token=&AD_get_group_by_token($linux_gruppe_to_kill,$school_token);
+
+       printf "%-11s %-16s %-35s %-12s\n",
+              $login_name_to_kill,
+              $group_token,
+              $identifier_to_kill,
+              $ou;
     }
 
     &print_line;
