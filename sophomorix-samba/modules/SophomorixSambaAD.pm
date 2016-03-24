@@ -14,6 +14,7 @@ require Exporter;
 use Unicode::Map8;
 use Unicode::String qw(utf16);
 use Net::LDAP;
+#use Sophomorix::SophomorixBase;
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 $Data::Dumper::Sortkeys = 1;
@@ -35,7 +36,6 @@ $Data::Dumper::Terse = 1;
             get_forbidden_logins
             AD_ou_add
             );
-
 
 sub AD_get_passwd {
     my $smb_pwd="";
@@ -110,8 +110,10 @@ sub AD_user_create {
     my $identifier = $arg_ref->{identifier};
     my $login = $arg_ref->{login};
     my $group = $arg_ref->{group};
-    my $firstname = $arg_ref->{firstname};
-    my $surname = $arg_ref->{surname};
+    my $firstname_ascii = $arg_ref->{firstname_ascii};
+    my $surname_ascii = $arg_ref->{surname_ascii};
+    my $firstname_utf8 = $arg_ref->{firstname_utf8};
+    my $surname_utf8 = $arg_ref->{surname_utf8};
     my $birthdate = $arg_ref->{birthdate};
     my $plain_password = $arg_ref->{plain_password};
     my $unid = $arg_ref->{unid};
@@ -120,10 +122,11 @@ sub AD_user_create {
     my $ou = $arg_ref->{ou};
     my $school_token = $arg_ref->{school_token};
     my $role = $arg_ref->{role};
+    my $creationdate = $arg_ref->{creationdate};
 
     #calculate
     my $shell="/bin/false";
-    my $display_name = $firstname." ".$surname;
+    my $display_name = $firstname_utf8." ".$surname_utf8;
     my $user_principal_name = $login."\@"."linuxmuster.local";
     # dn
     my $base=&AD_get_base();
@@ -144,8 +147,10 @@ sub AD_user_create {
         &Sophomorix::SophomorixBase::print_title("Creating User $user_count :");
         print("DN:                 $dn\n");
         print("DN (Parent):        $dn_class\n");
-        print("Surname:            $surname\n");
-        print("Firstname:          $firstname\n");
+        print("Surname (ASCII):    $surname_ascii\n");
+        print("Surname (UTF8):     $surname_utf8\n");
+        print("Firstname (ASCII):  $firstname_ascii\n");
+        print("Firstname (UTF8):   $firstname_utf8\n");
         print("Birthday:           $birthdate\n");
         print("Identifier:         $identifier\n");
         print("OU:                 $ou\n"); # Organisatinal Unit
@@ -157,20 +162,32 @@ sub AD_user_create {
         #print("Login (to check):   $login_name_to_check\n");
         print("Login (check OK):   $login\n");
         print("Password:           $plain_password\n");
+        # sophomorix stuff
+
+
+        print("Creationdate:       $creationdate\n");
+
         print("Unid:               $unid\n");
         print("Unix-id:            $wunsch_id\n");
     }
 
     $ldap->add($dn_class,attr => ['objectclass' => ['top', 'container']]);
-
     my $result = $ldap->add( $dn,
                    attr => [
                    'sAMAccountName' => $login,
-                   'givenName'   => $firstname,
-                   'sn'   => $surname,
+                   'givenName'   => $firstname_utf8,
+                   'sn'   => $surname_utf8,
                    'displayName'   => [$display_name],
                    'userPrincipalName' => $user_principal_name,
-                   'unicodePwd' => $uni_password, 
+                   'unicodePwd' => $uni_password,
+                   'sophomorixExitAdminClass' => "unknown", 
+                   'sophomorixUnid' => $unid,
+                   'sophomorixStatus' => "U",
+                   'sophomorixAdminClass' => $group_token,    
+                   'sophomorixFirstPassword' => $plain_password, 
+                   'sophomorixFirstnameASCII' => $firstname_ascii,
+                   'sophomorixSurnameASCII'  => $surname_ascii,
+    #               'sophomorixCreationDate' => $creationdate, 
                    'userAccountControl' => '512',
                    'objectclass' => ['top', 'person',
                                      'organizationalPerson',

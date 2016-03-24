@@ -463,6 +463,276 @@ sub  check_options{
 }
 
 
+# encoding, recoding stuff
+######################################################################
+sub recode_utf8_to_ascii {
+    my ($string) = @_;
+    # ascii (immer filtern)
+    # '
+    $string=~s/\x27//g;
+    $string=~s/\x60//g;
+    # -
+    $string=~s/\x2D/-/g;
+    $string=~s/\x5F/-/g;
+
+    # utf8
+    # -
+    $string=~s/\xC2\xAF/-/g;
+    # '
+    $string=~s/\xC2\xB4//g;
+
+    # iso 8859-1 stuff
+    # A
+    $string=~s/\xC3\x80/A/g;
+    $string=~s/\xC3\x81/A/g;
+    $string=~s/\xC3\x82/A/g;
+    $string=~s/\xC3\x83/A/g;
+    $string=~s/\xC3\x85/A/g;
+    # Ae
+    $string=~s/\xC3\x84/Ae/g;
+    $string=~s/\xC3\x86/Ae/g;
+    # C
+    $string=~s/\xC3\x87/C/g;
+    # E
+    $string=~s/\xC3\x88/E/g;
+    $string=~s/\xC3\x89/E/g;
+    $string=~s/\xC3\x8A/E/g;
+    $string=~s/\xC3\x8B/E/g;
+    # I
+    $string=~s/\xC3\x8C/I/g;
+    $string=~s/\xC3\x8D/I/g;
+    $string=~s/\xC3\x8E/I/g;
+    $string=~s/\xC3\x8F/I/g;
+    # D
+    $string=~s/\xC3\x90/D/g;
+    # I
+    $string=~s/\xC3\x91/N/g;
+    # O
+    $string=~s/\xC3\x92/O/g;
+    $string=~s/\xC3\x93/O/g;
+    $string=~s/\xC3\x94/O/g;
+    $string=~s/\xC3\x95/O/g;
+    $string=~s/\xC3\x98/O/g;
+    # Oe
+    $string=~s/\xC3\x96/Oe/g;
+    # X
+    $string=~s/\xC3\x97/x/g;
+    # U
+    $string=~s/\xC3\x99/U/g;
+    $string=~s/\xC3\x9A/U/g;
+    $string=~s/\xC3\x9B/U/g;
+    # Ue
+    $string=~s/\xC3\x9C/Ue/g;
+    # Y
+    $string=~s/\xC3\x9D/Y/g;
+    # Th
+    $string=~s/\xC3\x9E/Th/g;
+    # ss
+    $string=~s/\xC3\x9F/ss/g;
+    # a
+    $string=~s/\xC3\xA0/a/g;
+    $string=~s/\xC3\xA1/a/g;
+    $string=~s/\xC3\xA2/a/g;
+    $string=~s/\xC3\xA3/a/g;
+    $string=~s/\xC3\xA5/a/g;
+    # ae
+    $string=~s/\xC3\xA4/ae/g;
+    $string=~s/\xC3\xA6/ae/g;
+    # c
+    $string=~s/\xC3\xA7/c/g;
+    # e
+    $string=~s/\xC3\xA8/e/g;
+    $string=~s/\xC3\xA9/e/g;
+    $string=~s/\xC3\xAA/e/g;
+    $string=~s/\xC3\xAB/e/g;
+    # i
+    $string=~s/\xC3\xAC/i/g;
+    $string=~s/\xC3\xAD/i/g;
+    $string=~s/\xC3\xAE/i/g;
+    $string=~s/\xC3\xAF/i/g;
+    # d
+    $string=~s/\xC3\xB0/d/g;
+    # n
+    $string=~s/\xC3\xB1/n/g;
+    # o
+    $string=~s/\xC3\xB2/o/g;
+    $string=~s/\xC3\xB3/o/g;
+    $string=~s/\xC3\xB4/o/g;
+    $string=~s/\xC3\xB5/o/g;
+    # \xC3\xB7 is DIVISION SIGN
+    # o
+    $string=~s/\xC3\xB8/o/g;
+    # oe
+    $string=~s/\xC3\xB6/oe/g;
+    # u
+    $string=~s/\xC3\xB9/u/g;
+    $string=~s/\xC3\xBA/u/g;
+    $string=~s/\xC3\xBB/u/g;
+    # ue
+    $string=~s/\xC3\xBC/ue/g;
+    # y
+    $string=~s/\xC3\xBD/y/g;
+    $string=~s/\xC3\xBF/y/g;
+    # FE thorn
+    $string=~s/\xC3\xBE/th/g;
+    # iso 8859-1 stuff end
+   
+    # \xc4 stuff (U+0100)
+    $string=~s/\xC4\x80/A/g;
+    $string=~s/\xC4\x81/a/g;
+    $string=~s/\xC4\x82/A/g;
+    $string=~s/\xC4\x83/a/g;
+    $string=~s/\xC4\x84/A/g;
+    $string=~s/\xC4\x85/a/g;
+    $string=~s/\xC4\x86/C/g;
+    $string=~s/\xC4\x87/c/g;
+    $string=~s/\xC4\x88/C/g;
+    $string=~s/\xC4\x89/c/g;
+    $string=~s/\xC4\x8A/C/g;
+    $string=~s/\xC4\x8B/c/g;
+    $string=~s/\xC4\x8C/C/g;
+    $string=~s/\xC4\x8D/c/g;
+    $string=~s/\xC4\x8E/D/g;
+    $string=~s/\xC4\x8F/d/g;
+    $string=~s/\xC4\x90/D/g;
+    $string=~s/\xC4\x91/d/g;
+    $string=~s/\xC4\x92/E/g;
+    $string=~s/\xC4\x93/e/g;
+    $string=~s/\xC4\x94/E/g;
+    $string=~s/\xC4\x95/e/g;
+    $string=~s/\xC4\x96/E/g;
+    $string=~s/\xC4\x97/e/g;
+    $string=~s/\xC4\x98/E/g;
+    $string=~s/\xC4\x99/e/g;
+    $string=~s/\xC4\x9A/E/g;
+    $string=~s/\xC4\x9B/e/g;
+    $string=~s/\xC4\x9C/G/g;
+    $string=~s/\xC4\x9D/g/g;
+    $string=~s/\xC4\x9E/G/g;
+    $string=~s/\xC4\x9F/g/g;
+    $string=~s/\xC4\xA0/G/g;
+    $string=~s/\xC4\xA1/g/g;
+    $string=~s/\xC4\xA2/G/g;
+    $string=~s/\xC4\xA3/g/g;
+    $string=~s/\xC4\xA4/H/g;
+    $string=~s/\xC4\xA5/h/g;
+    $string=~s/\xC4\xA6/H/g;
+    $string=~s/\xC4\xA7/h/g;
+    $string=~s/\xC4\xA8/I/g;
+    $string=~s/\xC4\xA9/i/g;
+    $string=~s/\xC4\xAA/I/g;
+    $string=~s/\xC4\xAB/i/g;
+    $string=~s/\xC4\xAC/I/g;
+    $string=~s/\xC4\xAD/i/g;
+    $string=~s/\xC4\xAE/I/g;
+    $string=~s/\xC4\xAF/i/g;
+    $string=~s/\xC4\xB0/I/g;
+    $string=~s/\xC4\xB1/i/g;
+    $string=~s/\xC4\xB2/Ij/g;
+    $string=~s/\xC4\xB3/ij/g;
+    $string=~s/\xC4\xB4/J/g;
+    $string=~s/\xC4\xB5/j/g;
+    $string=~s/\xC4\xB6/K/g;
+    $string=~s/\xC4\xB7/k/g;
+    $string=~s/\xC4\xB8/k/g;
+    $string=~s/\xC4\xB9/L/g;
+    $string=~s/\xC4\xBA/l/g;
+    $string=~s/\xC4\xBB/L/g;
+    $string=~s/\xC4\xBC/l/g;
+    $string=~s/\xC4\xBD/L/g;
+    $string=~s/\xC4\xBE/l/g;
+    $string=~s/\xC4\xBF/L/g;
+
+    # \xc5 stuff (U+0140)
+    $string=~s/\xC5\x80/l/g;
+    $string=~s/\xC5\x81/L/g;
+    $string=~s/\xC5\x82/l/g;
+    $string=~s/\xC5\x83/N/g;
+    $string=~s/\xC5\x84/n/g;
+    $string=~s/\xC5\x85/N/g;
+    $string=~s/\xC5\x86/n/g;
+    $string=~s/\xC5\x87/N/g;
+    $string=~s/\xC5\x88/n/g;
+    $string=~s/\xC5\x89/n/g;
+    $string=~s/\xC5\x8A/N/g;
+    $string=~s/\xC5\x8B/n/g;
+    $string=~s/\xC5\x8C/O/g;
+    $string=~s/\xC5\x8D/o/g;
+    $string=~s/\xC5\x8E/O/g;
+    $string=~s/\xC5\x8F/o/g;
+    $string=~s/\xC5\x90/O/g;
+    $string=~s/\xC5\x91/o/g;
+    $string=~s/\xC5\x92/Oe/g;
+    $string=~s/\xC5\x93/oe/g;
+    $string=~s/\xC5\x94/R/g;
+    $string=~s/\xC5\x95/r/g;
+    $string=~s/\xC5\x96/R/g;
+    $string=~s/\xC5\x97/r/g;
+    $string=~s/\xC5\x98/R/g;
+    $string=~s/\xC5\x99/r/g;
+    $string=~s/\xC5\x9A/S/g;
+    $string=~s/\xC5\x9B/s/g;
+    $string=~s/\xC5\x9C/S/g;
+    $string=~s/\xC5\x9D/s/g;
+    $string=~s/\xC5\x9E/S/g;
+    $string=~s/\xC5\x9F/s/g;
+    $string=~s/\xC5\xA0/S/g;
+    $string=~s/\xC5\xA1/s/g;
+    $string=~s/\xC5\xA2/T/g;
+    $string=~s/\xC5\xA3/t/g;
+    $string=~s/\xC5\xA4/T/g;
+    $string=~s/\xC5\xA5/t/g;
+    $string=~s/\xC5\xA6/T/g;
+    $string=~s/\xC5\xA7/t/g;
+    $string=~s/\xC5\xA8/U/g;
+    $string=~s/\xC5\xA9/u/g;
+    $string=~s/\xC5\xAA/U/g;
+    $string=~s/\xC5\xAB/u/g;
+    $string=~s/\xC5\xAC/U/g;
+    $string=~s/\xC5\xAD/u/g;
+    $string=~s/\xC5\xAE/U/g;
+    $string=~s/\xC5\xAF/u/g;
+    $string=~s/\xC5\xB0/U/g;
+    $string=~s/\xC5\xB1/ue/g;
+    $string=~s/\xC5\xB2/U/g;
+    $string=~s/\xC5\xB3/u/g;
+    $string=~s/\xC5\xB4/W/g;
+    $string=~s/\xC5\xB5/w/g;
+    $string=~s/\xC5\xB6/Y/g;
+    $string=~s/\xC5\xB7/y/g;
+    $string=~s/\xC5\xB8/Y/g;
+    $string=~s/\xC5\xB9/Z/g;
+    $string=~s/\xC5\xBA/z/g;
+    $string=~s/\xC5\xBB/Z/g;
+    $string=~s/\xC5\xBC/z/g;
+    $string=~s/\xC5\xBD/Z/g;
+    $string=~s/\xC5\xBE/z/g;
+    $string=~s/\xC5\xBF/s/g;
+    $string=~s/\xC6\x80/b/g;
+    $string=~s/\xC6\x81/B/g;
+    $string=~s/\xC6\x82/B/g;
+    $string=~s/\xC6\x83/b/g;
+    # not a letter
+    $string=~s/\xC6\x84/6/g;
+    # not a letter
+    $string=~s/\xC6\x85/6/g;
+    $string=~s/\xC6\x86/O/g;
+    $string=~s/\xC6\x87/C/g;
+    $string=~s/\xC6\x88/c/g;
+    $string=~s/\xC6\x89/D/g;
+    $string=~s/\xC6\x8A/D/g;
+    $string=~s/\xC6\x8B/D/g;
+    $string=~s/\xC6\x8C/d/g;
+    $string=~s/\xC6\x8D/d/g;
+    $string=~s/\xC6\x8E/E/g;
+    # grosses Schwa
+    $string=~s/\xC6\x8F/E/g;
+    # ?????? continue here
+    return $string;
+}
+
+
+
 
 # END OF FILE
 # Return true=1

@@ -42,7 +42,7 @@ PERLMOD=$(DESTDIR)/usr/share/perl5/Sophomorix
 CONF=$(DESTDIR)/etc/sophomorix
 
 # Schema
-#SCHEMA=$(DESTDIR)/etc/ldap/schema
+SCHEMA=$(DESTDIR)/usr/share/sophomorix/schema
 
 # Developer configs
 DEVELCONF=$(DESTDIR)/usr/share/sophomorix
@@ -141,6 +141,12 @@ install-sophomorix-samba:
 # Install the modules
 	@install -d -m755 -oroot -groot $(PERLMOD)
 	@install -oroot -groot --mode=0644 sophomorix-samba/modules/Sophomorix*[a-z1-9.]pm $(PERLMOD)
+# install schema
+	@install -d -m755 -oroot -groot $(SCHEMA)/
+	@install -oroot -groot --mode=0644 sophomorix-samba/schema/1_sophomorix-attributes.ldif $(SCHEMA)/
+	@install -oroot -groot --mode=0644 sophomorix-samba/schema/2_sophomorix-classes.ldif $(SCHEMA)/
+	@install -oroot -groot --mode=0644 sophomorix-samba/schema/3_sophomorix-aux.ldif $(SCHEMA)/
+	@install -oroot -groot --mode=0755 sophomorix-samba/schema/sophomorix_schema_add.sh $(SCHEMA)/
 # group owner is changed in postinst-script to lehrer
 #	@install -oroot -groot --mode=4750 sophomorix-base/scripts-teacher/sophomorix-*[a-z1-9] $(DESTDIR)/usr/bin
 # installing configs for root
@@ -242,7 +248,7 @@ install-pgldap:
 	@install -oroot -groot --mode=0644 sophomorix-pgldap/config-samba/smb.conf.template.rembo $(CTEMPDIR)/samba/
 	@install -oroot -groot --mode=0644 sophomorix-pgldap/config-samba/smb.conf.template.tivoli $(CTEMPDIR)/samba/
 	@install -oroot -groot --mode=0644 sophomorix-pgldap/config-samba/smb.conf.global $(CTEMPDIR)/samba/
-# install samba.schema
+# install schema
 	@install -d -m755 -oroot -groot $(SCHEMA)/
 	@install -oroot -groot --mode=0755 sophomorix-pgldap/config-ldap/samba.schema $(SCHEMA)/
 # install sophomorix.schema

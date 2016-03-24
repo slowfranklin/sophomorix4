@@ -46,8 +46,10 @@ my $time_stamp_AD=&time_stamp_AD();
 my $user_count=0;
 
 my $identifier;
-my $surname;
-my $firstname;
+my $surname_ascii;
+my $firstname_ascii;
+my $firstname_utf8;
+my $surname_utf8;
 my $birthdate;
 my $gecos="";
 my $wunsch_login;
@@ -314,15 +316,18 @@ while(<SOPHOMORIXADD>){
     $unid,
     $ou,
     $school_token,
-    $role)=split("::");
+    $role,
+    $surname_utf8,
+    $firstname_utf8,
+   )=split("::");
 
    if (not defined $unid){
        $unid="";
    }
 
-   ($surname,$firstname,$birthdate)=split(";", $identifier);
+   ($surname_ascii,$firstname_ascii,$birthdate)=split(";", $identifier);
    # GECOS-Feld:
-   $gecos=$firstname." ".$surname; 
+   $gecos=$firstname_ascii." ".$surname_ascii; 
 
    # Falls Wunsch-Login-Namen gegeben, diesen benutzen
    if ($wunsch_login ne "---"){
@@ -330,11 +335,11 @@ while(<SOPHOMORIXADD>){
    } else {
     # Sonst: Login-Name bilden
     # remove - from login
-    my $surname_login=$surname;
+    my $surname_login=$surname_ascii;
     $surname_login=~s/-//g;
     #$surname_login=&recode_to_ascii($surname_login);
 
-    my $firstname_login=$firstname;
+    my $firstname_login=$firstname_ascii;
     $firstname_login=~s/-//g;
     #$firstname_login=&recode_to_ascii($firstname_login);
 
@@ -361,7 +366,7 @@ while(<SOPHOMORIXADD>){
        # Wunsch-Login angegeben
        # Abbrechen, Wunsch-Login soll nicht verändert werden
        print "\nERROR:\n";
-       print "Cannot add user   $firstname $surname \n";
+       print "Cannot add user $firstname_ascii $surname_ascii ($firstname_utf8 $surname_utf8) \n";
        print "Login   $wunsch_login   exists in the system",
              "/is a forbidden name!\n\n";
        next;
@@ -429,8 +434,10 @@ while(<SOPHOMORIXADD>){
                     identifier=>$identifier,
                     login=>$login_check_ok,
                     group=>$class_group,
-                    firstname=>$firstname,
-                    surname=>$surname,
+                    firstname_ascii=>$firstname_ascii,
+                    surname_ascii=>$surname_ascii,
+                    firstname_utf8=>$firstname_utf8,
+                    surname_utf8=>$surname_utf8,
                     birthdate=>$birthdate,
                     plain_password=>$plain_password,
                     unid=>$unid,
@@ -439,6 +446,7 @@ while(<SOPHOMORIXADD>){
                     wunsch_gid=>$wunsch_gid,
                     role=>$role,
                     school_token=>$school_token,
+                    creationdate=>$time_stamp_AD,
                   });
 
    # 1. Entry in sophomorix database and auth system

@@ -1,3 +1,23 @@
+############################################################
+Schema
+############################################################
+
+Questions:
+
+lDAPDisplayName  (wird zum befüllen benutzt)
+adminDisplayName (tut nicht)
+
+
+Changes:
+
+
+
+
+############################################################
+Scripts
+############################################################
+
+
 add/move/kill
 -> logfiles adding, deletion, killing
 -> Option -i: 
