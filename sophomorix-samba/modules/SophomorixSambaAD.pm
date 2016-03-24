@@ -304,22 +304,22 @@ sub AD_group_create {
     # calculate missing Attributes
     my $base=&AD_get_base();
     my $container=&AD_get_container_by_role($role,$group_token);
-    my $dn = "cn=".$group.",".$container.$ou.",".$base;
+    my $dn = "cn=".$group_token.",".$container.$ou.",".$base;
 
-    if ($count=&AD_group_test_exist($ldap,$group) > 0){
-        print "   * Group $group exists already ($count results)\n";
+    if ($count=&AD_group_test_exist($ldap,$group_token) > 0){
+        print "   * Group $group_token exists already ($count results)\n";
         return;
     }
 
     # adding the group
     &Sophomorix::SophomorixBase::print_title("Creating Group:");
-    print("   Group:    $group\n");
+    print("   Group:    $group_token\n");
     print("   Role:     $role\n");
     print("   dn:       $dn\n");
     my $result = $ldap->add( $dn,
                            attr => [
-                             'cn'   => $group,
-                             'sAMAccountName' => $group,
+                             'cn'   => $group_token,
+                             'sAMAccountName' => $group_token,
                              'objectclass' => ['top',
                                                'group' ],
                                    ]

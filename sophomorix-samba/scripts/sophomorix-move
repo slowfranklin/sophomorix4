@@ -43,6 +43,11 @@ my $alte_klasse;
 my $neue_klasse;
 my $login_versetzen;
 my $old_status;
+my $school_token_old;
+my $school_token_new;
+my $ou_old;
+my $ou_new;
+
 my $identifier;
 my $alte_zeile="";
 my $neue_zeile="";
@@ -200,7 +205,12 @@ if ($info==1) {
        ($login_versetzen,
         $alte_klasse,
         $neue_klasse,
-        $old_status)=split(/::/,$line);
+        $old_status,
+        $school_token_old,
+        $school_token_new,
+        $ou_old,
+        $ou_new,
+       )=split(/::/,$line);
        if (not defined $old_status){$old_status=""};
        # Ausgabe
        printf "%-12s %-10s %-10s %-6s \n",
@@ -242,10 +252,21 @@ open(NOCHVERSETZEN,">$move_file_new")
 open(USERVERSETZEN,"$move_file") 
      || die "Fehler: $!";
 while(<USERVERSETZEN>){
-   chomp();
-#   $user_nummer++;
-   ($login_versetzen, $alte_klasse, $neue_klasse,$old_status)=split(/::/);
-   if (not defined $old_status){$old_status=""};
+    if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+        next;
+    }
+    chomp();
+    $user_nummer++;
+    ($login_versetzen, 
+     $alte_klasse, 
+     $neue_klasse,
+     $old_status,
+     $school_token_old,
+     $school_token_new,
+     $ou_old,
+     $ou_new,
+    )=split(/::/);
+    if (not defined $old_status){$old_status=""};
    # Home ermitteln
    # altes home ermiteln
    #my ($old_home)=
@@ -300,14 +321,16 @@ while(<USERVERSETZEN>){
    if($Conf::log_level>=1){
       print "\n";
       &print_title("Moving User $login_versetzen ($user_nummer) to another class:");
-      print("Group (Old):      $alte_klasse\n");
-      print("Group (New):      $neue_klasse\n");
-      print("Old Homedir:      $old_home\n");
-      print("New Home:         $new_home\n");
-      print("New Homedir:      $new_homedir_above\n");
-      print("Old Status:       $old_status\n");
+      print("Group (Old):       $alte_klasse\n");
+      print("Group (New):       $neue_klasse\n");
+      print("Old Homedir:       $old_home\n");
+      print("New Home:          $new_home\n");
+      print("New Homedir:       $new_homedir_above\n");
+      print("Old Status:        $old_status\n");
       #print("Share Directory:   $home_share_dir\n");
       #print("Task Directory:    $home_task_dir\n");
+      print("SchoolToken(Old):  $school_token_old\n");
+      print("SchoolToken(New):  $school_token_new\n");
    }
 
    # 0. rember login to set quota later
@@ -318,7 +341,12 @@ while(<USERVERSETZEN>){
 
 
    # Sicherstellen dass neue Klasse (Linux-Gruppe) existiert
-   &AD_group_create({ldap=>$ldap,group=>$neue_klasse});
+   &AD_group_create({ldap=>$ldap,
+                     group=>$neue_klasse,
+                     ou=>$ou_new,
+                     school_token=>$school_token_new,
+                     role=>"class",
+                    });
 
 
    #if ($neue_klasse ne ${DevelConf::teacher}) {
@@ -351,10 +379,12 @@ while(<USERVERSETZEN>){
     &AD_group_addmembers({ldap => $ldap,
                           group => $neue_klasse,
                           addmembers => $login_versetzen,
+                          school_token => $school_token_new,
                         });   
     &AD_group_removemembers({ldap => $ldap, 
                              group => $alte_klasse,
                              removemembers => $login_versetzen,
+                             school_token => $school_token_old,
                            });   
    # samba4 todo: ??????????????????????????????????????????????????????????
    # update exitadminclass
