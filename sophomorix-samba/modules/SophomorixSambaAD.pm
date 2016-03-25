@@ -35,8 +35,7 @@ $Data::Dumper::Terse = 1;
             AD_get_group_by_token
             get_forbidden_logins
             AD_ou_add
-            AD_user_test_exist 
-            AD_group_test_exist 
+            AD_object_search
             );
 
 sub AD_get_passwd {
@@ -93,7 +92,7 @@ sub AD_user_kill {
     my $login = $arg_ref->{login};
     my $identifier = $arg_ref->{identifier};
 
-    my ($count,$dn_exist)=&AD_user_test_exist($ldap,$login);
+    my ($count,$dn_exist)=&AD_object_search($ldap,"user",$user);
     if ($count > 0){
         my $command="samba-tool user delete ". $login;
         print "   # $command\n";
@@ -276,13 +275,17 @@ sub AD_ou_add {
 }
 
 
-
-sub AD_user_test_exist {
-    my ($ldap,$user) = @_;
-    # check if user exists
-    my $filter="(&(objectclass=user) (cn=".$user."))"; # (&(objectclass=user)(cn=pete)
+sub AD_object_search {
+    my ($ldap,$type,$name) = @_;
+    # returns 0,"" or 1,"dn of object"
+    # type: group, user, ...
+    # check if object exists
+    # (&(objectclass=user)(cn=pete)
+    # (&(objectclass=group)(cn=7a)
+    my $filter="(&(objectclass=".$type.") (cn=".$name."))"; 
+    print "$filter\n";
     my $base=&AD_get_base();
-    my $mesg = $ldap->search( # perform a search
+    my $mesg = $ldap->search(
                       base   => $base,
                       scope => 'sub',
                       filter => $filter,
@@ -299,27 +302,6 @@ sub AD_user_test_exist {
     }
 }
 
-
-sub AD_group_test_exist {
-    my ($ldap,$group) = @_;
-    # check if group exists
-    my $filter="(&(objectclass=group) (cn=".$group."))"; # (&(objectclass=group)(cn=7a)
-    my $base=&AD_get_base();
-    $mesg = $ldap->search( # perform a search
-                   base   => $base,
-                   scope => 'sub',
-                   filter => $filter,
-                         );
-    #print Dumper(\$mesg);
-    my $count = $mesg->count; 
-    if ($count>0){
-        my ($entry,@entries) = $mesg->entries;
-        my $dn = $entry->dn();
-        return ($count,$dn);
-    } else {
-        return (0,"");
-    }
-}
 
 
 
@@ -338,7 +320,7 @@ sub AD_group_create {
     my $container=&AD_get_container_by_role($role,$group_token);
     my $dn = "cn=".$group_token.",".$container."OU=".$ou.",".$base;
 
-    my ($count,$dn_exist)=&AD_group_test_exist($ldap,$group_token);
+    my ($count,$dn_exist)=&AD_object_search($ldap,"group",$group_token);
     if ($count> 0){
         print "   * Group $group_token exists already ($count results)\n";
         return;
@@ -372,7 +354,7 @@ sub AD_group_addmembers {
 
     $group=&AD_get_group_by_token($group,$school_token);
 
-    my ($count,$dn_exist)=&AD_user_test_exist($ldap,$user);
+    my ($count,$dn_exist)=&AD_object_search($ldap,"user",$user);
     if ($count > 0){
         print "   * User $user exists ($count results)\n";
         print "Adding $user to group $group\n";
@@ -394,10 +376,9 @@ sub AD_group_removemembers {
     my $group = $arg_ref->{group};
     my $user = $arg_ref->{removemembers};
     my $school_token = $arg_ref->{school_token};
-
     $group=&AD_get_group_by_token($group,$school_token);
 
-    my ($count,$dn_exist)=&AD_user_test_exist($ldap,$user);
+    my ($count,$dn_exist)=&AD_object_search($ldap,"user",$user);
     if ($count > 0){
         print "   * User $user exists ($count results)\n";
         print "Removing $user from group $group\n";

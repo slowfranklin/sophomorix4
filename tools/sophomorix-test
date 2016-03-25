@@ -33,8 +33,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_bind_admin
                                  AD_unbind_admin
                                  AD_user_create
-                                 AD_user_test_exist
-                                 AD_group_test_exist
+                                 AD_object_search
                                  AD_group_create
                                  AD_group_addmembers
                                  AD_get_group_by_token
@@ -49,8 +48,7 @@ $Conf::log_level=1;
 my $ldap = &AD_bind_admin();
 
 
-my ($count,$dn)=&AD_group_test_exist($ldap,"pks-7a");
-#my ($count,$dn)=&AD_user_test_exist($ldap,"krbtgt");
+my ($count,$dn)=&AD_object_search($ldap,"group","koehleju");
 
 
 print "Count:   $count\n";
