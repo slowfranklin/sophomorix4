@@ -9,17 +9,23 @@ adminDisplayName (tut nicht)
 
 
 Changes:
-creatindate
+creationdate
 tolerationdate
 deactivationdate
 
 oMSyntax 23 (Zeit) --> oMSyntax 64 (utf8 string)
-
+-> Just switch that does not work, schema is not loadable 
 
 
 ############################################################
 Scripts
 ############################################################
+
+sophomorix-project
+
+add groups with role 'project'
+  - p_name (no school_token).
+  - projects can contain students of all schools
 
 
 add/move/kill
