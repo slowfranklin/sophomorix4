@@ -1,0 +1,61 @@
+#!/usr/bin/perl -w
+# This script (sophomorix-test) is maintained by Rüdiger Beck
+# It is Free Software (License GPLv3)
+# If you find errors, contact the author
+# jeffbeck@web.de  or  jeffbeck@linuxmuster.net
+
+# Bibliotheken
+use strict;
+#use Quota;
+use Getopt::Long;
+Getopt::Long::Configure ("bundling");
+use Sophomorix::SophomorixConfig;
+#use IMAP::Admin;
+#use DBI;
+use Net::LDAP;
+use Sophomorix::SophomorixBase qw(
+                                 print_line
+                                 print_title
+                                 time_stamp_AD
+                                 time_stamp_file
+                                 unlock_sophomorix
+                                 lock_sophomorix
+                                 log_script_start
+                                 log_script_end
+                                 log_script_exit
+                                 backup_amku_file
+                                 get_passwd_charlist
+                                 get_plain_password
+                                 check_options
+                                 );
+use Sophomorix::SophomorixSambaAD qw(
+                                 AD_ou_add
+                                 AD_bind_admin
+                                 AD_unbind_admin
+                                 AD_user_create
+                                 AD_user_test_exist
+                                 AD_group_test_exist
+                                 AD_group_create
+                                 AD_group_addmembers
+                                 AD_get_group_by_token
+                                 get_forbidden_logins
+                                    );
+
+
+
+
+$Conf::log_level=1;
+
+my $ldap = &AD_bind_admin();
+
+
+my ($count,$dn)=&AD_group_test_exist($ldap,"pks-7a");
+#my ($count,$dn)=&AD_user_test_exist($ldap,"krbtgt");
+
+
+print "Count:   $count\n";
+print "DN:      $dn\n";
+
+
+&AD_unbind_admin($ldap);
+
