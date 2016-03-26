@@ -9,12 +9,26 @@ adminDisplayName (tut nicht)
 
 
 Changes:
+1) ----------------------------------------
 creationdate
 tolerationdate
 deactivationdate
 
 oMSyntax 23 (Zeit) --> oMSyntax 64 (utf8 string)
 -> Just switch that does not work, schema is not loadable 
+
+2) ----------------------------------------
+bei Gruppenerweiterungen
+statt type: role ?
+
+
+Benamung/Unterscheidung:
+
+mailquota bei user mailquota
+(Oder kann dasselbe attribut nochmals verwendet werden?)
+
+mailalias bei user? oder kann diese Mailadresse schon eingetragen werden
+
 
 
 ############################################################
@@ -83,3 +97,9 @@ sophomorix-print:
        (Firstnames, Surnames will be utf8 encoded)
      - add support for templates
        see pull requests for sophomorix2
+
+############################################################
+Janitor scripts
+############################################################
+
+check if user is in more groups of type class
