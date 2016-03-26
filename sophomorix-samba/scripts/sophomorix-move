@@ -218,8 +218,8 @@ if ($info==1) {
         $ou_new,
        )=split(/::/,$line);
 
-    my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old);
-    my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new);
+    my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old,"adminclass");
+    my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new,"adminclass");
 
     if (not defined $old_status){$old_status=""};
        # Ausgabe
@@ -329,8 +329,8 @@ while(<USERVERSETZEN>){
      }
    }
 
-    my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old);
-    my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new);
+    my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old,"adminclass");
+    my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new,"adminclass");
     my $target_branch="CN=".$group_token_new.",CN=Students,OU=".$ou_new.",".$base;
 
    #####################################
@@ -378,7 +378,7 @@ while(<USERVERSETZEN>){
 
     # make sure new group exits
     &AD_group_create({ldap=>$ldap,
-                     group=>$neue_klasse,
+                     group=>$group_token_new,
                      ou=>$ou_new,
                      school_token=>$school_token_new,
                      role=>"class",
@@ -419,13 +419,15 @@ while(<USERVERSETZEN>){
    #system("find $new_home -group $alte_klasse -print0 | xargs --no-run-if-empty -0 chown .$neue_klasse");
 
    # user in samba AD updaten
+    my $token_group_old=&AD_get_group_by_token($alte_klasse,$school_token_old,"adminclass");
+    my $token_group_new=&AD_get_group_by_token($neue_klasse,$school_token_new,"adminclass");
     &AD_group_addmembers({ldap => $ldap,
-                          group => $neue_klasse,
+                          group => $token_group_new,
                           addmembers => $login_versetzen,
                           school_token => $school_token_new,
                         });   
     &AD_group_removemembers({ldap => $ldap, 
-                             group => $alte_klasse,
+                             group => $token_group_old,
                              removemembers => $login_versetzen,
                              school_token => $school_token_old,
                            });   

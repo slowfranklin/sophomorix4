@@ -88,23 +88,26 @@ sub AD_unbind_admin {
 }
 
 
+
 sub AD_user_kill {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
-    my $login = $arg_ref->{login};
+    my $user = $arg_ref->{login};
     my $identifier = $arg_ref->{identifier};
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
     if ($count > 0){
-        my $command="samba-tool user delete ". $login;
+        my $command="samba-tool user delete ". $user;
         print "   # $command\n";
         system($command);
         return;
     } else {
-        print "   * User $login nonexisting ($count results)\n";
+        print "   * User $user nonexisting ($count results)\n";
         return;
     }
 }
+
+
 
 sub AD_user_create {
     my ($arg_ref) = @_;
@@ -133,7 +136,7 @@ sub AD_user_create {
     my $user_principal_name = $login."\@"."linuxmuster.local";
     # dn
     my $base=&AD_get_base();
-    my $group_token=&AD_get_group_by_token($group,$school_token);
+    my $group_token=&AD_get_group_by_token($group,$school_token,$role);
     my $container=&AD_get_container_by_role($role,$group_token);
 
     my $dn_class = $container."OU=".$ou.",".$base;
@@ -204,22 +207,34 @@ sub AD_user_create {
 }
 
 
+
 sub AD_get_base {
     # ?????
     return "DC=linuxmuster,DC=local";
 }
 
 
+
 sub AD_get_group_by_token {
-    my ($group,$school_token) = @_;
+    my ($group,$school_token,$role) = @_;
     my $groupname="";
-    if ($school_token eq "---" or $school_token eq ""){
-        $groupname=$group;
+    if ($role eq "adminclass"){
+        if ($school_token eq "---" or $school_token eq ""){
+            # no multischool
+            $groupname=$group;
+        } else {
+            # multischool
+            $groupname=$school_token."-".$group;
+        }
+        return $groupname;
+    } elsif ($role eq "project"){
+        # project: no token-prefix
+        return $group;
     } else {
-        $groupname=$school_token."-".$group;
+        return $group;
     }
-    return $groupname;
 }
+
 
 
 sub AD_get_container_by_role {
@@ -277,6 +292,7 @@ sub AD_ou_add {
 }
 
 
+
 sub AD_object_search {
     my ($ldap,$type,$name) = @_;
     # returns 0,"" or 1,"dn of object"
@@ -305,6 +321,8 @@ sub AD_object_search {
         return (0,"","");
     }
 }
+
+
 
 sub AD_object_move {
     my ($arg_ref) = @_;
@@ -336,7 +354,7 @@ sub AD_group_create {
     my $role = $arg_ref->{role};
     my $school_token = $arg_ref->{school_token};
 
-    my $group_token=&AD_get_group_by_token($group,$school_token);
+    my $group_token=&AD_get_group_by_token($group,$school_token,$role);
 
     # calculate missing Attributes
     my $base=&AD_get_base();
@@ -369,13 +387,12 @@ sub AD_group_create {
 
 
 sub AD_group_addmembers {
+    # requires token-group as groupname
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
     my $user = $arg_ref->{addmembers};
     my $school_token = $arg_ref->{school_token};
-
-    $group=&AD_get_group_by_token($group,$school_token);
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
     if ($count > 0){
@@ -394,12 +411,12 @@ sub AD_group_addmembers {
 
 
 sub AD_group_removemembers {
+    # requires token-group as groupname
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
     my $user = $arg_ref->{removemembers};
     my $school_token = $arg_ref->{school_token};
-    $group=&AD_get_group_by_token($group,$school_token);
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
     if ($count > 0){

@@ -213,7 +213,7 @@ if ($info==1) {
        $school_token,
        $role)=split("::",$line);
 
-       my $group_token=&AD_get_group_by_token($class_group,$school_token);
+       my $group_token=&AD_get_group_by_token($class_group,$school_token,$role);
 
        my $identifier_cut=substr($identifier,0,28);
        printf "%-11s%-29s%-10s%-6s%-6s%-10s%-10s\n",
@@ -487,8 +487,10 @@ while(<SOPHOMORIXADD>){
                     school_token=>$school_token,
                     role=>"class",
                   });
+
+  my $token_group=&AD_get_group_by_token($class_group,$school_token,$role);
   &AD_group_addmembers({ldap => $ldap,
-                         group => $class_group,
+                         group => $token_group,
                          addmembers => $login_check_ok,
                          school_token=>$school_token,
                        });   

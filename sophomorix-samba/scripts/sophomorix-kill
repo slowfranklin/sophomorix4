@@ -191,7 +191,7 @@ if ($info==1) {
         $linux_gruppe_to_kill,
         $school_token,
         $ou)=split(/::/,$line);
-       my $group_token=&AD_get_group_by_token($linux_gruppe_to_kill,$school_token);
+       my $group_token=&AD_get_group_by_token($linux_gruppe_to_kill,$school_token,"---");
 
        printf "%-11s %-16s %-35s %-12s\n",
               $login_name_to_kill,
@@ -258,7 +258,10 @@ if ($killuser ne ""){
  	    next;
         }
         chomp();
-        ($identifier_to_kill, $login_name_to_kill)=split(/::/);
+        ($identifier_to_kill, 
+         $login_name_to_kill)=split(/::/);
+        print "Killing $login_name_to_kill\n";
+
         &AD_user_kill({ldap=>$ldap,
                        login=>$login_name_to_kill,
                        identifier=>$identifier_to_kill});
