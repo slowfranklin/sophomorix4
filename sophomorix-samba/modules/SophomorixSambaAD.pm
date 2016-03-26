@@ -35,7 +35,9 @@ $Data::Dumper::Terse = 1;
             AD_get_group_by_token
             get_forbidden_logins
             AD_ou_add
+            AD_get_base
             AD_object_search
+            AD_object_move
             );
 
 sub AD_get_passwd {
@@ -92,7 +94,7 @@ sub AD_user_kill {
     my $login = $arg_ref->{login};
     my $identifier = $arg_ref->{identifier};
 
-    my ($count,$dn_exist)=&AD_object_search($ldap,"user",$user);
+    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
     if ($count > 0){
         my $command="samba-tool user delete ". $login;
         print "   # $command\n";
@@ -283,12 +285,12 @@ sub AD_object_search {
     # (&(objectclass=user)(cn=pete)
     # (&(objectclass=group)(cn=7a)
     my $filter="(&(objectclass=".$type.") (cn=".$name."))"; 
-    print "$filter\n";
     my $base=&AD_get_base();
     my $mesg = $ldap->search(
                       base   => $base,
                       scope => 'sub',
                       filter => $filter,
+                      attr => ['cn']
                             );
     #print Dumper(\$mesg);
     my $count = $mesg->count;
@@ -296,12 +298,33 @@ sub AD_object_search {
         # process first entry
         my ($entry,@entries) = $mesg->entries;
         my $dn = $entry->dn();
-        return ($count,$dn);
+        my $cn = $entry->get_value ('cn');
+        $cn="CN=".$cn;
+        return ($count,$dn,$cn);
     } else {
-        return (0,"");
+        return (0,"","");
     }
 }
 
+sub AD_object_move {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $dn = $arg_ref->{dn};
+    my $target_branch = $arg_ref->{target_branch};
+    my $rdn = $arg_ref->{rdn};
+
+    # create branch
+    my $result = $ldap->add($target_branch,attr => ['objectclass' => ['top', 'container']]);
+    #print Dumper(\$result);
+
+    # move object
+    $result = $ldap->moddn ( $dn,
+                        newrdn => $rdn,
+                        deleteoldrdn => '1',
+                        newsuperior => $target_branch
+                               );
+    #print Dumper(\$result);
+}
 
 
 
@@ -320,7 +343,7 @@ sub AD_group_create {
     my $container=&AD_get_container_by_role($role,$group_token);
     my $dn = "cn=".$group_token.",".$container."OU=".$ou.",".$base;
 
-    my ($count,$dn_exist)=&AD_object_search($ldap,"group",$group_token);
+    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"group",$group_token);
     if ($count> 0){
         print "   * Group $group_token exists already ($count results)\n";
         return;
@@ -354,7 +377,7 @@ sub AD_group_addmembers {
 
     $group=&AD_get_group_by_token($group,$school_token);
 
-    my ($count,$dn_exist)=&AD_object_search($ldap,"user",$user);
+    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
     if ($count > 0){
         print "   * User $user exists ($count results)\n";
         print "Adding $user to group $group\n";
@@ -378,7 +401,7 @@ sub AD_group_removemembers {
     my $school_token = $arg_ref->{school_token};
     $group=&AD_get_group_by_token($group,$school_token);
 
-    my ($count,$dn_exist)=&AD_object_search($ldap,"user",$user);
+    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
     if ($count > 0){
         print "   * User $user exists ($count results)\n";
         print "Removing $user from group $group\n";

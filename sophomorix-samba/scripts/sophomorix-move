@@ -25,12 +25,16 @@ use Sophomorix::SophomorixBase qw(
                                  );
 
 use Sophomorix::SophomorixSambaAD qw(
+                                 AD_ou_add
+                                 AD_get_base
                                  AD_bind_admin
                                  AD_unbind_admin
                                  AD_group_create
                                  AD_group_addmembers
                                  AD_group_removemembers
                                  AD_get_group_by_token
+                                 AD_object_search
+                                 AD_object_move
                                     );
 my @arguments = @ARGV;
 
@@ -48,6 +52,7 @@ my $school_token_old;
 my $school_token_new;
 my $ou_old;
 my $ou_new;
+my %ou_created=();
 
 my $identifier;
 my $alte_zeile="";
@@ -239,6 +244,7 @@ if ($info==1) {
 # start
 # ===========================================================================
 my $ldap = &AD_bind_admin();
+my $base=&AD_get_base();
 
 &log_script_start(@arguments);
 
@@ -323,13 +329,14 @@ while(<USERVERSETZEN>){
      }
    }
 
+    my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old);
+    my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new);
+    my $target_branch="CN=".$group_token_new.",CN=Students,OU=".$ou_new.",".$base;
 
    #####################################
    # Ermittelte Daten ausgeben
    #####################################
    if($Conf::log_level>=1){
-      my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old);
-      my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new);
 
       print "\n";
       &print_title("Moving User $login_versetzen ($user_nummer) to another class:");
@@ -343,6 +350,7 @@ while(<USERVERSETZEN>){
       #print("Task Directory:    $home_task_dir\n");
       print("SchoolToken(Old):  $school_token_old\n");
       print("SchoolToken(New):  $school_token_new\n");
+      print("Target branch:  $target_branch\n");
    }
 
    # 0. rember login to set quota later
@@ -352,14 +360,37 @@ while(<USERVERSETZEN>){
    #&save_tausch_klasse($login_versetzen, $alte_klasse);
 
 
-   # Sicherstellen dass neue Klasse (Linux-Gruppe) existiert
-   &AD_group_create({ldap=>$ldap,
+    # fetch the dn (where the object really is)
+    my ($count,$dn,$rdn)=&AD_object_search($ldap,"user",$login_versetzen);
+    if ($count==0){
+        print "\nWARNING: $login_versetzen not found in ldap, skipping\n\n";
+        next;
+    }
+ 
+   # make sue OU and tree exists
+   if (not exists $ou_created{$ou_new}){
+        # create new ou
+        &AD_ou_add($ldap,$ou_new);
+        # remember new ou to add it only once
+        $ou_created{$ou_new}="already created";
+    }
+
+
+    # make sure new group exits
+    &AD_group_create({ldap=>$ldap,
                      group=>$neue_klasse,
                      ou=>$ou_new,
                      school_token=>$school_token_new,
                      role=>"class",
                     });
 
+
+
+    &AD_object_move({ldap=>$ldap,
+                     dn=>$dn,
+                     rdn=>$rdn,
+                     target_branch=>$target_branch,
+                    });
 
    #if ($neue_klasse ne ${DevelConf::teacher}) {
    #  # first create sb entry, then create files (db_entry needed)
@@ -369,7 +400,7 @@ while(<USERVERSETZEN>){
 
    ## removing bind mounts if necessary
    #if ($DevelConf::share_pointer_type eq "bind"){
-   #    &delete_bind_to_all_subdirs($home_share_dir);
+   #    &delete_bind_sto_all_subdirs($home_share_dir);
    #    &delete_bind_to_all_subdirs($home_task_dir);
    #}
 
