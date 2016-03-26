@@ -13,6 +13,12 @@ use Sophomorix::SophomorixConfig;
 #use IMAP::Admin;
 #use DBI;
 use Net::LDAP;
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Useqq = 1;
+$Data::Dumper::Terse = 1; 
+
 use Sophomorix::SophomorixBase qw(
                                  print_line
                                  print_title
@@ -34,6 +40,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_unbind_admin
                                  AD_user_create
                                  AD_object_search
+                                 AD_object_move
                                  AD_group_create
                                  AD_group_addmembers
                                  AD_get_group_by_token
@@ -48,11 +55,10 @@ $Conf::log_level=1;
 my $ldap = &AD_bind_admin();
 
 
-my ($count,$dn)=&AD_object_search($ldap,"group","koehleju");
-
-
-print "Count:   $count\n";
-print "DN:      $dn\n";
+#my ($count,$dn,$rdn)=&AD_object_search($ldap,"user","koehleju");
+#print "Count:       $count\n";
+#print "OLD DN:      $dn\n";
+#print "OLD RDN:     $rdn\n";
 
 
 &AD_unbind_admin($ldap);
