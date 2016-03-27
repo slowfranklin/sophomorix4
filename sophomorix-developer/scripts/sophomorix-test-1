@@ -17,33 +17,140 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_bind_admin
                                  AD_unbind_admin
                                  AD_get_base
+                                 AD_object_search
                                     );
 use Sophomorix::SophomorixTest qw(
                                  AD_test_object_exist
                                  );
 
 $Conf::log_level=1;
+my $add=0;
+my $move=0;
+my $kill=0;
+my $help=0;
+my $skip_warning=0;
+
+my $testopt=GetOptions(
+           "add|a" => \$add,
+           "move|m" => \$move,
+           "kill|k" => \$kill,
+           "help|h" => \$help,
+           "skip|s" => \$skip_warning,
+          );
+
+
+# Prüfen, ob Optionen erkannt wurden, sonst Abbruch
+&check_options($testopt);
 
 my $ldap = &AD_bind_admin();
+my $file_add=$DevelConf::path_result."/sophomorix.add";
+my $file_move=$DevelConf::path_result."/sophomorix.move";
+my $file_kill=$DevelConf::path_result."/sophomorix.kill";
+
+my $testdata="/usr/share/sophomorix-developer/testdata";
+my $file_add_test=$testdata."/sophomorix.add-1";
+my $file_move_test=$testdata."/sophomorix.move-1";
+my $file_kill_test=$testdata."/sophomorix.kill-1";
+
+############################################################
+# Check preliminaries
+############################################################
+
+# --add
+if ($add==1){
+    if (-e $file_add){
+        print "\nTo run this test $file_add must not be there!\n\n";
+        if ($skip_warning==0){
+            exit;
+        }
+    }
+    my @users=("koehleju","maier");
+    foreach my $user (@users){
+        my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
+        if ($count > 0){
+            print "\nTo run this test $user must not exist in AD!\n\n";
+            if ($skip_warning==0){
+                exit;
+	    }
+        }
+    }
+}
 
 
+# --kill
+if ($kill==1){
+    if (-e $file_kill){
+        print "\nTo run this test $file_kill must not be there!\n\n";
+        if ($skip_warning==0){
+            exit;
+        }
+    }
+}
 
-&AD_test_object_exist({ldap=>$ldap,
-                   dn=>"CN=koehleju7,CN=attic,CN=Students,OU=LEUNA,DC=linuxmuster,DC=local",
+############################################################
+# Run the tests
+############################################################
+
+
+# --add
+if ($add==1){
+    # copy sophomorix.add
+    system("cp $file_add_test $file_add");
+    system("sophomorix-add -i");
+#    system("sophomorix-add");
+
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=muellegr42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
-                   displayName=>"Jürgen Köhler",
-                   givenName=>"Jürgen",
-                   name=>"koehleju7",
-                   sAMAccountname=>"koehleju7",
-                   sn=>"Köhler",
-                   sophomorixAdminClass => "pks-7a",
-                   sophomorixFirstPassword => "Muster!",
-                   sophomorixFirstnameASCII => "Juergen",
-                   sophomorixSurnameASCII  => "Koehler",
+                   displayName=>"Gregor Müller",
+                   givenName=>"Gregor",
+                   name=>"muellegr42",
+                   sAMAccountname=>"muellegr42",
+                   sn=>"Müller",
+                   sophomorixAdminClass => "bsz-m7ab",
+                   sophomorixFirstPassword => "Muster23!",
+                   sophomorixFirstnameASCII => "Gregor",
+                   sophomorixSurnameASCII  => "Mueller",
                    sophomorixRole => "student",
-                   sophomorixSchoolPrefix => "pks",
-                   sophomorixSchoolname => "PKS",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
                   });
+
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=maiersa42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Sarina Maier",
+                   givenName=>"Sarina",
+                   name=>"maiersa42",
+                   sAMAccountname=>"maiersa42",
+                   sn=>"Maier",
+                   sophomorixAdminClass => "bsz-m7ab",
+                   sophomorixFirstPassword => "Muster!",
+                   sophomorixFirstnameASCII => "Sarina",
+                   sophomorixSurnameASCII  => "Maier",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                  });
+
+
+
+
+
+}
+
+
+
+
+
+# --kill
+if ($kill==1){
+    # copy sophomorix.add
+    system("cp $file_kill_test $file_kill");
+    system("sophomorix-kill -i");
+    system("sophomorix-kill");
+
+}
 
 
 

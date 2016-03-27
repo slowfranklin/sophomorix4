@@ -70,6 +70,7 @@ LANGUAGE=$(DESTDIR)/usr/share/sophomorix/lang
 # Testfiles
 DEVELOPERDIR=$(DESTDIR)/usr/share/sophomorix-developer
 DEVELEX=$(DESTDIR)/usr/share/sophomorix-developer/examples
+TESTDATA=$(DESTDIR)/usr/share/sophomorix-developer/testdata
 
 # sophomorix-virusscan
 #VIRUSSCAN=$(DESTDIR)/usr/share/sophomorix-virusscan
@@ -292,33 +293,26 @@ install-virusscan:
 
 install-developer:
 	### install-developer
-### installing test and developement tools
+### installing test scripts
 	@install -d $(DESTDIR)/usr/sbin
 	@install -oroot -groot --mode=0744 sophomorix-developer/scripts/sophomorix-test-*[0-9] $(DESTDIR)/usr/sbin
 # copying perl developer modules
 	@install -d -m755 -oroot -groot $(PERLMOD)
 	@install -oroot -groot --mode=0644 sophomorix-developer/modules/SophomorixTest.pm $(PERLMOD)
-# tools for developing
-# installing sophomorix.add example
+# installing  examples
 	@install -d $(DEVELOPERDIR)
 	@install -d $(DEVELEX)
-	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.add $(DEVELEX)/sophomorix.add 
-	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.move $(DEVELEX)/sophomorix.move
-	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.kill $(DEVELEX)/sophomorix.kill
+	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.add $(DEVELEX)
+	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.move $(DEVELEX)
+	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.kill $(DEVELEX)
+# installing  testdata
+	@install -d $(TESTDATA)
+	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/sophomorix.add-1 $(TESTDATA)
+	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/sophomorix.move-1 $(TESTDATA)
+	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/sophomorix.kill-1 $(TESTDATA)
 # installing sources.list examples
 #	@install -d $(TOOLS)/apt/s-lists
 #	@install -oroot -groot --mode=0644 sophomorix-developer/tools/apt/s-lists/*sources.list $(TOOLS)/apt/s-lists
-# installing testfiles
-#	@install -d $(DEVELOPERDIR)
-#	@install -d $(DEVELOPERDIR)/testfiles
-#	@install -oroot -groot --mode=0644 sophomorix-developer/testfiles/*.txt $(DEVELOPERDIR)/testfiles
-#	@install -d $(DEVELOPERDIR)/projectfiles
-#	@install -oroot -groot --mode=0644 sophomorix-developer/projectfiles/*.dump $(DEVELOPERDIR)/projectfiles
-#	@install -d $(TOOLS)/projectdumps
-# installing  scripts for laptop development
-#	@install -d $(TOOLS)/scripts/laptop
-#	@install -oroot -groot --mode=0755 sophomorix-developer/tools/scripts/laptop/*-cvs $(TOOLS)/scripts/laptop
-
 
 
 #clean-doc:
