@@ -133,6 +133,74 @@ if ($add==1){
                    sophomorixSchoolname => "BSZLEO",
                   });
 
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=jonsonad42,CN=bsz-m8cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Aðalráður Jónsson",
+                   givenName=>"Aðalráður",
+                   name=>"jonsonad42",
+                   sAMAccountname=>"jonsonad42",
+                   sn=>"Jónsson",
+                   sophomorixAdminClass => "bsz-m8cd",
+                   sophomorixFirstPassword => "Muster23!",
+                   sophomorixFirstnameASCII => "Adalradur",
+                   sophomorixSurnameASCII  => "Jonsson",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                  });
+
+
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=samardze42,CN=bsz-m8cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Željko Samardžić",
+                   givenName=>"Željko",
+                   name=>"samardze42",
+                   sAMAccountname=>"samardze42",
+                   sn=>"Samardžić",
+                   sophomorixAdminClass => "bsz-m8cd",
+                   sophomorixFirstPassword => "Muster!",
+                   sophomorixFirstnameASCII => "Zeljko",
+                   sophomorixSurnameASCII  => "Samardzic",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                  });
+
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=oe42,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Gökhan Ömür",
+                   givenName=>"Gökhan",
+                   name=>"oe42",
+                   sAMAccountname=>"oe42",
+                   sn=>"Ömür",
+                   sophomorixAdminClass => "bsz-teachers",
+                   sophomorixFirstPassword => "LinuxMuster23!",
+                   sophomorixFirstnameASCII => "Goekhan",
+                   sophomorixSurnameASCII  => "Oemuer",
+                   sophomorixRole => "teacher",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                  });
+
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=wu42,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Désirée Würth",
+                   givenName=>"Désirée",
+                   name=>"wu42",
+                   sAMAccountname=>"wu42",
+                   sn=>"Würth",
+                   sophomorixAdminClass => "bsz-teachers",
+                   sophomorixFirstPassword => "LinuxMuster!",
+                   sophomorixFirstnameASCII => "Desiree",
+                   sophomorixSurnameASCII  => "Wuerth",
+                   sophomorixRole => "teacher",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                  });
 
 
 
