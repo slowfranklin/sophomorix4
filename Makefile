@@ -78,7 +78,7 @@ DEVELEX=$(DESTDIR)/usr/share/sophomorix-developer/examples
 #TOOLS=$(DESTDIR)/root/sophomorix-developer
 
 
-all: install-sophomorix-samba install-virusscan
+all: install-sophomorix-samba install-virusscan install-developer
 
 help:
 	@echo ' '
@@ -294,11 +294,10 @@ install-developer:
 	### install-developer
 ### installing test and developement tools
 	@install -d $(DESTDIR)/usr/sbin
-#	@install -oroot -groot --mode=0744 sophomorix-developer/scripts/sophomorix-test $(DESTDIR)/usr/sbin
-#	@install -oroot -groot --mode=0744 sophomorix-developer/scripts/sophomorix-*[a-z1-9] $(DESTDIR)/usr/sbin
+	@install -oroot -groot --mode=0744 sophomorix-developer/scripts/sophomorix-test-*[0-9] $(DESTDIR)/usr/sbin
 # copying perl developer modules
-#	@install -d -m755 -oroot -groot $(PERLMOD)
-#	@install -oroot -groot --mode=0644 sophomorix-developer/modules/Sophomorix*[a-z1-9] $(PERLMOD)
+	@install -d -m755 -oroot -groot $(PERLMOD)
+	@install -oroot -groot --mode=0644 sophomorix-developer/modules/SophomorixTest.pm $(PERLMOD)
 # tools for developing
 # installing sophomorix.add example
 	@install -d $(DEVELOPERDIR)
