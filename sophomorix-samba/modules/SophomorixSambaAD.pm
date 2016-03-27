@@ -137,7 +137,7 @@ sub AD_user_create {
     # dn
     my $base=&AD_get_base();
     my $group_token=&AD_get_group_by_token($group,$school_token,$role);
-    my $container=&AD_get_container_by_role($role,$group_token);
+    my $container=&AD_get_container($role,$group_token);
 
     my $dn_class = $container."OU=".$ou.",".$base;
     my $dn = "cn=".$login.",".$container."OU=".$ou.",".$base;
@@ -218,7 +218,7 @@ sub AD_get_base {
 sub AD_get_group_by_token {
     my ($group,$school_token,$role) = @_;
     my $groupname="";
-    if ($role eq "adminclass"){
+    if ($role eq "adminclass" or $role eq "student" or $role eq "teacher"){
         if ($school_token eq "---" or $school_token eq ""){
             # no multischool
             $groupname=$group;
@@ -237,9 +237,11 @@ sub AD_get_group_by_token {
 
 
 
-sub AD_get_container_by_role {
+sub AD_get_container {
     # returns empty string or container followed by comma
     # i.e. >< OR >CN=Students,< 
+    # first option: role(user) OR type(group)
+    # second option: groupname (with token, i.e. pks-7a) 
     my ($role,$group) = @_;
     my $group_strg="CN=".$group.",";
     my $container="";
@@ -247,7 +249,7 @@ sub AD_get_container_by_role {
         $container=$group_strg.$DevelConf::AD_student_cn;
     }  elsif ($role eq "teacher"){
         $container=$DevelConf::AD_teacher_cn;
-    }  elsif ($role eq "class"){
+    }  elsif ($role eq "adminclass"){
         $container=$DevelConf::AD_class_cn;
     }  elsif ($role eq "project"){
         $container=$DevelConf::AD_project_cn;
@@ -352,13 +354,14 @@ sub AD_group_create {
     my $group = $arg_ref->{group};
     my $ou = $arg_ref->{ou};
     my $role = $arg_ref->{role};
+    my $type = $arg_ref->{type};
     my $school_token = $arg_ref->{school_token};
 
-    my $group_token=&AD_get_group_by_token($group,$school_token,$role);
+    my $group_token=&AD_get_group_by_token($group,$school_token,$type);
 
     # calculate missing Attributes
     my $base=&AD_get_base();
-    my $container=&AD_get_container_by_role($role,$group_token);
+    my $container=&AD_get_container($type,$group_token);
     my $dn = "cn=".$group_token.",".$container."OU=".$ou.",".$base;
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"group",$group_token);
@@ -370,7 +373,7 @@ sub AD_group_create {
     # adding the group
     &Sophomorix::SophomorixBase::print_title("Creating Group:");
     print("   Group:    $group_token\n");
-    print("   Role:     $role\n");
+    print("   Type:     $type\n");
     print("   dn:       $dn\n");
     my $result = $ldap->add( $dn,
                            attr => [

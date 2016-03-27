@@ -118,6 +118,7 @@ my $ldap = &AD_bind_admin();
 # make sure group exists
 &AD_group_create({ldap=>$ldap, 
                  group=>$group,
+                 type=>"sophomorix-groupadd"
                 });
 
 

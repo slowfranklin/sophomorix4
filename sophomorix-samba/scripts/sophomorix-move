@@ -381,7 +381,7 @@ while(<USERVERSETZEN>){
                      group=>$group_token_new,
                      ou=>$ou_new,
                      school_token=>$school_token_new,
-                     role=>"class",
+                     type=>"adminclass",
                     });
 
 
