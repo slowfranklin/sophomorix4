@@ -26,16 +26,9 @@ use Sophomorix::SophomorixBase qw(
 
 use Sophomorix::SophomorixSambaAD qw(
                                  AD_user_move
-                                 AD_ou_add
-                                 AD_get_base
                                  AD_bind_admin
                                  AD_unbind_admin
-                                 AD_group_create
-                                 AD_group_addmembers
-                                 AD_group_removemembers
                                  AD_get_group_by_token
-                                 AD_object_search
-                                 AD_object_move
                                     );
 my @arguments = @ARGV;
 
@@ -50,7 +43,6 @@ my $school_token_old;
 my $school_token_new;
 my $ou_old;
 my $ou_new;
-my %ou_created=();
 
 my $identifier;
 my $alte_zeile="";
@@ -242,7 +234,6 @@ if ($info==1) {
 # start
 # ===========================================================================
 my $ldap = &AD_bind_admin();
-my $base=&AD_get_base();
 
 &log_script_start(@arguments);
 
