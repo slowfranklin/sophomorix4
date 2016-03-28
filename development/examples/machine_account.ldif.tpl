@@ -1,0 +1,17 @@
+dn: CN=@@uppercase_computername@@,CN=Computers,@@basedn@@
+changetype: add
+objectClass: computer
+cn: @@uppercase_computername@@
+distinguishedName: CN=@@uppercase_computername@@,CN=Computers,@@basedn@@
+objectCategory: CN=Computer,CN=Schema,CN=Configuration,@@basedn@@
+instanceType: 4
+displayName: @@uppercase_computername@@$
+name: @@uppercase_computername@@
+userAccountControl: 4096
+codePage: 0
+countryCode: 0
+accountExpires: 0
+sAMAccountName: @@uppercase_computername@@$
+dNSHostName: @@computername@@.@@domainname@@
+servicePrincipalName: HOST/@@uppercase_computername@@
+servicePrincipalName: HOST/@@computername@@.@@domainname@@
