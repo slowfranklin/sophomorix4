@@ -1,6 +1,6 @@
 ###### class::identifier_ascii::login::password::uid::gid::unid::OU::school_token::role::firstname_utf8::surname_utf8:: ######
-m7ab::Mueller;Gregor;26.01.1992::muellegr42::Muster23!::---::---::unid2345::BSZLEO::bsz::student::Müller::Gregor::
 m7ab::Maier;Sarina;25.01.1991::maiersa42::Muster!::---::---::unid1234::BSZLEO::bsz::student::Maier::Sarina::
+m7ab::Mueller;Gregor;26.01.1992::muellegr42::Muster23!::---::---::unid2345::BSZLEO::bsz::student::Müller::Gregor::
 m8cd::Jonsson;Adalradur;22.03.1996::jonsonad42::Muster23!::---::---::unid3456::BSZLEO::bsz::student::Jónsson::Aðalráður::
 m8cd::Samardzic;Zeljko;22.04.1992::samardze42::Muster!::---::---::unid4567::BSZLEO::bsz::student::Samardžić::Željko::
 teachers::Oemuer;Goekhan;15.09.1976::oe42::LinuxMuster23!::---::---::unid5678::BSZLEO::bsz::teacher::Ömür::Gökhan::

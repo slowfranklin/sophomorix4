@@ -100,23 +100,6 @@ if ($add==1){
     system("sophomorix-add -i");
 #    system("sophomorix-add");
     &AD_test_object_exist({ldap=>$ldap,
-                   dn=>"CN=muellegr42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
-                   #####
-                   displayName=>"Gregor Müller",
-                   givenName=>"Gregor",
-                   name=>"muellegr42",
-                   sAMAccountname=>"muellegr42",
-                   sn=>"Müller",
-                   sophomorixAdminClass => "bsz-m7ab",
-                   sophomorixExitAdminClass => "unknown",
-                   sophomorixFirstPassword => "Muster23!",
-                   sophomorixFirstnameASCII => "Gregor",
-                   sophomorixSurnameASCII  => "Mueller",
-                   sophomorixRole => "student",
-                   sophomorixSchoolPrefix => "bsz",
-                   sophomorixSchoolname => "BSZLEO",
-                  });
-    &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=maiersa42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Sarina Maier",
@@ -132,6 +115,27 @@ if ($add==1){
                    sophomorixRole => "student",
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
+                   memberOf => "students,bsz-students,bsz-m7ab",
+                   not_memberOf => "teachers,bsz-teachers,lin-teachers",
+                  });
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=muellegr42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Gregor Müller",
+                   givenName=>"Gregor",
+                   name=>"muellegr42",
+                   sAMAccountname=>"muellegr42",
+                   sn=>"Müller",
+                   sophomorixAdminClass => "bsz-m7ab",
+                   sophomorixExitAdminClass => "unknown",
+                   sophomorixFirstPassword => "Muster23!",
+                   sophomorixFirstnameASCII => "Gregor",
+                   sophomorixSurnameASCII  => "Mueller",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                   memberOf => "students,bsz-students,bsz-m7ab",
+                   not_memberOf => "teachers,bsz-teachers,lin-teachers",
                   });
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=jonsonad42,CN=bsz-m8cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
@@ -149,6 +153,8 @@ if ($add==1){
                    sophomorixRole => "student",
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
+                   memberOf => "students,bsz-students,bsz-m8cd",
+                   not_memberOf => "teachers,bsz-teachers,lin-teachers",
                   });
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=samardze42,CN=bsz-m8cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
@@ -166,6 +172,8 @@ if ($add==1){
                    sophomorixRole => "student",
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
+                   memberOf => "students,bsz-students,bsz-m8cd",
+                   not_memberOf => "teachers,bsz-teachers,lin-teachers",
                   });
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=oe42,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
@@ -183,6 +191,8 @@ if ($add==1){
                    sophomorixRole => "teacher",
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
+                   memberOf => "teachers,bsz-teachers,",
+                   not_memberOf => "lin-teachers,students",
                   });
 
     &AD_test_object_exist({ldap=>$ldap,
@@ -201,6 +211,8 @@ if ($add==1){
                    sophomorixRole => "teacher",
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
+                   memberOf => "teachers,bsz-teachers,",
+                   not_memberOf => "lin-teachers,students",
                   });
 }
 
@@ -228,6 +240,8 @@ if ($move==1){
                    sophomorixRole => "student",
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
+                   memberOf => "students,bsz-students,bsz-attic",
+                   not_memberOf => "teachers,bsz-teachers,lin-teachers",
                   });
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=muellegr42,CN=lin-attic,CN=Students,OU=LINUXLEO,DC=linuxmuster,DC=local",
@@ -245,6 +259,8 @@ if ($move==1){
                    sophomorixRole => "student",
                    sophomorixSchoolPrefix => "lin",
                    sophomorixSchoolname => "LINUXLEO",
+                   memberOf => "students,bsz-students,lin-attic",
+                   not_memberOf => "teachers,bsz-teachers,lin-teachers",
                   });
 }
 
