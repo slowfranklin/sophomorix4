@@ -227,7 +227,21 @@ sub AD_user_move {
     # fetch the dn (where the object really is)
     my ($count,$dn,$rdn)=&AD_object_search($ldap,"user",$user);
     if ($count==0){
-        print "\nWARNING: $login_versetzen not found in ldap, skipping\n\n";
+        print "\nWARNING: $user not found in ldap, skipping\n\n";
+        next;
+    }
+    my ($count_group_old,
+        $dn_group_old,
+        $rdn_group_old)=&AD_object_search($ldap,"group",$group_old);
+    if ($count_group_old==0){
+        print "\nWARNING: $group_old not found in ldap, skipping\n\n";
+        next;
+    }
+    my ($count_group_new,
+        $dn_group_new,
+        $rdn_group_new)=&AD_object_search($ldap,"group",$group_new);
+    if ($count_group_new==0){
+        print "\nWARNING: $group_new not found in ldap, skipping\n\n";
         next;
     }
 
@@ -258,22 +272,45 @@ sub AD_user_move {
                      school_token=>$school_token_new,
                      type=>"adminclass",
                     });
+
+    my $mesg = $ldap->modify( $dn,
+		      replace => {
+                          sophomorixAdminClass => $group_new,
+                          sophomorixSchoolPrefix => $school_token_new,
+                          sophomorixSchoolname => $ou_new,
+                      }
+               );
+    print Dumper(\$mesg);
+
+    $mesg = $ldap->modify( $dn_group_old,
+		      delete => {
+                          member => $dn,
+                      }
+               );
+
+    $mesg = $ldap->modify( $dn_group_new,
+		      add => {
+                          member => $dn,
+                      }
+               );
+
     &AD_object_move({ldap=>$ldap,
                      dn=>$dn,
                      rdn=>$rdn,
                      target_branch=>$target_branch,
                     });
-    &AD_group_addmembers({ldap => $ldap,
-                          group => $group_new,
-                          addmembers => $user,
-                          school_token => $school_token_new,
-                        });   
-    &AD_group_removemembers({ldap => $ldap, 
-                             group => $group_old,
-                             removemembers => $user,
-                             school_token => $school_token_old,
-                           });   
 
+
+#    &AD_group_addmembers({ldap => $ldap,
+#                          group => $group_new,
+#                          addmembers => $user,
+#                          school_token => $school_token_new,
+#                        });   
+#    &AD_group_removemembers({ldap => $ldap, 
+#                             group => $group_old,
+#                             removemembers => $user,
+#                             school_token => $school_token_old,
+#                           });   
 }
 
 

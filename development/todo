@@ -35,6 +35,13 @@ mailalias bei user? oder kann diese Mailadresse schon eingetragen werden
 Scripts
 ############################################################
 
+AD_user_move
+add AD_group_addmembers and AD_group_removemembers to $ldap->modify( $dn,
+ERROR: attribute 'memberOf' on entry 'CN=muellegr42,CN=lin-attic,CN=Students,OU=LINUXLEO,DC=linuxmuster,DC=local' 
+       must not be modified directly, it is a linked attribute",
+-> What to do?
+
+
 sophomorix-project
 
 add groups with role 'project'
