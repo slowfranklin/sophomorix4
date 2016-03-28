@@ -25,6 +25,7 @@ use Sophomorix::SophomorixBase qw(
                                  );
 
 use Sophomorix::SophomorixSambaAD qw(
+                                 AD_user_move
                                  AD_ou_add
                                  AD_get_base
                                  AD_bind_admin
@@ -38,9 +39,6 @@ use Sophomorix::SophomorixSambaAD qw(
                                     );
 my @arguments = @ARGV;
 
-#&check_connections();
-
-#my $zeit=&zeit_stempel;
 my $time_stamp_file=&time_stamp_file();
 my $user_nummer=0;
 
@@ -331,66 +329,24 @@ while(<USERVERSETZEN>){
 
     my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old,"adminclass");
     my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new,"adminclass");
-    my $target_branch="CN=".$group_token_new.",CN=Students,OU=".$ou_new.",".$base;
 
-   #####################################
-   # Ermittelte Daten ausgeben
-   #####################################
-   if($Conf::log_level>=1){
-
-      print "\n";
-      &print_title("Moving User $login_versetzen ($user_nummer) to another class:");
-      print("Group (Old):       $alte_klasse ($group_token_old)\n");
-      print("Group (New):       $neue_klasse ($group_token_new)\n");
-      print("Old Homedir:       $old_home\n");
-      print("New Home:          $new_home\n");
-      print("New Homedir:       $new_homedir_above\n");
-      print("Old Status:        $old_status\n");
-      #print("Share Directory:   $home_share_dir\n");
-      #print("Task Directory:    $home_task_dir\n");
-      print("SchoolToken(Old):  $school_token_old\n");
-      print("SchoolToken(New):  $school_token_new\n");
-      print("Target branch:  $target_branch\n");
-   }
+    &AD_user_move({ldap=>$ldap,
+                   user=>$login_versetzen,
+                   user_count=>$user_nummer,
+                   group_old=>$group_token_old,
+                   group_new=>$group_token_new,
+                   ou_old=>$ou_old,
+                   ou_new=>$ou_new,
+                   school_token_old=>$school_token_old,
+                   school_token_new=>$school_token_new,
+                   type=>"adminclass",
+                  });
 
    # 0. rember login to set quota later
    #push @users_for_quota, $login_versetzen;
 
    ## die Daten aus dem Tausch-Verzeichnis dem Schüler in sein home moven
    #&save_tausch_klasse($login_versetzen, $alte_klasse);
-
-
-    # fetch the dn (where the object really is)
-    my ($count,$dn,$rdn)=&AD_object_search($ldap,"user",$login_versetzen);
-    if ($count==0){
-        print "\nWARNING: $login_versetzen not found in ldap, skipping\n\n";
-        next;
-    }
- 
-   # make sue OU and tree exists
-   if (not exists $ou_created{$ou_new}){
-        # create new ou
-        &AD_ou_add($ldap,$ou_new);
-        # remember new ou to add it only once
-        $ou_created{$ou_new}="already created";
-    }
-
-
-    # make sure new group exits
-    &AD_group_create({ldap=>$ldap,
-                     group=>$group_token_new,
-                     ou=>$ou_new,
-                     school_token=>$school_token_new,
-                     type=>"adminclass",
-                    });
-
-
-
-    &AD_object_move({ldap=>$ldap,
-                     dn=>$dn,
-                     rdn=>$rdn,
-                     target_branch=>$target_branch,
-                    });
 
    #if ($neue_klasse ne ${DevelConf::teacher}) {
    #  # first create sb entry, then create files (db_entry needed)
@@ -417,45 +373,6 @@ while(<USERVERSETZEN>){
 
    # ehemals testen
    #system("find $new_home -group $alte_klasse -print0 | xargs --no-run-if-empty -0 chown .$neue_klasse");
-
-   # user in samba AD updaten
-    my $token_group_old=&AD_get_group_by_token($alte_klasse,$school_token_old,"adminclass");
-    my $token_group_new=&AD_get_group_by_token($neue_klasse,$school_token_new,"adminclass");
-    &AD_group_addmembers({ldap => $ldap,
-                          group => $token_group_new,
-                          addmembers => $login_versetzen,
-                          school_token => $school_token_new,
-                        });   
-    &AD_group_removemembers({ldap => $ldap, 
-                             group => $token_group_old,
-                             removemembers => $login_versetzen,
-                             school_token => $school_token_old,
-                           });   
-   # samba4 todo: ??????????????????????????????????????????????????????????
-   # update exitadminclass
-
-
-   ## user in db updaten
-   #    if ($neue_klasse eq "attic"){
-   #       &update_user_db_entry($login_versetzen,
-   #                   "AdminClass=$neue_klasse",
-   #                   "Gid=$neue_klasse",
-   #                   "ExitAdminClass=$alte_klasse");
-   #    } elsif ($old_status eq "A") {
-   #       &update_user_db_entry($login_versetzen,
-   #                   "AdminClass=$neue_klasse",
-   #                   "Gid=$neue_klasse",
-   #                   "Status=U",
-   #                   "TolerationDate=",
-   #                   "DeactivationDate=");
-   #    } else {
-   #       &update_user_db_entry($login_versetzen,
-   #                   "AdminClass=$neue_klasse",
-   #                   "Gid=$neue_klasse");
-   #    }
-
-
-
 
    ## links/dirs anlegen 
    #&create_share_link($login_versetzen, $neue_klasse,$neue_klasse,"adminclass");

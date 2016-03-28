@@ -28,6 +28,7 @@ $Data::Dumper::Terse = 1;
             AD_bind_admin
             AD_unbind_admin
             AD_user_create
+            AD_user_move
             AD_user_kill
             AD_group_create
             AD_group_addmembers
@@ -208,6 +209,74 @@ sub AD_user_create {
 
 
 
+sub AD_user_move {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $user = $arg_ref->{user};
+    my $user_count = $arg_ref->{user_count};
+    my $group_old = $arg_ref->{group_old};
+    my $group_new = $arg_ref->{group_new};
+    my $ou_old = $arg_ref->{ou_old};
+    my $ou_new = $arg_ref->{ou_new};
+    my $school_token_old = $arg_ref->{school_token_old};
+    my $school_token_new = $arg_ref->{school_token_new};
+
+    # calculate
+    my $base=&AD_get_base();
+    my $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$base;
+    # fetch the dn (where the object really is)
+    my ($count,$dn,$rdn)=&AD_object_search($ldap,"user",$user);
+    if ($count==0){
+        print "\nWARNING: $login_versetzen not found in ldap, skipping\n\n";
+        next;
+    }
+
+    if($Conf::log_level>=1){
+        print "\n";
+        &Sophomorix::SophomorixBase::print_title("Moving User $user ($user_count):");
+
+        print("DN:                 $dn\n");
+        #print("DN (Parent):        $dn_class\n");
+        print("Group (Old):        $group_old\n");
+        print("Group (New):        $group_new\n");
+        print("School(Old):        $school_token_old ($ou_old)\n");
+        print("School(New):        $school_token_new ($ou_new)\n");
+    }
+
+    # make sure OU and tree exists
+#    if (not exists $ou_created{$ou_new}){
+#         # create new ou
+         &AD_ou_add($ldap,$ou_new);
+#         # remember new ou to add it only once
+#         $ou_created{$ou_new}="already created";
+#     }
+
+    # make sure new group exits
+    &AD_group_create({ldap=>$ldap,
+                     group=>$group_new,
+                     ou=>$ou_new,
+                     school_token=>$school_token_new,
+                     type=>"adminclass",
+                    });
+    &AD_object_move({ldap=>$ldap,
+                     dn=>$dn,
+                     rdn=>$rdn,
+                     target_branch=>$target_branch,
+                    });
+    &AD_group_addmembers({ldap => $ldap,
+                          group => $group_new,
+                          addmembers => $user,
+                          school_token => $school_token_new,
+                        });   
+    &AD_group_removemembers({ldap => $ldap, 
+                             group => $group_old,
+                             removemembers => $user,
+                             school_token => $school_token_old,
+                           });   
+
+}
+
+
 sub AD_get_base {
     # ?????
     return "DC=linuxmuster,DC=local";
@@ -353,32 +422,31 @@ sub AD_group_create {
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
     my $ou = $arg_ref->{ou};
-    my $role = $arg_ref->{role};
     my $type = $arg_ref->{type};
     my $school_token = $arg_ref->{school_token};
 
-    my $group_token=&AD_get_group_by_token($group,$school_token,$type);
+    #my $group_token=&AD_get_group_by_token($group,$school_token,$type);
 
     # calculate missing Attributes
     my $base=&AD_get_base();
-    my $container=&AD_get_container($type,$group_token);
-    my $dn = "cn=".$group_token.",".$container."OU=".$ou.",".$base;
+    my $container=&AD_get_container($type,$group);
+    my $dn = "cn=".$group.",".$container."OU=".$ou.",".$base;
 
-    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"group",$group_token);
+    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"group",$group);
     if ($count> 0){
-        print "   * Group $group_token exists already ($count results)\n";
+        print "   * Group $group exists already ($count results)\n";
         return;
     }
 
     # adding the group
     &Sophomorix::SophomorixBase::print_title("Creating Group:");
-    print("   Group:    $group_token\n");
+    print("   Group:    $group\n");
     print("   Type:     $type\n");
     print("   dn:       $dn\n");
     my $result = $ldap->add( $dn,
                            attr => [
-                             'cn'   => $group_token,
-                             'sAMAccountName' => $group_token,
+                             'cn'   => $group,
+                             'sAMAccountName' => $group,
                              'objectclass' => ['top',
                                                'group' ],
                                    ]
