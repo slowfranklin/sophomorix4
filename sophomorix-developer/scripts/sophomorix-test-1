@@ -91,14 +91,14 @@ if ($kill==1){
 # Run the tests
 ############################################################
 
-
-# --add
+############################################################
+# Adding users --add
+############################################################
 if ($add==1){
     # copy sophomorix.add
     system("cp $file_add_test $file_add");
     system("sophomorix-add -i");
 #    system("sophomorix-add");
-
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=muellegr42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
@@ -115,7 +115,6 @@ if ($add==1){
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
                   });
-
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=maiersa42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
@@ -132,7 +131,6 @@ if ($add==1){
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
                   });
-
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=jonsonad42,CN=bsz-m8cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
@@ -149,8 +147,6 @@ if ($add==1){
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
                   });
-
-
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=samardze42,CN=bsz-m8cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
@@ -167,7 +163,6 @@ if ($add==1){
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
                   });
-
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=oe42,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
@@ -201,19 +196,58 @@ if ($add==1){
                    sophomorixSchoolPrefix => "bsz",
                    sophomorixSchoolname => "BSZLEO",
                   });
+}
 
 
-
-
+############################################################
+# Adding users --move
+############################################################
+if ($move==1){
+    # copy sophomorix.move
+    system("cp $file_move_test $file_move");
+    system("sophomorix-move -i");
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=maiersa42,CN=bsz-attic,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Sarina Maier",
+                   givenName=>"Sarina",
+                   name=>"maiersa42",
+                   sAMAccountname=>"maiersa42",
+                   sn=>"Maier",
+                   sophomorixAdminClass => "bsz-attic",
+                   sophomorixFirstPassword => "Muster!",
+                   sophomorixFirstnameASCII => "Sarina",
+                   sophomorixSurnameASCII  => "Maier",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                  });
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=muellegr42,CN=lin-attic,CN=Students,OU=LINUXLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Gregor Müller",
+                   givenName=>"Gregor",
+                   name=>"muellegr42",
+                   sAMAccountname=>"muellegr42",
+                   sn=>"Müller",
+                   sophomorixAdminClass => "lin-attic",
+                   sophomorixFirstPassword => "Muster23!",
+                   sophomorixFirstnameASCII => "Gregor",
+                   sophomorixSurnameASCII  => "Mueller",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "lin",
+                   sophomorixSchoolname => "LINUXLEO",
+                  });
 }
 
 
 
 
-
-# --kill
+############################################################
+# Deleting users --kill
+############################################################
 if ($kill==1){
-    # copy sophomorix.add
+    # copy sophomorix.kill
     system("cp $file_kill_test $file_kill");
     system("sophomorix-kill -i");
     system("sophomorix-kill");
