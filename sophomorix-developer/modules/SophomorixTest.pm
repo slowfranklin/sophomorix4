@@ -47,6 +47,7 @@ sub AD_test_object_exist {
 
     # sophomorix user
     my $s_admin_class = $arg_ref->{sophomorixAdminClass};
+    my $s_exit_admin_class = $arg_ref->{sophomorixExitAdminClass};
     my $s_first_password = $arg_ref->{sophomorixFirstPassword};
     my $s_firstname_ascii = $arg_ref->{sophomorixFirstnameASCII};
     my $s_surname_ascii = $arg_ref->{sophomorixSurnameASCII};
@@ -93,6 +94,10 @@ sub AD_test_object_exist {
         if (defined $s_admin_class){
             is ($entry->get_value ('sophomorixAdminClass'),$s_admin_class,
                                    "  * sophomorixAdminClass is $s_admin_class")
+        }
+        if (defined $s_exit_admin_class){
+            is ($entry->get_value ('sophomorixExitAdminClass'),$s_exit_admin_class,
+                                   "  * sophomorixExitAdminClass is $s_exit_admin_class")
         }
         if (defined $s_first_password){
             is ($entry->get_value ('sophomorixFirstPassword'),$s_first_password,

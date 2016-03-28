@@ -276,11 +276,12 @@ sub AD_user_move {
     my $mesg = $ldap->modify( $dn,
 		      replace => {
                           sophomorixAdminClass => $group_new,
+                          sophomorixExitAdminClass => $group_old,
                           sophomorixSchoolPrefix => $school_token_new,
                           sophomorixSchoolname => $ou_new,
                       }
                );
-    print Dumper(\$mesg);
+    #print Dumper(\$mesg);
 
     $mesg = $ldap->modify( $dn_group_old,
 		      delete => {
