@@ -587,6 +587,13 @@ sub AD_group_create {
                                    ]
                            );
     $result->code && warn "failed to add entry: ", $result->error ;
+
+    # make the group a member of <token>-students
+    my $token_students=$school_token."-".$DevelConf::student;
+    &AD_group_addmembers({ldap => $ldap,
+                          group => $token_students,
+                          addgroups => $group,
+                        });
     return;
 }
 
@@ -597,32 +604,50 @@ sub AD_group_addmembers {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
-    my $user = $arg_ref->{addmembers};
+    my $adduser = $arg_ref->{addmembers};
+    my $addgroup = $arg_ref->{addgroups};
 
-    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
     my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);
-    if ($count_group==0){
-        # user exist, but group not -> create group
-        print "   * Group $group nonexisting ($count_group results)\n";
-    }
-    if ($count > 0){
-        print "   * User $user exists ($count results)\n";
-        print "Adding $user to group $group\n";
-        my $mesg = $ldap->modify( $dn_exist_group,
-	    	              add => {
-                                  member => $dn_exist,
-                              }
-                          );
-        #print Dumper(\$mesg);
+     if ($count_group==0){
+         # user exist, but group not -> create group
+         print "   * Group $group nonexisting ($count_group results)\n";
+     }
 
-        #my $command="samba-tool group addmembers ". $group." ".$user;
-        #print "   # $command\n";
-        #system($command);
-        return;
-    } else {
-        print "   * User $user nonexisting ($count results)\n";
-        return;
-    }
+     if (defined $adduser){
+         my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$adduser);
+         if ($count > 0){
+             print "   * User $adduser exists ($count results)\n";
+             print "Adding user $adduser to group $group\n";
+             my $mesg = $ldap->modify( $dn_exist_group,
+     	        	              add => {
+                                    member => $dn_exist,
+                               }
+                           );
+             #print Dumper(\$mesg);
+
+             #my $command="samba-tool group addmembers ". $group." ".$adduser;
+             #print "   # $command\n";
+             #system($command);
+             return;
+         }
+     } elsif (defined $addgroup){
+         print "Adding Group $addgroup to $group\n";
+         my ($count_group,$dn_exist_addgroup,$cn_exist_addgroup)=&AD_object_search($ldap,"group",$addgroup);
+         if ($count_group > 0){
+             print "   * Group $addgroup exists ($count_group results)\n";
+             print "Adding group $addgroup to group $group\n";
+             my $mesg = $ldap->modify( $dn_exist_group,
+     	    	              add => {
+                                   member => $dn_exist_addgroup,
+                               }
+                           );
+             #print Dumper(\$mesg);
+             return;
+         }
+     } else {
+         print "   * ERRORUser $adduser nonexisting ($count results)\n";
+         return;
+     }
 }
 
 

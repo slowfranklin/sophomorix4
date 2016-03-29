@@ -488,32 +488,37 @@ while(<SOPHOMORIXADD>){
                     school_token=>$school_token,
                     type=>"adminclass",
                   });
-
-  my $token_group=&AD_get_group_by_token($class_group,$school_token,"adminclass");
+  # add student/teacher to its group
   &AD_group_addmembers({ldap => $ldap,
-                         group => $token_group,
+                         group => $group_token,
                          addmembers => $login_check_ok,
                        });   
 
     if ($role eq "student"){
-        # token-students
         my $group=$school_token."-".$DevelConf::student;
         &AD_group_addmembers({ldap => $ldap,
-                              group => $group,
-                              addmembers => $login_check_ok,
-                            });
-        # students
-        &AD_group_addmembers({ldap => $ldap,
                               group => $DevelConf::student,
-                              addmembers => $login_check_ok,
+                              addgroups => $group,
                             });
+        # <student> directly in <token>-students 
+        #&AD_group_addmembers({ldap => $ldap,
+        #                      group => $group,
+        #                      addmembers => $login_check_ok,
+        #                    });
+        # add token-students to students
    
     } elsif ($role eq "teacher"){
-        # teachers
+        my $group=$school_token."-".$DevelConf::teacher;
         &AD_group_addmembers({ldap => $ldap,
                               group => $DevelConf::teacher,
-                              addmembers => $login_check_ok,
-                            });   
+                              addgroups => $group,
+                            });
+        ## <teacher> in <token>-teachers
+        #&AD_group_addmembers({ldap => $ldap,
+        #                      group => $DevelConf::teacher,
+        #                      addmembers => $login_check_ok,
+        #                    });   
+        # add token-students to students
     }
 
 
