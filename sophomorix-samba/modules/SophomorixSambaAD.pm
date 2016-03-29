@@ -623,9 +623,10 @@ sub AD_group_addmember {
     my $addgroup = $arg_ref->{addgroup};
 
     my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);
-     if ($count_group==0){
-         # user exist, but group not -> create group
-         print "   * Group $group nonexisting ($count_group results)\n";
+    if ($count_group==0){
+        # group does not exist -> exit with warning
+        print "   * WARNING: Group $group nonexisting ($count_group results)\n";
+        return;
      }
 
      if (defined $adduser){
@@ -652,15 +653,14 @@ sub AD_group_addmember {
              print "   * Group $addgroup exists ($count_group results)\n";
              print "Adding group $addgroup to group $group\n";
              my $mesg = $ldap->modify( $dn_exist_group,
-     	    	              add => {
-                                   member => $dn_exist_addgroup,
-                               }
-                           );
+     	    	                   add => {
+                                       member => $dn_exist_addgroup,
+                                   }
+                               );
              #print Dumper(\$mesg);
              return;
          }
      } else {
-         print "   * ERRORUser $adduser nonexisting ($count results)\n";
          return;
      }
 }
@@ -672,25 +672,47 @@ sub AD_group_removemember {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
-    my $user = $arg_ref->{removemember};
+    my $removeuser = $arg_ref->{removemember};
+    my $removegroup = $arg_ref->{removegroup};
 
-    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
     my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);
-    if ($count > 0){
-        print "   * User $user exists ($count results)\n";
-        print "Removing $user from group $group\n";
-
-        my $mesg = $ldap->modify( $dn_exist_group,
-		              delete => {
-                                  member => $dn_exist,
-                              }
-                          );
-        #my $command="samba-tool group removemembers ". $group." ".$user;
-        #print "   # $command\n";
-        #system($command);
+    if ($count_group==0){
+        # group does not exist -> create group
+        print "   * WARNING: Group $group nonexisting ($count_group results)\n";
         return;
+    }
+
+    if (defined $removeuser){
+        my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$removeuser);
+        if ($count > 0){
+            print "   * User $removeuser exists ($count results)\n";
+            print "Removing $removeuser from group $group\n";
+
+            my $mesg = $ldap->modify( $dn_exist_group,
+	  	                  delete => {
+                                      member => $dn_exist,
+                                  }
+                              );
+            #my $command="samba-tool group removemembers ". $group." ".$removeuser;
+            #print "   # $command\n";
+            #system($command);
+            return;
+        }
+    } elsif (defined $removegroup){
+         print "Removing Group $removegroup from $group\n";
+         my ($count_group,$dn_exist_removegroup,$cn_exist_removegroup)=&AD_object_search($ldap,"group",$removegroup);
+         if ($count_group > 0){
+             print "   * Group $removegroup exists ($count_group results)\n";
+             print "Removing group $removegroup from group $group\n";
+             my $mesg = $ldap->modify( $dn_exist_group,
+     	    	                   delete => {
+                                       member => $dn_exist_removegroup,
+                                   }
+                               );
+             #print Dumper(\$mesg);
+             return;
+         }
     } else {
-        print "   * User $user nonexisting ($count results)\n";
         return;
     }
 }

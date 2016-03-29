@@ -41,16 +41,9 @@ Tree
 Scripts
 ############################################################
 
-AD_group_addmembers
+AD_group_addmember
  add user to group only if they are not member already
  add group to group only if they are not member already
-
-
-AD_user_move
-add AD_group_addmembers and AD_group_removemembers to $ldap->modify( $dn,
-ERROR: attribute 'memberOf' on entry 'CN=muellegr42,CN=lin-attic,CN=Students,OU=LINUXLEO,DC=linuxmuster,DC=local' 
-       must not be modified directly, it is a linked attribute",
--> What to do?
 
 
 sophomorix-project
