@@ -31,8 +31,8 @@ $Data::Dumper::Terse = 1;
             AD_user_move
             AD_user_kill
             AD_group_create
-            AD_group_addmembers
-            AD_group_removemembers
+            AD_group_addmember
+            AD_group_removemember
             AD_get_group_by_token
             get_forbidden_logins
             AD_ou_add
@@ -309,26 +309,26 @@ sub AD_user_move {
 #               );
 
     # change group
-    &AD_group_removemembers({ldap => $ldap, 
-                             group => $group_old,
-                             removemembers => $user,
-                           });   
+    &AD_group_removemember({ldap => $ldap, 
+                            group => $group_old,
+                            removemember => $user,
+                          });   
 
-    &AD_group_addmembers({ldap => $ldap,
-                          group => $group_new,
-                          addmembers => $user,
-                        }); 
+    &AD_group_addmember({ldap => $ldap,
+                         group => $group_new,
+                         addmember => $user,
+                       }); 
 
     # change rolegroup
     #if ($role_group_old ne $role_group_new){
-    #    &AD_group_removemembers({ldap => $ldap, 
-    #                             group => $role_group_old,
-    #                             removemembers => $user,
-    #                           });   
-    #    &AD_group_addmembers({ldap => $ldap,
-    #                          group => $role_group_new,
-    #                          addmembers => $user,
-    #                       }); 
+    #    &AD_group_removemember({ldap => $ldap, 
+    #                            group => $role_group_old,
+    #                            removemember => $user,
+    #                          });   
+    #    &AD_group_addmember({ldap => $ldap,
+    #                         group => $role_group_new,
+    #                         addmember => $user,
+    #                      }); 
     #}
   
     &AD_object_move({ldap=>$ldap,
@@ -591,22 +591,22 @@ sub AD_group_create {
     if ($type eq "adminclass"){
         # make the group a member of <token>-students
         my $token_students=$school_token."-".$DevelConf::student;
-        &AD_group_addmembers({ldap => $ldap,
-                              group => $token_students,
-                              addgroups => $group,
-                            });
+        &AD_group_addmember({ldap => $ldap,
+                             group => $token_students,
+                             addgroup => $group,
+                           });
         if ($group eq "teachers"){
             my $token_teachers=$school_token."-".$DevelConf::teachers;
-            &AD_group_addmembers({ldap => $ldap,
-                                  group => $DevelConf::teachers,
-                                  addgroups => $token_teachers,
-                                });
+            &AD_group_addmember({ldap => $ldap,
+                                 group => $DevelConf::teachers,
+                                 addgroup => $token_teachers,
+                               });
         } else {
             my $token_students=$school_token."-".$DevelConf::student;
-            &AD_group_addmembers({ldap => $ldap,
-                                  group => $DevelConf::student,
-                                  addgroups => $token_students,
-                                });
+            &AD_group_addmember({ldap => $ldap,
+                                 group => $DevelConf::student,
+                                 addgroup => $token_students,
+                               });
         }
     }
     return;
@@ -614,13 +614,13 @@ sub AD_group_create {
 
 
 
-sub AD_group_addmembers {
+sub AD_group_addmember {
     # requires token-group as groupname
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
-    my $adduser = $arg_ref->{addmembers};
-    my $addgroup = $arg_ref->{addgroups};
+    my $adduser = $arg_ref->{addmember};
+    my $addgroup = $arg_ref->{addgroup};
 
     my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);
      if ($count_group==0){
@@ -667,12 +667,12 @@ sub AD_group_addmembers {
 
 
 
-sub AD_group_removemembers {
+sub AD_group_removemember {
     # requires token-group as groupname
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
-    my $user = $arg_ref->{removemembers};
+    my $user = $arg_ref->{removemember};
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
     my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);

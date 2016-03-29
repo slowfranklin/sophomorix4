@@ -34,7 +34,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_unbind_admin
                                  AD_user_create
                                  AD_group_create
-                                 AD_group_addmembers
+                                 AD_group_addmember
                                  AD_get_group_by_token
                                  get_forbidden_logins
                                     );
@@ -489,34 +489,34 @@ while(<SOPHOMORIXADD>){
                     type=>"adminclass",
                   });
   # add student/teacher to its group
-  &AD_group_addmembers({ldap => $ldap,
-                         group => $group_token,
-                         addmembers => $login_check_ok,
-                       });   
+  &AD_group_addmember({ldap => $ldap,
+                        group => $group_token,
+                        addmember => $login_check_ok,
+                      });   
 
     if ($role eq "student"){
         my $group=$school_token."-".$DevelConf::student;
-        &AD_group_addmembers({ldap => $ldap,
-                              group => $DevelConf::student,
-                              addgroups => $group,
-                            });
+        &AD_group_addmember({ldap => $ldap,
+                             group => $DevelConf::student,
+                             addgroup => $group,
+                           });
         # <student> directly in <token>-students 
-        #&AD_group_addmembers({ldap => $ldap,
+        #&AD_group_addmember({ldap => $ldap,
         #                      group => $group,
-        #                      addmembers => $login_check_ok,
+        #                      addmember => $login_check_ok,
         #                    });
         # add token-students to students
    
     } elsif ($role eq "teacher"){
         my $group=$school_token."-".$DevelConf::teacher;
-        &AD_group_addmembers({ldap => $ldap,
-                              group => $DevelConf::teacher,
-                              addgroups => $group,
-                            });
+        &AD_group_addmember({ldap => $ldap,
+                             group => $DevelConf::teacher,
+                             addgroup => $group,
+                           });
         ## <teacher> in <token>-teachers
-        #&AD_group_addmembers({ldap => $ldap,
+        #&AD_group_addmember({ldap => $ldap,
         #                      group => $DevelConf::teacher,
-        #                      addmembers => $login_check_ok,
+        #                      addmember => $login_check_ok,
         #                    });   
         # add token-students to students
     }

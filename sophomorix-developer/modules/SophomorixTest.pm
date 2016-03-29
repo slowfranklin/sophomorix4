@@ -125,6 +125,10 @@ sub AD_test_object_exist {
             is ($entry->get_value ('sophomorixSchoolname'),$s_school_name,
 		"  * sophomorixSchoolname is $s_school_name");
         }
+
+        #is ($entry->get_value ('sophomorixCreationDate'),'',
+	#	    "  * creationDate IS $entry->get_value ('sophomorixCreationDate' ");
+
         if (defined $member_of and $not_member_of){
             # get membership data into hash
             my %member_of=();
