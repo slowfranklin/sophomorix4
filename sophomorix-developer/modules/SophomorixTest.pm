@@ -126,8 +126,6 @@ sub AD_test_object_exist {
 		"  * sophomorixSchoolname is $s_school_name");
         }
         if (defined $member_of){
-            print "   * Checking memberships\n";
-
             # get membership data into hash
             my %member_of=();
             my @data=$entry->get_value ('memberOf');
@@ -135,7 +133,7 @@ sub AD_test_object_exist {
             foreach my $item (@data){
                 my ($group,@rest)=split(/,/,$item);
                 $group=~s/^CN=//;
-                print "      * MemberOf: $group\n";
+                #print "      * MemberOf: $group\n";
                 $member_of{$group}="seen";
                 $membership_count++;
             }
