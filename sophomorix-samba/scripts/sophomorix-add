@@ -496,18 +496,25 @@ while(<SOPHOMORIXADD>){
                        });   
 
     if ($role eq "student"){
+        # token-students
         my $group=$school_token."-".$DevelConf::student;
         &AD_group_addmembers({ldap => $ldap,
                               group => $group,
                               addmembers => $login_check_ok,
+                            });
+        # students
+        &AD_group_addmembers({ldap => $ldap,
+                              group => $DevelConf::student,
+                              addmembers => $login_check_ok,
+                            });
+   
+    } elsif ($role eq "teacher"){
+        # teachers
+        &AD_group_addmembers({ldap => $ldap,
+                              group => $DevelConf::teacher,
+                              addmembers => $login_check_ok,
                             });   
-    } 
-#elsif ($role eq "teacher"){
-#        &AD_group_addmembers({ldap => $ldap,
-#                              group => $DevelConf::teacher,
-#                              addmembers => $login_check_ok,
-#                            });   
-#    }
+    }
 
 
 
