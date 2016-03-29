@@ -373,7 +373,7 @@ if ($move==1){
                   });
     ##### Testing the users ou-students group
     &AD_test_object_exist({ldap=>$ldap,
-                   dn=>"CN=bsz-students,CN=Classes,OU=LEO,DC=linuxmuster,DC=local",
+                   dn=>"CN=bsz-students,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-students",
                    memberOf => "students",
                    not_memberOf => "teachers",
@@ -445,10 +445,6 @@ if ($move==1){
                    memberOf => "students",
                    not_memberOf => "teachers",
                   });
-
-
-
-
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=samardze42,CN=bsz-m9cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
@@ -482,14 +478,204 @@ if ($move==1){
                    memberOf => "students",
                    not_memberOf => "teachers",
                   });
-
-
-
-
-
-
-
-
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=oe42,CN=bsz-alumni,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Gökhan Ömür",
+                   givenName=>"Gökhan",
+                   name=>"oe42",
+                   sAMAccountname=>"oe42",
+                   sn=>"Ömür",
+                   sophomorixAdminClass => "bsz-alumni",
+                   sophomorixExitAdminClass => "bsz-teachers",
+                   sophomorixFirstPassword => "LinuxMuster23!",
+                   sophomorixFirstnameASCII => "Goekhan",
+                   sophomorixSurnameASCII  => "Oemuer",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                   memberOf => "bsz-alumni",
+                   not_memberOf => "teachers,bsz-teachers,lin-teachers,bsz-students",
+                  });
+    ##### Testing the users class
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=bsz-m9cd,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   sAMAccountname=>"bsz-m9cd",
+                   memberOf => "bsz-students",
+                   not_memberOf => "students,uni-students,lin-students",
+                  });
+    ##### Testing the users ou-students group
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=bsz-students,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   sAMAccountname=>"bsz-students",
+                   memberOf => "students",
+                   not_memberOf => "teachers",
+                  });
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=wu42,CN=uni-teachers,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Gökhan Ömür",
+                   givenName=>"Gökhan",
+                   name=>"oe42",
+                   sAMAccountname=>"oe42",
+                   sn=>"Ömür",
+                   sophomorixAdminClass => "bsz-alumni",
+                   sophomorixExitAdminClass => "bsz-teachers",
+                   sophomorixFirstPassword => "LinuxMuster23!",
+                   sophomorixFirstnameASCII => "Goekhan",
+                   sophomorixSurnameASCII  => "Oemuer",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                   memberOf => "bsz-alumni",
+                   not_memberOf => "teachers,bsz-teachers,lin-teachers,bsz-students",
+                  });
+    ##### Testing the users class
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=uni-teachers,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+                   sAMAccountname=>"uni-teachers",
+                   memberOf => "teachers",
+                   not_memberOf => "students,uni-students,lin-students",
+                  });
+#    ##### Testing the users ou-students group
+#    &AD_test_object_exist({ldap=>$ldap,
+#                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+#                   sAMAccountname=>"bsz-students",
+#                   memberOf => "students",
+#                   not_memberOf => "teachers",
+#                  });
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=lordjo42,CN=uni-teachers,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Jon Lord",
+                   givenName=>"Jon",
+                   name=>"lordjo42",
+                   sAMAccountname=>"lordjo42",
+                   sn=>"Lord",
+                   sophomorixAdminClass => "uni-12-abc",
+                   sophomorixExitAdminClass => "uni-teachers",
+                   sophomorixFirstPassword => "Muster23!",
+                   sophomorixFirstnameASCII => "Jon",
+                   sophomorixSurnameASCII  => "Lord",
+                   sophomorixRole => "teacher",
+                   sophomorixSchoolPrefix => "uni",
+                   sophomorixSchoolname => "UNIVERSITÄT",
+                   memberOf => "uni-teachers",
+                   not_memberOf => "bsz-teachers,lin-teachers,bsz-students",
+                  });
+    ##### Testing the users class
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=uni-teachers,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+                   sAMAccountname=>"uni-teachers",
+                   memberOf => "teachers",
+                   not_memberOf => "students,uni-students,lin-students",
+                  });
+#    ##### Testing the users ou-students group
+#    &AD_test_object_exist({ldap=>$ldap,
+#                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+#                   sAMAccountname=>"bsz-students",
+#                   memberOf => "students",
+#                   not_memberOf => "teachers",
+#                  });
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=blackmri42,CN=lin-teachers,CN=Teachers,OU=LINUXLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Richard Blackmore",
+                   givenName=>"Richard",
+                   name=>"blackmri42",
+                   sAMAccountname=>"blackmri42",
+                   sn=>"Blackmore",
+                   sophomorixAdminClass => "lin-teachers",
+                   sophomorixExitAdminClass => "uni-12-abc",
+                   sophomorixFirstPassword => "Muster!",
+                   sophomorixFirstnameASCII => "Richard",
+                   sophomorixSurnameASCII  => "Blackmore",
+                   sophomorixRole => "teacher",
+                   sophomorixSchoolPrefix => "lin",
+                   sophomorixSchoolname => "LINUXLEO",
+                   memberOf => "lin-teachers",
+                   not_memberOf => "bsz-teachers,lin-teachers,bsz-students",
+                  });
+    ##### Testing the users class
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=uni-teachers,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+                   sAMAccountname=>"uni-teachers",
+                   memberOf => "teachers",
+                   not_memberOf => "students,uni-students,lin-students",
+                  });
+#    ##### Testing the users ou-students group
+#    &AD_test_object_exist({ldap=>$ldap,
+#                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+#                   sAMAccountname=>"bsz-students",
+#                   memberOf => "students",
+#                   not_memberOf => "teachers",
+#                  });
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=kep42,CN=uni-alumni,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Johannes Kepler",
+                   givenName=>"Johannes",
+                   name=>"kep42",
+                   sAMAccountname=>"kep42",
+                   sn=>"Kepler",
+                   sophomorixAdminClass => "uni-alumni",
+                   sophomorixExitAdminClass => "uni-teachers",
+                   sophomorixFirstPassword => "Muster!",
+                   sophomorixFirstnameASCII => "Johannes",
+                   sophomorixSurnameASCII  => "Kepler",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "lin",
+                   sophomorixSchoolname => "UNIVERSITÄT",
+                   memberOf => "uni-alumni",
+                   not_memberOf => "bsz-teachers,lin-teachers,bsz-students",
+                  });
+    ##### Testing the users class
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=uni-alumni,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+                   sAMAccountname=>"uni-alumni",
+                   memberOf => "uni-students",
+                   not_memberOf => "students,lin-students",
+                  });
+#    ##### Testing the users ou-students group
+#    &AD_test_object_exist({ldap=>$ldap,
+#                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+#                   sAMAccountname=>"bsz-students",
+#                   memberOf => "students",
+#                   not_memberOf => "teachers",
+#                  });
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=gal42,CN=ghs-alumni,CN=Classes,OU=GHS-SCHOOL,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Galileo Galilei",
+                   givenName=>"Galileo",
+                   name=>"gal42",
+                   sAMAccountname=>"gal42",
+                   sn=>"Galilei",
+                   sophomorixAdminClass => "ghs-alumni",
+                   sophomorixExitAdminClass => "uni-teachers",
+                   sophomorixFirstPassword => "LinuxMuster!",
+                   sophomorixFirstnameASCII => "Galileo",
+                   sophomorixSurnameASCII  => "Galilei",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "lin",
+                   sophomorixSchoolname => "GHS-SCHOOL",
+                   memberOf => "ghs-alumni",
+                   not_memberOf => "uni-teachers,lin-teachers,bsz-students",
+                  });
+    ##### Testing the users class
+    &AD_test_object_exist({ldap=>$ldap,
+                   dn=>"CN=ghs-alumni,CN=Classes,OU=GHS-SCHOOL,DC=linuxmuster,DC=local",
+                   sAMAccountname=>"ghs-alumni",
+                   memberOf => "ghs-students",
+                   not_memberOf => "students,lin-students",
+                  });
+#    ##### Testing the users ou-students group
+#    &AD_test_object_exist({ldap=>$ldap,
+#                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+#                   sAMAccountname=>"bsz-students",
+#                   memberOf => "students",
+#                   not_memberOf => "teachers",
+#                  });
 }
 
 
