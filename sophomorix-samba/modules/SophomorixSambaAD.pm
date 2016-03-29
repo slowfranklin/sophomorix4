@@ -245,17 +245,9 @@ sub AD_user_move {
         $dn_group_old,
         $rdn_group_old)=&AD_object_search($ldap,"group",$group_old);
     if ($count_group_old==0){
-        print "\nWARNING: $group_old not found in ldap, skipping\n\n";
+        print "\nWARNING: Group $group_old not found in ldap, skipping\n\n";
         next;
     }
-    my ($count_group_new,
-        $dn_group_new,
-        $rdn_group_new)=&AD_object_search($ldap,"group",$group_new);
-    if ($count_group_new==0){
-        print "\nWARNING: $group_new not found in ldap, skipping\n\n";
-        next;
-    }
-
     if($Conf::log_level>=1){
         print "\n";
         &Sophomorix::SophomorixBase::print_title("Moving User $user ($user_count):");
@@ -286,6 +278,14 @@ sub AD_user_move {
                      type=>"adminclass",
                     });
 
+    # why test group that has been added just now ?????   
+    #my ($count_group_new,
+    #    $dn_group_new,
+    #    $rdn_group_new)=&AD_object_search($ldap,"group",$group_new);
+    #if ($count_group_new==0){
+    #    print "\nWARNING: Group $group_new not found in ldap, skipping\n\n";
+    #    next;
+    #}
     my $mesg = $ldap->modify( $dn,
 		      replace => {
                           sophomorixAdminClass => $group_new,
@@ -320,16 +320,16 @@ sub AD_user_move {
                         }); 
 
     # change rolegroup
-    if ($role_group_old ne $role_group_new){
-        &AD_group_removemembers({ldap => $ldap, 
-                                 group => $role_group_old,
-                                 removemembers => $user,
-                               });   
-        &AD_group_addmembers({ldap => $ldap,
-                              group => $role_group_new,
-                              addmembers => $user,
-                           }); 
-    }
+    #if ($role_group_old ne $role_group_new){
+    #    &AD_group_removemembers({ldap => $ldap, 
+    #                             group => $role_group_old,
+    #                             removemembers => $user,
+    #                           });   
+    #    &AD_group_addmembers({ldap => $ldap,
+    #                          group => $role_group_new,
+    #                          addmembers => $user,
+    #                       }); 
+    #}
   
     &AD_object_move({ldap=>$ldap,
                      dn=>$dn,
@@ -588,12 +588,27 @@ sub AD_group_create {
                            );
     $result->code && warn "failed to add entry: ", $result->error ;
 
-    # make the group a member of <token>-students
-    my $token_students=$school_token."-".$DevelConf::student;
-    &AD_group_addmembers({ldap => $ldap,
-                          group => $token_students,
-                          addgroups => $group,
-                        });
+    if ($type eq "adminclass"){
+        # make the group a member of <token>-students
+        my $token_students=$school_token."-".$DevelConf::student;
+        &AD_group_addmembers({ldap => $ldap,
+                              group => $token_students,
+                              addgroups => $group,
+                            });
+        if ($group eq "teachers"){
+            my $token_teachers=$school_token."-".$DevelConf::teachers;
+            &AD_group_addmembers({ldap => $ldap,
+                                  group => $DevelConf::teachers,
+                                  addgroups => $token_teachers,
+                                });
+        } else {
+            my $token_students=$school_token."-".$DevelConf::student;
+            &AD_group_addmembers({ldap => $ldap,
+                                  group => $DevelConf::student,
+                                  addgroups => $token_students,
+                                });
+        }
+    }
     return;
 }
 
