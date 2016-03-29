@@ -424,7 +424,7 @@ while(<SOPHOMORIXADD>){
    # 1. Entry in AD
     if (not exists $ou_created{$ou}){
         # create ou
-        &AD_ou_add($ldap,$ou);
+        &AD_ou_add($ldap,$ou,$school_token);
         # remember ou
         $ou_created{$ou}="already created";
    }
@@ -493,8 +493,23 @@ while(<SOPHOMORIXADD>){
   &AD_group_addmembers({ldap => $ldap,
                          group => $token_group,
                          addmembers => $login_check_ok,
-                         school_token=>$school_token,
                        });   
+
+    if ($role eq "student"){
+        my $group=$school_token."-".$DevelConf::student;
+        &AD_group_addmembers({ldap => $ldap,
+                              group => $group,
+                              addmembers => $login_check_ok,
+                            });   
+    } 
+#elsif ($role eq "teacher"){
+#        &AD_group_addmembers({ldap => $ldap,
+#                              group => $DevelConf::teacher,
+#                              addmembers => $login_check_ok,
+#                            });   
+#    }
+
+
 
   # 6. Add a mailbox for the user
   #&imap_create_mailbox($imap,$login_check_ok);

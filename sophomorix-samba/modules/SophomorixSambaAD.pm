@@ -260,7 +260,7 @@ sub AD_user_move {
     # make sure OU and tree exists
 #    if (not exists $ou_created{$ou_new}){
 #         # create new ou
-         &AD_ou_add($ldap,$ou_new);
+         &AD_ou_add($ldap,$ou_new,$school_token_new);
 #         # remember new ou to add it only once
 #         $ou_created{$ou_new}="already created";
 #     }
@@ -283,35 +283,31 @@ sub AD_user_move {
                );
     #print Dumper(\$mesg);
 
-    $mesg = $ldap->modify( $dn_group_old,
-		      delete => {
-                          member => $dn,
-                      }
-               );
+#    $mesg = $ldap->modify( $dn_group_old,
+#		      delete => {
+#                          member => $dn,
+#                      }
+#               );
+#
+#    $mesg = $ldap->modify( $dn_group_new,
+#		      add => {
+#                          member => $dn,
+#                      }
+#               );
+    &AD_group_removemembers({ldap => $ldap, 
+                             group => $group_old,
+                             removemembers => $user,
+                           });   
 
-    $mesg = $ldap->modify( $dn_group_new,
-		      add => {
-                          member => $dn,
-                      }
-               );
-
+    &AD_group_addmembers({ldap => $ldap,
+                          group => $group_new,
+                          addmembers => $user,
+                        });   
     &AD_object_move({ldap=>$ldap,
                      dn=>$dn,
                      rdn=>$rdn,
                      target_branch=>$target_branch,
                     });
-
-
-#    &AD_group_addmembers({ldap => $ldap,
-#                          group => $group_new,
-#                          addmembers => $user,
-#                          school_token => $school_token_new,
-#                        });   
-#    &AD_group_removemembers({ldap => $ldap, 
-#                             group => $group_old,
-#                             removemembers => $user,
-#                             school_token => $school_token_old,
-#                           });   
 }
 
 
@@ -376,7 +372,7 @@ sub AD_get_container {
 
 sub AD_ou_add {
     # if $result->code is not given, the add is silent
-    my ($ldap,$ou) = @_;
+    my ($ldap,$ou,$token) = @_;
     my $base=&AD_get_base();
     my $dn="OU=".$ou.",".$base;
     # provide that a ou exists
@@ -398,6 +394,32 @@ sub AD_ou_add {
     $result = $ldap->add($printer,attr => ['objectclass' => ['top', 'container']]);
     my $custom=$DevelConf::AD_custom_cn.",".$dn;
     $result = $ldap->add($custom,attr => ['objectclass' => ['top', 'container']]);
+    # Adding some groups
+
+    # token-teachers
+    my $group=$token."-".$DevelConf::teacher;
+    my $dn_group="CN=".$group.",".$DevelConf::AD_class_cn.",".$dn;
+    $result = $ldap->add( $dn_group,
+                         attr => [
+                             'cn'   => $group,
+                             'sAMAccountName' => $group,
+                             'objectclass' => ['top',
+                                               'group' ],
+                         ]
+                     );
+    #print Dumper(\$result);
+    # token-students
+    $group=$token."-".$DevelConf::student;
+    $dn_group="CN=".$group.",".$DevelConf::AD_class_cn.",".$dn;
+    $result = $ldap->add( $dn_group,
+                         attr => [
+                             'cn'   => $group,
+                             'sAMAccountName' => $group,
+                             'objectclass' => ['top',
+                                               'group' ],
+                         ]
+                     );
+    #print Dumper(\$result);
 }
 
 
@@ -501,15 +523,26 @@ sub AD_group_addmembers {
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
     my $user = $arg_ref->{addmembers};
-    my $school_token = $arg_ref->{school_token};
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
+    my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);
+    if ($count_group==0){
+        # user exist, but group not -> create group
+        print "   * Group $group nonexisting ($count_group results)\n";
+    }
     if ($count > 0){
         print "   * User $user exists ($count results)\n";
         print "Adding $user to group $group\n";
-        my $command="samba-tool group addmembers ". $group." ".$user;
-        print "   # $command\n";
-        system($command);
+        my $mesg = $ldap->modify( $dn_exist_group,
+	    	              add => {
+                                  member => $dn_exist,
+                              }
+                          );
+  print Dumper(\$mesg);
+
+        #my $command="samba-tool group addmembers ". $group." ".$user;
+        #print "   # $command\n";
+        #system($command);
         return;
     } else {
         print "   * User $user nonexisting ($count results)\n";
@@ -525,15 +558,21 @@ sub AD_group_removemembers {
     my $ldap = $arg_ref->{ldap};
     my $group = $arg_ref->{group};
     my $user = $arg_ref->{removemembers};
-    my $school_token = $arg_ref->{school_token};
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
+    my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);
     if ($count > 0){
         print "   * User $user exists ($count results)\n";
         print "Removing $user from group $group\n";
-        my $command="samba-tool group removemembers ". $group." ".$user;
-        print "   # $command\n";
-        system($command);
+
+        my $mesg = $ldap->modify( $dn_exist_group,
+		              delete => {
+                                  member => $dn_exist,
+                              }
+                          );
+        #my $command="samba-tool group removemembers ". $group." ".$user;
+        #print "   # $command\n";
+        #system($command);
         return;
     } else {
         print "   * User $user nonexisting ($count results)\n";
