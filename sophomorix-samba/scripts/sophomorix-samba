@@ -30,6 +30,9 @@ my $backup_samba="";
 my $restore_samba="";
 my $schema_load=0;
 
+my $samba_private="/var/lib/samba/private";
+my $samba_private_d="/var/lib/samba/private/sam.ldb.d";
+
 
 # Parsen der Optionen
 my $testopt=GetOptions(
@@ -70,7 +73,25 @@ Please see the sophomorix-add(8) man pages for full documentation
 # --backup-samba
 if ($backup_samba ne ""){
     print "\nBacking up samba databases with suffix -$backup_samba\n\n";
-    system("/usr/share/sophomorix/schema/samba-backup $backup_samba");
+    #system("/usr/share/sophomorix/schema/samba-backup $backup_samba");
+    my @ldb_files = &get_ldb_files();
+    print "##### saving ldb files: #####\n";
+    foreach my $ldb (@ldb_files){
+        my $command="cp -v ${samba_private}/${ldb} ${samba_private}/${ldb}-${backup_samba}";
+        #print "  $command\n";
+        system($command);
+    } 
+    my @ldb_files_d = &get_ldb_d_files();
+    print "##### saving ldb files: #####\n";
+    foreach my $ldb_d (@ldb_files_d){
+        my $command="cp -v ${samba_private_d}/${ldb_d} ${samba_private_d}/${ldb_d}-${backup_samba}";
+        #print "  $command\n";
+        system($command);
+    } 
+
+
+
+
     exit;
 }
 
@@ -78,7 +99,24 @@ if ($backup_samba ne ""){
 # --restore-samba
 if ($restore_samba ne ""){
     print "\nRestoring samba databases with suffix -$restore_samba\n\n";
-    system("/usr/share/sophomorix/schema/samba-restore $restore_samba");
+    &samba_stop();
+    my @ldb_files = &get_ldb_files();
+    print "##### restoring ldb files: #####\n";
+    foreach my $ldb (@ldb_files){
+        my $command="cp -v ${samba_private}/${ldb}-${restore_samba} ${samba_private}/${ldb} ";
+        #print "  $command\n";
+        system($command);
+    } 
+    my @ldb_files_d = &get_ldb_d_files();
+    print "##### restoring ldb files: #####\n";
+    foreach my $ldb_d (@ldb_files_d){
+        my $command="cp -v ${samba_private_d}/${ldb_d}-${restore_samba} ${samba_private_d}/${ldb_d} ";
+        #print "  $command\n";
+        system($command);
+    } 
+    &samba_start();
+    # does not work
+    #system("/usr/share/sophomorix/schema/samba-restore $restore_samba");
     exit;
 }
 
@@ -88,4 +126,51 @@ if ($schema_load==1){
     print "\nLoading sophomorix schema into ldap\n\n";
     system("/usr/share/sophomorix/schema/samba-schema-load");
     exit;
+}
+
+
+############################################################
+# subs
+############################################################
+
+sub samba_stop {
+    system("/etc/init.d/samba stop");
+    sleep 2;
+}
+
+sub samba_start {
+    sleep 2;
+    system("/etc/init.d/samba start");
+}
+
+
+
+sub get_ldb_files {
+    my @files=();
+      opendir SAMBADB, $samba_private or return;
+       foreach my $file (readdir SAMBADB){
+          if ($file eq "."){next};
+          if ($file eq ".."){next};
+          if ($file=~m/.ldb$/){
+	      push @files,$file;
+          }
+      }
+       closedir SAMBADB;
+    @files = sort @files;
+    return @files;
+}
+
+sub get_ldb_d_files {
+    my @files=();
+      opendir SAMBADB, $samba_private_d or return;
+       foreach my $file (readdir SAMBADB){
+          if ($file eq "."){next};
+          if ($file eq ".."){next};
+          if ($file=~m/.ldb$/){
+	      push @files,$file;
+          }
+      }
+       closedir SAMBADB;
+    @files = sort @files;
+    return @files;
 }
