@@ -220,8 +220,19 @@ sub AD_user_move {
     my $ou_new = $arg_ref->{ou_new};
     my $school_token_old = $arg_ref->{school_token_old};
     my $school_token_new = $arg_ref->{school_token_new};
+    my $role = $arg_ref->{role};
 
     # calculate
+    my $role_group_old;
+    my $role_group_new;
+    if ($role eq "student"){
+        $role_group_old = $school_token_old."-".$DevelConf::student;
+        $role_group_new = $school_token_new."-".$DevelConf::student;;
+    } elsif ($role eq "teacher"){
+        $role_group_old = $school_token_old."-".$DevelConf::teacher;
+        $role_group_new = $school_token_new."-".$DevelConf::teacher;;
+    }
+
     my $base=&AD_get_base();
     my $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$base;
     # fetch the dn (where the object really is)
@@ -249,12 +260,14 @@ sub AD_user_move {
         print "\n";
         &Sophomorix::SophomorixBase::print_title("Moving User $user ($user_count):");
 
-        print("DN:                 $dn\n");
-        #print("DN (Parent):        $dn_class\n");
-        print("Group (Old):        $group_old\n");
-        print("Group (New):        $group_new\n");
-        print("School(Old):        $school_token_old ($ou_old)\n");
-        print("School(New):        $school_token_new ($ou_new)\n");
+        print("DN:                  $dn\n");
+        #print("DN (Parent):         $dn_class\n");
+        print("Group (Old):         $group_old\n");
+        print("Group (New):         $group_new\n");
+        print("RoleGroup (Old):     $role_group_old\n");
+        print("RoleGroup (New):     $role_group_new\n");
+        print("School(Old):         $school_token_old ($ou_old)\n");
+        print("School(New):         $school_token_new ($ou_new)\n");
     }
 
     # make sure OU and tree exists
@@ -294,6 +307,8 @@ sub AD_user_move {
 #                          member => $dn,
 #                      }
 #               );
+
+    # change group
     &AD_group_removemembers({ldap => $ldap, 
                              group => $group_old,
                              removemembers => $user,
@@ -302,7 +317,20 @@ sub AD_user_move {
     &AD_group_addmembers({ldap => $ldap,
                           group => $group_new,
                           addmembers => $user,
-                        });   
+                        }); 
+
+    # change rolegroup
+    if ($role_group_old ne $role_group_new){
+        &AD_group_removemembers({ldap => $ldap, 
+                                 group => $role_group_old,
+                                 removemembers => $user,
+                               });   
+        &AD_group_addmembers({ldap => $ldap,
+                              group => $role_group_new,
+                              addmembers => $user,
+                           }); 
+    }
+  
     &AD_object_move({ldap=>$ldap,
                      dn=>$dn,
                      rdn=>$rdn,
@@ -585,7 +613,7 @@ sub AD_group_addmembers {
                                   member => $dn_exist,
                               }
                           );
-  print Dumper(\$mesg);
+        #print Dumper(\$mesg);
 
         #my $command="samba-tool group addmembers ". $group." ".$user;
         #print "   # $command\n";
