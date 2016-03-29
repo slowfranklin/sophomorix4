@@ -125,7 +125,7 @@ sub AD_test_object_exist {
             is ($entry->get_value ('sophomorixSchoolname'),$s_school_name,
 		"  * sophomorixSchoolname is $s_school_name");
         }
-        if (defined $member_of){
+        if (defined $member_of and $not_member_of){
             # get membership data into hash
             my %member_of=();
             my @data=$entry->get_value ('memberOf');
@@ -156,7 +156,9 @@ sub AD_test_object_exist {
                 is (exists $member_of{$should_not_be_member},'',
 		    "  * $sam_account IS NOT member of $should_not_be_member");
              } 
-        }
+        } else {
+             print "\nWARNING: Skipping memberOf and not_memberOf completely: Use BOTH in your test script!\n\n"
+        } 
     } else {
         print "\nWARNING: Skipping a lot of tests\n\n";
     }
