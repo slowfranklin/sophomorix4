@@ -15,12 +15,9 @@ tolerationdate
 deactivationdate
 
 oMSyntax 23 (Zeit) --> oMSyntax 64 (utf8 string)
--> Just switch that does not work, schema is not loadable 
+attributeSyntax: 2.5.5.11 --> attributeSyntax: 2.5.5.12
 
-2) ----------------------------------------
-bei Gruppenerweiterungen
-statt type: role ?
-
+See: https://technet.microsoft.com/en-us/library/cc961740.aspx
 
 Benamung/Unterscheidung:
 
@@ -29,6 +26,15 @@ mailquota bei user mailquota
 
 mailalias bei user? oder kann diese Mailadresse schon eingetragen werden
 
+
+
+############################################################
+Tree
+############################################################
+- now: every user is in the group students
+- future: 
+   - every adminclass is in the group students
+   - group students and teachers are in group school 
 
 
 ############################################################

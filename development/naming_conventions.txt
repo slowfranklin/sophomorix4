@@ -1,0 +1,24 @@
+Names:
+
+Definitions:
+
+############################################################
+RoleGroup: 
+   Group that a user is member because of its role, 
+   i.e. bsz-students, ...
+
+
+############################################################
+A user has a: role
+ - student
+ - teacher
+ - workstation
+ -ExamAccount
+
+
+############################################################
+A group has a: type
+
+  - adminclass  (administration software class)
+  - project
+  - room
