@@ -259,8 +259,8 @@ if ($move==1){
                    sophomorixRole => "student",
                    sophomorixSchoolPrefix => "lin",
                    sophomorixSchoolname => "LINUXLEO",
-                   memberOf => "students,bsz-students,lin-attic",
-                   not_memberOf => "teachers,bsz-teachers,lin-teachers",
+                   memberOf => "students,lin-students,lin-attic",
+                   not_memberOf => "teachers,bsz-teachers,lin-teachers,bsz-students",
                   });
 }
 
