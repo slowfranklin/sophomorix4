@@ -1,3 +1,20 @@
 ###### login::oldClass:.newClass::oldStatus::oldSchoolToken::newSchool_Token::oldOU::newOU::role:: ######
+##### maiersa42 is moved into attic within the school
 maiersa42::m7ab::attic::U::bsz::bsz::BSZLEO::BSZLEO::student::
+##### muellegre is moved to attic of another school
 muellegr42::m7ab::attic::U::bsz::lin::BSZLEO::LINUXLEO::student::
+##### jonsonad42,samardze42 are moved within school to next class
+jonsonad42::m8cd::m9cd::U::bsz::bsz::BSZLEO::BSZLEO::student::
+samardze42::m8cd::m9cd::U::bsz::bsz::BSZLEO::BSZLEO::student::
+##### oe42 becomes alumni/student of same school
+oe42::teachers::alumni::U::bsz::bsz::BSZLEO::BSZLEO::student::
+##### wu42 is moved to another school
+wu42::teachers::teachers::U::bsz::uni::BSZLEO::UNIVERSITÄT::teacher::
+##### lordjo becomes a teacher of its school
+lordjo42::12abc::teachers::U::uni::uni::UNIVERSITÄT::UNIVERSITÄT::
+##### blackmri42 becomes a teacher of another school
+blackmri42:::12abc::teachers::U::uni::lin::UNIVERSITÄT::LINUXLEO::
+##### kep42 becomes alumni/student of same school
+kep42::teachers::alumni::U::uni::uni::UNIVERSITÄT::UNIVERSITÄT::
+##### gal42 becomes alumni of another school
+gal42::teachers::alumni::U::uni::ghs::UNIVERSITÄT::GHS-SCHOOL::
