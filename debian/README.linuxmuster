@@ -30,9 +30,8 @@ Create an official package for linuxmuster 7.x/xenial:
         (this determines, in which repo the package will be uploaded)
 
 
-5. # Check in modified files (use the jeffbeck ssh-key):
-   cd sophomorix2
-   git add debian/control.ubuntu debian/changelog
+5. # Commit changes (use the jeffbeck ssh-key):
+   cd sophomorix4
    git commit -m "prepared new package 3.0.2-1"
    git push
 

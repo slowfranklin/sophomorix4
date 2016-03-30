@@ -42,7 +42,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_object_search
                                  AD_object_move
                                  AD_group_create
-                                 AD_group_addmembers
+                                 AD_group_addmember
                                  AD_get_group_by_token
                                  get_forbidden_logins
                                     );
@@ -53,6 +53,8 @@ use Sophomorix::SophomorixSambaAD qw(
 $Conf::log_level=1;
 
 my $ldap = &AD_bind_admin();
+
+        &AD_ou_add($ldap,"HOMECATC","hcc");
 
 
 #my ($count,$dn,$rdn)=&AD_object_search($ldap,"user","koehleju");

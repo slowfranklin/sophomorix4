@@ -1,3 +1,9 @@
+sophomorix4 (3.2.1-1) xgenial-unstable; urgency=medium
+
+  * New upstream, small fixes
+
+ -- jeff <bz@adler>  Wed, 30 Mar 2016 17:59:19 +0200
+
 sophomorix4 (3.2.0-1) xenial-unstable; urgency=medium
 
   * new upstream with tests

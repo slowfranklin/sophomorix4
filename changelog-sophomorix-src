@@ -6,6 +6,11 @@
 4.0.0-1 (2016-??-??)
 
 
+3.2.1-1 (2016-03-30)
+      - install test with package
+      - small fixes
+      - user delete tests
+
 3.2.0-1 (2016-03-30)
       - lots if tests and fixes
       - sophomorix-test-1 works 
