@@ -275,14 +275,6 @@ sub AD_user_move {
                      type=>"adminclass",
                     });
 
-    # why test group that has been added just now ?????   
-    #my ($count_group_new,
-    #    $dn_group_new,
-    #    $rdn_group_new)=&AD_object_search($ldap,"group",$group_new);
-    #if ($count_group_new==0){
-    #    print "\nWARNING: Group $group_new not found in ldap, skipping\n\n";
-    #    next;
-    #}
     my $mesg = $ldap->modify( $dn,
 		      replace => {
                           sophomorixAdminClass => $group_new,
@@ -294,41 +286,17 @@ sub AD_user_move {
                );
     #print Dumper(\$mesg);
 
-#    $mesg = $ldap->modify( $dn_group_old,
-#		      delete => {
-#                          member => $dn,
-#                      }
-#               );
-#
-#    $mesg = $ldap->modify( $dn_group_new,
-#		      add => {
-#                          member => $dn,
-#                      }
-#               );
-
-    # change group
+    # move user membership to new group
     &AD_group_removemember({ldap => $ldap, 
                             group => $group_old,
                             removemember => $user,
                           });   
-
     &AD_group_addmember({ldap => $ldap,
                          group => $group_new,
                          addmember => $user,
                        }); 
 
-    # change rolegroup
-    #if ($group_type_old ne $group_type_new){
-    #    &AD_group_removemember({ldap => $ldap, 
-    #                            group => $group_type_old,
-    #                            removemember => $user,
-    #                          });   
-    #    &AD_group_addmember({ldap => $ldap,
-    #                         group => $group_type_new,
-    #                         addmember => $user,
-    #                      }); 
-    #}
-  
+    # move the object in ldap tree
     &AD_object_move({ldap=>$ldap,
                      dn=>$dn,
                      rdn=>$rdn,
@@ -562,8 +530,6 @@ sub AD_group_create {
     my $type = $arg_ref->{type};
     my $school_token = $arg_ref->{school_token};
 
-    #my $group_token=&AD_get_group_by_token($group,$school_token,$type);
-
     # calculate missing Attributes
     my $base=&AD_get_base();
     my $container=&AD_get_container($type,$group);
@@ -587,25 +553,27 @@ sub AD_group_create {
         $result->code && warn "failed to add entry: ", $result->error ;
     } else {
         print "   * Group $group exists already ($count results)\n";
-        return;
+        #return;
     }
 
-
     if ($type eq "adminclass"){
-        # make the group a member of <token>-students
-        my $token_students=$school_token."-".$DevelConf::student;
-        &AD_group_addmember({ldap => $ldap,
-                             group => $token_students,
-                             addgroup => $group,
-                           });
-        if ($group eq "teachers"){
-            my $token_teachers=$school_token."-".$DevelConf::teacher;
+        my $teacher_group_expected=$school_token."-".$DevelConf::teacher;
+        if ($group eq $teacher_group_expected){
+            #print "Teacher group of the school: $group\n";
             &AD_group_addmember({ldap => $ldap,
                                  group => $DevelConf::teacher,
-                                 addgroup => $token_teachers,
+                                 addgroup => $group,
                                });
         } else {
+            # a group like 7a, 7b
+            #print "Student class of the school: $group\n";
             my $token_students=$school_token."-".$DevelConf::student;
+            # add the group to <token>-students
+            &AD_group_addmember({ldap => $ldap,
+                                 group => $token_students,
+                                 addgroup => $group,
+                               });
+            # add <token>-students tostudents
             &AD_group_addmember({ldap => $ldap,
                                  group => $DevelConf::student,
                                  addgroup => $token_students,
