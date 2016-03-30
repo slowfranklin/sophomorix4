@@ -26,13 +26,37 @@ $Data::Dumper::Terse = 1;
 
 @EXPORT_OK = qw( );
 @EXPORT = qw(
-            AD_test_object_exist
+            AD_object_nonexist
+            AD_test_object
             );
 
 
 
+sub AD_object_nonexist {
+    my ($ldap,$type,$name) = @_;
+    # type: group, user, ...
+    # check if object exists
+    # (&(objectclass=user)(cn=pete)
+    # (&(objectclass=group)(cn=7a)
+    my $filter="(&(objectclass=".$type.") (cn=".$name."))"; 
+    my $base=&Sophomorix::SophomorixSambaAD::AD_get_base();
+    my $mesg = $ldap->search(
+                      base   => $base,
+                      scope => 'sub',
+                      filter => $filter,
+                      attr => ['cn']
+                            );
+    #print Dumper(\$mesg);
+    my $count = $mesg->count;
+    is ($count,0,"  * $type-Object $name does not exist");
+}
 
-sub AD_test_object_exist {
+
+
+
+
+
+sub AD_test_object {
     # verifies an object and Attributes in ldap
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};

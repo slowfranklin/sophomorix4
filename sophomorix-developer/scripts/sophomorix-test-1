@@ -20,7 +20,8 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_object_search
                                     );
 use Sophomorix::SophomorixTest qw(
-                                 AD_test_object_exist
+                                 AD_object_nonexist
+                                 AD_test_object
                                  );
 
 $Conf::log_level=1;
@@ -136,6 +137,9 @@ Please see the sophomorix-add(8) man pages for full documentation
 # Check preliminaries
 ############################################################
 
+system("mkdir -p $DevelConf::path_result");
+
+
 # --full
 if ($full==1){
     $add=1;
@@ -196,7 +200,7 @@ if ($add==1 or $test_add==1){
     }
 
     ##### Testing the users
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=maiersa42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Sarina Maier",
@@ -216,14 +220,14 @@ if ($add==1 or $test_add==1){
                    not_memberOf => "bsz-students,teachers,bsz-teachers,lin-teachers",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-m7ab,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-m7ab",
                    memberOf => "bsz-students",
                    not_memberOf => "teachers",
                   });
     ##### Testing the users ou-students group
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-students,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-students",
                    memberOf => "students",
@@ -231,7 +235,7 @@ if ($add==1 or $test_add==1){
                   });
 
 
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=muellegr42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Gregor Müller",
@@ -250,7 +254,7 @@ if ($add==1 or $test_add==1){
                    memberOf => "bsz-m7ab",
                    not_memberOf => "bsz-students,teachers,bsz-teachers,lin-teachers",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=jonsonad42,CN=bsz-m8cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Aðalráður Jónsson",
@@ -269,7 +273,7 @@ if ($add==1 or $test_add==1){
                    memberOf => "bsz-m8cd",
                    not_memberOf => "bsz-students,teachers,bsz-teachers,lin-teachers",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=samardze42,CN=bsz-m8cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Željko Samardžić",
@@ -289,13 +293,13 @@ if ($add==1 or $test_add==1){
                    not_memberOf => "bsz-students,teachers,bsz-teachers,lin-teachers",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-m8cd,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-m8cd",
                    memberOf => "bsz-students",
                    not_memberOf => "teachers",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=oe42,CN=bsz-teachers,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Gökhan Ömür",
@@ -314,7 +318,7 @@ if ($add==1 or $test_add==1){
                    memberOf => "bsz-teachers,",
                    not_memberOf => "teachers,lin-teachers,students",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=wu42,CN=bsz-teachers,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Désirée Würth",
@@ -334,13 +338,13 @@ if ($add==1 or $test_add==1){
                    not_memberOf => "teachers,lin-teachers,students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-teachers,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-teachers",
                    memberOf => "teachers",
                    not_memberOf => "students",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=blackmri42,CN=uni-12abc,CN=Students,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Richard Blackmore",
@@ -359,7 +363,7 @@ if ($add==1 or $test_add==1){
                    memberOf => "uni-12abc,",
                    not_memberOf => "teachers,uni-teachers,lin-teachers,bsz-teachers,students",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=lordjo42,CN=uni-12abc,CN=Students,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Jon Lord",
@@ -379,13 +383,13 @@ if ($add==1 or $test_add==1){
                    not_memberOf => "teachers,uni-teachers,lin-teachers,bsz-teachers,students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=uni-12abc,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    sAMAccountname=>"uni-12abc",
                    memberOf => "uni-students",
                    not_memberOf => "students,uni-teachers",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=kep42,CN=uni-teachers,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Johannes Kepler",
@@ -404,7 +408,7 @@ if ($add==1 or $test_add==1){
                    memberOf => "uni-teachers,",
                    not_memberOf => "teachers,lin-teachers,bsz-teachers,students",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=gal42,CN=uni-teachers,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Galileo Galilei",
@@ -424,7 +428,7 @@ if ($add==1 or $test_add==1){
                    not_memberOf => "teachers,lin-teachers,bsz-teachers,students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=uni-teachers,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    sAMAccountname=>"uni-teachers",
                    memberOf => "teachers",
@@ -450,7 +454,7 @@ if ($move==1 or $test_move==1){
     }
 
     ##### Testing the users
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=maiersa42,CN=bsz-attic,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Sarina Maier",
@@ -470,21 +474,21 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "teachers,bsz-teachers,lin-teachers",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-attic,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-attic",
                    memberOf => "bsz-students",
                    not_memberOf => "students,lin-students,uni-students",
                   });
     ##### Testing the users ou-students group
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-students,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-students",
                    memberOf => "students",
                    not_memberOf => "teachers",
                   });
 
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=muellegr42,CN=lin-attic,CN=Students,OU=LINUXLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Gregor Müller",
@@ -504,20 +508,20 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "teachers,bsz-teachers,lin-teachers,bsz-students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=lin-attic,CN=Classes,OU=LINUXLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"lin-attic",
                    memberOf => "lin-students",
                    not_memberOf => "students,uni-students,bsz-students",
                   });
     ##### Testing the users ou-students group
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=lin-students,CN=Classes,OU=LINUXLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"lin-students",
                    memberOf => "students",
                    not_memberOf => "teachers",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=jonsonad42,CN=bsz-m9cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Aðalráður Jónsson",
@@ -537,20 +541,20 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "teachers,bsz-teachers,lin-teachers,bsz-students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-m9cd,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-m9cd",
                    memberOf => "bsz-students",
                    not_memberOf => "students,uni-students,lin-students",
                   });
     ##### Testing the users ou-students group
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-students,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-students",
                    memberOf => "students",
                    not_memberOf => "teachers",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=samardze42,CN=bsz-m9cd,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Željko Samardžić",
@@ -570,20 +574,20 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "teachers,bsz-teachers,lin-teachers,bsz-students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-m9cd,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-m9cd",
                    memberOf => "bsz-students",
                    not_memberOf => "students,uni-students,lin-students",
                   });
     ##### Testing the users ou-students group
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-students,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-students",
                    memberOf => "students",
                    not_memberOf => "teachers",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=oe42,CN=bsz-alumni,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Gökhan Ömür",
@@ -603,20 +607,20 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "teachers,bsz-teachers,lin-teachers,bsz-students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-m9cd,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-m9cd",
                    memberOf => "bsz-students",
                    not_memberOf => "students,uni-students,lin-students",
                   });
     ##### Testing the users ou-students group
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-students,CN=Classes,OU=BSZLEO,DC=linuxmuster,DC=local",
                    sAMAccountname=>"bsz-students",
                    memberOf => "students",
                    not_memberOf => "teachers",
                   });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=wu42,CN=uni-teachers,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Désirée Würth",
@@ -636,20 +640,20 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "teachers,bsz-teachers,lin-teachers,bsz-students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=uni-teachers,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    sAMAccountname=>"uni-teachers",
                    memberOf => "teachers",
                    not_memberOf => "students,uni-students,lin-students",
                   });
 #    ##### Testing the users ou-students group
-#    &AD_test_object_exist({ldap=>$ldap,
+#    &AD_test_object({ldap=>$ldap,
 #                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
 #                   sAMAccountname=>"bsz-students",
 #                   memberOf => "students",
 #                   not_memberOf => "teachers",
 #                  });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=lordjo42,CN=uni-teachers,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Jon Lord",
@@ -669,20 +673,20 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "bsz-teachers,lin-teachers,bsz-students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=uni-teachers,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    sAMAccountname=>"uni-teachers",
                    memberOf => "teachers",
                    not_memberOf => "students,uni-students,lin-students",
                   });
 #    ##### Testing the users ou-students group
-#    &AD_test_object_exist({ldap=>$ldap,
+#    &AD_test_object({ldap=>$ldap,
 #                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
 #                   sAMAccountname=>"bsz-students",
 #                   memberOf => "students",
 #                   not_memberOf => "teachers",
 #                  });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=blackmri42,CN=lin-teachers,CN=Teachers,OU=LINUXLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Richard Blackmore",
@@ -702,20 +706,20 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "bsz-teachers,bsz-students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=uni-teachers,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    sAMAccountname=>"uni-teachers",
                    memberOf => "teachers",
                    not_memberOf => "students,uni-students,lin-students",
                   });
 #    ##### Testing the users ou-students group
-#    &AD_test_object_exist({ldap=>$ldap,
+#    &AD_test_object({ldap=>$ldap,
 #                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
 #                   sAMAccountname=>"bsz-students",
 #                   memberOf => "students",
 #                   not_memberOf => "teachers",
 #                  });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=kep42,CN=uni-alumni,CN=Students,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Johannes Kepler",
@@ -735,20 +739,20 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "bsz-teachers,lin-teachers,bsz-students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=uni-alumni,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    sAMAccountname=>"uni-alumni",
                    memberOf => "uni-students",
                    not_memberOf => "students,lin-students",
                   });
 #    ##### Testing the users ou-students group
-#    &AD_test_object_exist({ldap=>$ldap,
+#    &AD_test_object({ldap=>$ldap,
 #                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
 #                   sAMAccountname=>"bsz-students",
 #                   memberOf => "students",
 #                   not_memberOf => "teachers",
 #                  });
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=gal42,CN=ghs-alumni,CN=Students,OU=GHS-SCHOOL,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Galileo Galilei",
@@ -768,14 +772,14 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "uni-teachers,lin-teachers,bsz-students",
                   });
     ##### Testing the users class
-    &AD_test_object_exist({ldap=>$ldap,
+    &AD_test_object({ldap=>$ldap,
                    dn=>"CN=ghs-alumni,CN=Classes,OU=GHS-SCHOOL,DC=linuxmuster,DC=local",
                    sAMAccountname=>"ghs-alumni",
                    memberOf => "ghs-students",
                    not_memberOf => "students,lin-students",
                   });
 #    ##### Testing the users ou-students group
-#    &AD_test_object_exist({ldap=>$ldap,
+#    &AD_test_object({ldap=>$ldap,
 #                   dn=>"CN=bsz-students,CN=Classes,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
 #                   sAMAccountname=>"bsz-students",
 #                   memberOf => "students",
@@ -803,8 +807,16 @@ if ($kill==1 or $test_kill==1){
     }
   
     ##### Testing the users
-    print "\nNo kill tests at the moment\n\n";
-
+    &AD_object_nonexist($ldap,"user","maiersa42");
+    &AD_object_nonexist($ldap,"user","muellegr42");
+    &AD_object_nonexist($ldap,"user","jonsonad42");
+    &AD_object_nonexist($ldap,"user","samardze42");
+    &AD_object_nonexist($ldap,"user","oe42");
+    &AD_object_nonexist($ldap,"user","wu42");
+    &AD_object_nonexist($ldap,"user","lordjo42");
+    &AD_object_nonexist($ldap,"user","blackmri42");
+    &AD_object_nonexist($ldap,"user","kep42");
+    &AD_object_nonexist($ldap,"user","gal42");
 }
 
 
