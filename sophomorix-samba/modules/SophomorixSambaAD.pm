@@ -237,8 +237,6 @@ sub AD_user_move {
         $target_branch="CN=".$group_new.",CN=Teachers,OU=".$ou_new.",".$base;
     }
 
-#    my $target_branch=&get_target_branch($role_new,$group,$ou_new);
-#    my $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$base;
     # fetch the dn (where the object really is)
     my ($count,$dn,$rdn)=&AD_object_search($ldap,"user",$user);
     if ($count==0){

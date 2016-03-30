@@ -11,10 +11,10 @@ oe42::teachers::alumni::U::bsz::bsz::BSZLEO::BSZLEO::student::
 ##### wu42 is moved to another school
 wu42::teachers::teachers::U::bsz::uni::BSZLEO::UNIVERSITÄT::teacher::
 ##### lordjo becomes a teacher of its school
-lordjo42::12abc::teachers::U::uni::uni::UNIVERSITÄT::UNIVERSITÄT::
+lordjo42::12abc::teachers::U::uni::uni::UNIVERSITÄT::UNIVERSITÄT::teacher::
 ##### blackmri42 becomes a teacher of another school
-blackmri42:::12abc::teachers::U::uni::lin::UNIVERSITÄT::LINUXLEO::
+blackmri42::12abc::teachers::U::uni::lin::UNIVERSITÄT::LINUXLEO::teacher::
 ##### kep42 becomes alumni/student of same school
-kep42::teachers::alumni::U::uni::uni::UNIVERSITÄT::UNIVERSITÄT::
+kep42::teachers::alumni::U::uni::uni::UNIVERSITÄT::UNIVERSITÄT::student::
 ##### gal42 becomes alumni of another school
-gal42::teachers::alumni::U::uni::ghs::UNIVERSITÄT::GHS-SCHOOL::
+gal42::teachers::alumni::U::uni::ghs::UNIVERSITÄT::GHS-SCHOOL::student::
