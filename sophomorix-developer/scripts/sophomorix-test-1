@@ -201,7 +201,7 @@ if ($add==1){
                    not_memberOf => "teachers",
                   });
     &AD_test_object_exist({ldap=>$ldap,
-                   dn=>"CN=oe42,,CN=bsz-teachers,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   dn=>"CN=oe42,CN=bsz-teachers,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Gökhan Ömür",
                    givenName=>"Gökhan",
