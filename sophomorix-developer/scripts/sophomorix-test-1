@@ -201,7 +201,7 @@ if ($add==1){
                    not_memberOf => "teachers",
                   });
     &AD_test_object_exist({ldap=>$ldap,
-                   dn=>"CN=oe42,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   dn=>"CN=oe42,,CN=bsz-teachers,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Gökhan Ömür",
                    givenName=>"Gökhan",
@@ -220,7 +220,7 @@ if ($add==1){
                    not_memberOf => "teachers,lin-teachers,students",
                   });
     &AD_test_object_exist({ldap=>$ldap,
-                   dn=>"CN=wu42,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   dn=>"CN=wu42,CN=bsz-teachers,CN=Teachers,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Désirée Würth",
                    givenName=>"Désirée",
@@ -291,7 +291,7 @@ if ($add==1){
                    not_memberOf => "students,uni-teachers",
                   });
     &AD_test_object_exist({ldap=>$ldap,
-                   dn=>"CN=kep42,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+                   dn=>"CN=kep42,CN=uni-teachers,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Johannes Kepler",
                    givenName=>"Johannes",
@@ -310,7 +310,7 @@ if ($add==1){
                    not_memberOf => "teachers,lin-teachers,bsz-teachers,students",
                   });
     &AD_test_object_exist({ldap=>$ldap,
-                   dn=>"CN=gal42,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
+                   dn=>"CN=gal42,CN=uni-teachers,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
                    displayName=>"Galileo Galilei",
                    givenName=>"Galileo",
@@ -514,20 +514,20 @@ if ($move==1){
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=wu42,CN=uni-teachers,CN=Teachers,OU=UNIVERSITÄT,DC=linuxmuster,DC=local",
                    #####
-                   displayName=>"Gökhan Ömür",
-                   givenName=>"Gökhan",
-                   name=>"oe42",
-                   sAMAccountname=>"oe42",
-                   sn=>"Ömür",
-                   sophomorixAdminClass => "bsz-alumni",
+                   displayName=>"Désirée Würth",
+                   givenName=>"Désirée",
+                   name=>"wu42",
+                   sAMAccountname=>"wu42",
+                   sn=>"Würth",
+                   sophomorixAdminClass => "uni-teachers",
                    sophomorixExitAdminClass => "bsz-teachers",
-                   sophomorixFirstPassword => "LinuxMuster23!",
-                   sophomorixFirstnameASCII => "Goekhan",
-                   sophomorixSurnameASCII  => "Oemuer",
-                   sophomorixRole => "student",
-                   sophomorixSchoolPrefix => "bsz",
-                   sophomorixSchoolname => "BSZLEO",
-                   memberOf => "bsz-alumni",
+                   sophomorixFirstPassword => "LinuxMuster!",
+                   sophomorixFirstnameASCII => "Desiree",
+                   sophomorixSurnameASCII  => "Wuerth",
+                   sophomorixRole => "teacher",
+                   sophomorixSchoolPrefix => "uni",
+                   sophomorixSchoolname => "UNIVERSITÄT",
+                   memberOf => "uni-teachers",
                    not_memberOf => "teachers,bsz-teachers,lin-teachers,bsz-students",
                   });
     ##### Testing the users class

@@ -223,18 +223,22 @@ sub AD_user_move {
     my $role_new = $arg_ref->{role};
 
     # calculate
+    my $base=&AD_get_base();
     my $group_type_old;
     my $group_type_new;
+    my $target_branch;
     if ($role_new eq "student"){
         $group_type_old = $school_token_old."-".$DevelConf::student;
-        $group_type_new = $school_token_new."-".$DevelConf::student;;
+        $group_type_new = $school_token_new."-".$DevelConf::student;
+        $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$base;
     } elsif ($role_new eq "teacher"){
         $group_type_old = $school_token_old."-".$DevelConf::teacher;
-        $group_type_new = $school_token_new."-".$DevelConf::teacher;;
+        $group_type_new = $school_token_new."-".$DevelConf::teacher;
+        $target_branch="CN=".$group_new.",CN=Teachers,OU=".$ou_new.",".$base;
     }
 
-    my $base=&AD_get_base();
-    my $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$base;
+#    my $target_branch=&get_target_branch($role_new,$group,$ou_new);
+#    my $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$base;
     # fetch the dn (where the object really is)
     my ($count,$dn,$rdn)=&AD_object_search($ldap,"user",$user);
     if ($count==0){
@@ -252,15 +256,15 @@ sub AD_user_move {
         print "\n";
         &Sophomorix::SophomorixBase::print_title("Moving User $user ($user_count):");
 
-        print("DN:                  $dn\n");
-        #print("DN (Parent):         $dn_class\n");
-        print("Group (Old):         $group_old\n");
-        print("Group (New):         $group_new\n");
-        print("Role (New):          $role_new\n");
-        print("RoleGroup (Old):     $group_type_old\n");
-        print("RoleGroup (New):     $group_type_new\n");
-        print("School(Old):         $school_token_old ($ou_old)\n");
-        print("School(New):         $school_token_new ($ou_new)\n");
+        print("DN:                $dn\n");
+        print("Target DN:         $target_branch\n");
+        print("Group (Old):       $group_old\n");
+        print("Group (New):       $group_new\n");
+        print("Role (New):        $role_new\n");
+        print("Group (Old):       $group_type_old\n");
+        print("Group (New):       $group_type_new\n");
+        print("School(Old):       $school_token_old ($ou_old)\n");
+        print("School(New):       $school_token_new ($ou_new)\n");
     }
 
     # make sure OU and tree exists
@@ -381,13 +385,15 @@ sub AD_get_container {
     if ($role eq "student"){
         $container=$group_strg.$DevelConf::AD_student_cn;
     }  elsif ($role eq "teacher"){
-        $container=$DevelConf::AD_teacher_cn;
+        $container=$group_strg.$DevelConf::AD_teacher_cn;
     }  elsif ($role eq "adminclass"){
         $container=$DevelConf::AD_class_cn;
     }  elsif ($role eq "project"){
         $container=$DevelConf::AD_project_cn;
     }  elsif ($role eq "workstation"){
-        $container=$DevelConf::AD_workstation_cn;
+        $container=$group_strg.$DevelConf::AD_workstation_cn;
+    }  elsif ($role eq "examaccount"){
+        $container=$group_strg.$DevelConf::AD_examaccount_cn;
     }  elsif ($role eq "management"){
         $container=$DevelConf::AD_management_cn;
     }  elsif ($role eq "printer"){
@@ -551,7 +557,7 @@ sub AD_object_move {
                         deleteoldrdn => '1',
                         newsuperior => $target_branch
                                );
-    #print Dumper(\$result);
+    print Dumper(\$result);
 }
 
 
