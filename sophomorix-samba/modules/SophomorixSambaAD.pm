@@ -555,7 +555,7 @@ sub AD_object_move {
                         deleteoldrdn => '1',
                         newsuperior => $target_branch
                                );
-    print Dumper(\$result);
+    #print Dumper(\$result);
 }
 
 

@@ -27,13 +27,27 @@ $Conf::log_level=1;
 my $add=0;
 my $move=0;
 my $kill=0;
+my $cp_add=0;
+my $cp_move=0;
+my $cp_kill=0;
+my $test_add=0;
+my $test_move=0;
+my $test_kill=0;
+my $full=0;
 my $help=0;
 my $skip_warning=0;
 
 my $testopt=GetOptions(
+           "cp-add" => \$cp_add,
+           "cp-move" => \$cp_move,
+           "cp-kill" => \$cp_kill,
+           "test-add" => \$test_add,
+           "test-move" => \$test_move,
+           "test-kill" => \$test_kill,
            "add|a" => \$add,
            "move|m" => \$move,
            "kill|k" => \$kill,
+           "full|f" => \$full,
            "help|h" => \$help,
            "skip|s" => \$skip_warning,
           );
@@ -41,6 +55,9 @@ my $testopt=GetOptions(
 
 # Prüfen, ob Optionen erkannt wurden, sonst Abbruch
 &check_options($testopt);
+
+
+
 
 my $ldap = &AD_bind_admin();
 my $file_add=$DevelConf::path_result."/sophomorix.add";
@@ -52,9 +69,80 @@ my $file_add_test=$testdata."/sophomorix.add-1";
 my $file_move_test=$testdata."/sophomorix.move-1";
 my $file_kill_test=$testdata."/sophomorix.kill-1";
 
+# --help
+if ($help==1) {
+   # Scriptname ermitteln
+   my @list = split(/\//,$0);
+   my $scriptname = pop @list;
+   # Befehlsbeschreibung
+   print('
+sophomorix-test-1 tests sophomorix-add,sophomorix-move and sophomorix-kill.
+
+Created users or groups might clash with users or groups already added.
+It is recommended that sophomorix-test-1  is only run on test servers without 
+existing users and groups.
+
+Options
+  -h  / --help
+
+Full automated test:
+
+  -f, --full 
+   full test (copying file|add,move,kill|test)
+   includes skip
+  -s, --skip 
+   force overwriting sophomorix.add,sophomorix.move, sophomorix.kill
+
+Step by step Test:
+
+  Copy sophomorix.add:
+      sophomorix-test-1 --cp-add
+  Add the users:
+      sophomorix-add -i
+      sophomorix-add
+  Test added users:
+      sophomorix-test-1 --test-add
+
+  Copy sophomorix.move:
+      sophomorix-test-1 --cp-move
+  Move the users:
+      sophomorix-move -i
+      sophomorix-move
+  Test moved users:
+      sophomorix-test-1 --test-move
+
+  Copy sophomorix.kill:
+      sophomorix-test-1 --cp-kill
+  Kill the users:
+      sophomorix-kill -i
+      sophomorix-kill
+  Test killed users:
+      sophomorix-test-1 --test-kill
+
+  --u user / --users user
+  --c class / --class class
+  --lock / --unlock
+
+Please see the sophomorix-add(8) man pages for full documentation
+');
+   print "\n";
+   exit;
+}
+
+
+
+
 ############################################################
 # Check preliminaries
 ############################################################
+
+# --full
+if ($full==1){
+    $add=1;
+    $move=1;
+    $kill=1;
+    $skip_warning=1;
+}
 
 # --add
 if ($add==1){
@@ -94,13 +182,20 @@ if ($kill==1){
 ############################################################
 # Adding users --add
 ############################################################
-if ($add==1){
+if ($cp_add==1){
     # copy sophomorix.add
-    system("cp $file_add_test $file_add");
-    system("sophomorix-add -i");
-#    system("sophomorix-add");
+    system("cp -v $file_add_test $file_add");
+}
 
-    ##### Testing the user
+if ($add==1 or $test_add==1){
+    if ($add==1){
+        # copy sophomorix.add
+        system("cp -v $file_add_test $file_add");
+        system("sophomorix-add -i");
+        system("sophomorix-add");
+    }
+
+    ##### Testing the users
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=maiersa42,CN=bsz-m7ab,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
@@ -341,10 +436,20 @@ if ($add==1){
 ############################################################
 # Adding users --move
 ############################################################
-if ($move==1){
+if ($cp_move==1){
     # copy sophomorix.move
-    system("cp $file_move_test $file_move");
-    system("sophomorix-move -i");
+    system("cp -v $file_move_test $file_move");
+}
+
+if ($move==1 or $test_move==1){
+    if ($move==1){
+        # copy sophomorix.move
+        system("cp -v $file_move_test $file_move");
+        system("sophomorix-move -i");
+        system("sophomorix-move");
+    }
+
+    ##### Testing the users
     &AD_test_object_exist({ldap=>$ldap,
                    dn=>"CN=maiersa42,CN=bsz-attic,CN=Students,OU=BSZLEO,DC=linuxmuster,DC=local",
                    #####
@@ -684,11 +789,21 @@ if ($move==1){
 ############################################################
 # Deleting users --kill
 ############################################################
-if ($kill==1){
+if ($cp_kill==1){
     # copy sophomorix.kill
-    system("cp $file_kill_test $file_kill");
-    system("sophomorix-kill -i");
-    system("sophomorix-kill");
+    system("cp -v $file_kill_test $file_kill");
+}
+
+if ($kill==1 or $test_kill==1){
+    if ($kill==1){
+        # copy sophomorix.kill
+        system("cp -v $file_kill_test $file_kill");
+        system("sophomorix-kill -i");
+        system("sophomorix-kill");
+    }
+  
+    ##### Testing the users
+    print "\nNo kill tests at the moment\n\n";
 
 }
 
