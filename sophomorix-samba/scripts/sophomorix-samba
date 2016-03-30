@@ -135,11 +135,11 @@ if ($schema_load==1){
 
 sub samba_stop {
     system("/etc/init.d/samba stop");
-    sleep 2;
+    #sleep 2;
 }
 
 sub samba_start {
-    sleep 2;
+    #sleep 2;
     system("/etc/init.d/samba start");
 }
 

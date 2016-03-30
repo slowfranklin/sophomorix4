@@ -131,7 +131,7 @@ sub AD_user_create {
     my $role = $arg_ref->{role};
     my $creationdate = $arg_ref->{creationdate};
 
-    #calculate
+    # calculate
     my $shell="/bin/false";
     my $display_name = $firstname_utf8." ".$surname_utf8;
     my $user_principal_name = $login."\@"."linuxmuster.local";
@@ -228,13 +228,9 @@ sub AD_user_move {
     my $group_type_new;
     my $target_branch;
     if ($role_new eq "student"){
-        $group_type_old = $school_token_old."-".$DevelConf::student;
-        $group_type_new = $school_token_new."-".$DevelConf::student;
-        $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$base;
+         $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$base;
     } elsif ($role_new eq "teacher"){
-        $group_type_old = $school_token_old."-".$DevelConf::teacher;
-        $group_type_new = $school_token_new."-".$DevelConf::teacher;
-        $target_branch="CN=".$group_new.",CN=Teachers,OU=".$ou_new.",".$base;
+         $target_branch="CN=".$group_new.",CN=Teachers,OU=".$ou_new.",".$base;
     }
 
     # fetch the dn (where the object really is)
@@ -259,8 +255,6 @@ sub AD_user_move {
         print("Group (Old):       $group_old\n");
         print("Group (New):       $group_new\n");
         print("Role (New):        $role_new\n");
-        print("Group (Old):       $group_type_old\n");
-        print("Group (New):       $group_type_new\n");
         print("School(Old):       $school_token_old ($ou_old)\n");
         print("School(New):       $school_token_new ($ou_new)\n");
     }
@@ -576,25 +570,26 @@ sub AD_group_create {
     my $dn = "cn=".$group.",".$container."OU=".$ou.",".$base;
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"group",$group);
-    if ($count> 0){
+    if ($count==0){
+        # adding the group
+        &Sophomorix::SophomorixBase::print_title("Creating Group:");
+        print("   Group:    $group\n");
+        print("   Type:     $type\n");
+        print("   dn:       $dn\n");
+        my $result = $ldap->add( $dn,
+                                attr => [
+                                    'cn'   => $group,
+                                    'sAMAccountName' => $group,
+                                    'objectclass' => ['top',
+                                                      'group' ],
+                                ]
+                            );
+        $result->code && warn "failed to add entry: ", $result->error ;
+    } else {
         print "   * Group $group exists already ($count results)\n";
         return;
     }
 
-    # adding the group
-    &Sophomorix::SophomorixBase::print_title("Creating Group:");
-    print("   Group:    $group\n");
-    print("   Type:     $type\n");
-    print("   dn:       $dn\n");
-    my $result = $ldap->add( $dn,
-                           attr => [
-                             'cn'   => $group,
-                             'sAMAccountName' => $group,
-                             'objectclass' => ['top',
-                                               'group' ],
-                                   ]
-                           );
-    $result->code && warn "failed to add entry: ", $result->error ;
 
     if ($type eq "adminclass"){
         # make the group a member of <token>-students
@@ -604,9 +599,9 @@ sub AD_group_create {
                              addgroup => $group,
                            });
         if ($group eq "teachers"){
-            my $token_teachers=$school_token."-".$DevelConf::teachers;
+            my $token_teachers=$school_token."-".$DevelConf::teacher;
             &AD_group_addmember({ldap => $ldap,
-                                 group => $DevelConf::teachers,
+                                 group => $DevelConf::teacher,
                                  addgroup => $token_teachers,
                                });
         } else {
