@@ -220,17 +220,17 @@ sub AD_user_move {
     my $ou_new = $arg_ref->{ou_new};
     my $school_token_old = $arg_ref->{school_token_old};
     my $school_token_new = $arg_ref->{school_token_new};
-    my $role = $arg_ref->{role};
+    my $role_new = $arg_ref->{role};
 
     # calculate
-    my $role_group_old;
-    my $role_group_new;
-    if ($role eq "student"){
-        $role_group_old = $school_token_old."-".$DevelConf::student;
-        $role_group_new = $school_token_new."-".$DevelConf::student;;
-    } elsif ($role eq "teacher"){
-        $role_group_old = $school_token_old."-".$DevelConf::teacher;
-        $role_group_new = $school_token_new."-".$DevelConf::teacher;;
+    my $group_type_old;
+    my $group_type_new;
+    if ($role_new eq "student"){
+        $group_type_old = $school_token_old."-".$DevelConf::student;
+        $group_type_new = $school_token_new."-".$DevelConf::student;;
+    } elsif ($role_new eq "teacher"){
+        $group_type_old = $school_token_old."-".$DevelConf::teacher;
+        $group_type_new = $school_token_new."-".$DevelConf::teacher;;
     }
 
     my $base=&AD_get_base();
@@ -256,8 +256,9 @@ sub AD_user_move {
         #print("DN (Parent):         $dn_class\n");
         print("Group (Old):         $group_old\n");
         print("Group (New):         $group_new\n");
-        print("RoleGroup (Old):     $role_group_old\n");
-        print("RoleGroup (New):     $role_group_new\n");
+        print("Role (New):          $role_new\n");
+        print("RoleGroup (Old):     $group_type_old\n");
+        print("RoleGroup (New):     $group_type_new\n");
         print("School(Old):         $school_token_old ($ou_old)\n");
         print("School(New):         $school_token_new ($ou_new)\n");
     }
@@ -292,6 +293,7 @@ sub AD_user_move {
                           sophomorixExitAdminClass => $group_old,
                           sophomorixSchoolPrefix => $school_token_new,
                           sophomorixSchoolname => $ou_new,
+                          sophomorixRole => $role_new,
                       }
                );
     #print Dumper(\$mesg);
@@ -320,13 +322,13 @@ sub AD_user_move {
                        }); 
 
     # change rolegroup
-    #if ($role_group_old ne $role_group_new){
+    #if ($group_type_old ne $group_type_new){
     #    &AD_group_removemember({ldap => $ldap, 
-    #                            group => $role_group_old,
+    #                            group => $group_type_old,
     #                            removemember => $user,
     #                          });   
     #    &AD_group_addmember({ldap => $ldap,
-    #                         group => $role_group_new,
+    #                         group => $group_type_new,
     #                         addmember => $user,
     #                      }); 
     #}
@@ -416,6 +418,8 @@ sub AD_ou_add {
     $result = $ldap->add($project,attr => ['objectclass' => ['top', 'container']]);
     my $workstation=$DevelConf::AD_workstation_cn.",".$dn;
     $result = $ldap->add($workstation,attr => ['objectclass' => ['top', 'container']]);
+    my $examaccount=$DevelConf::AD_examaccount_cn.",".$dn;
+    $result = $ldap->add($examaccount,attr => ['objectclass' => ['top', 'container']]);
     my $management=$DevelConf::AD_management_cn.",".$dn;
     $result = $ldap->add($management,attr => ['objectclass' => ['top', 'container']]);
     my $printer=$DevelConf::AD_printer_cn.",".$dn;
