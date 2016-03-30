@@ -1,3 +1,9 @@
+sophomorix4 (3.2.0-1) xenial-unstable; urgency=medium
+
+  * new upstream with tests
+
+ -- jeff <bz@adler>  Wed, 30 Mar 2016 13:27:50 +0200
+
 sophomorix4 (3.1.1-1) xenial-unstable; urgency=medium
 
   * new upstream with sophomorix schema

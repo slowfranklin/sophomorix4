@@ -5,8 +5,10 @@
 
 4.0.0-1 (2016-??-??)
 
-3.1.2-1 (2016-03-xx)
 
+3.2.0-1 (2016-03-30)
+      - lots if tests and fixes
+      - sophomorix-test-1 works 
 
 3.1.1-1 (2016-03-24)
       - sophomorix schema added

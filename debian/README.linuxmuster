@@ -24,7 +24,7 @@ Create an official package for linuxmuster 7.x/xenial:
 4. # update changelog file:
    cd sophomorix4
    dch -i 
-     -> set version number (example: 3.0.2-1)
+     -> set version number (example: 3.2.0-1)
      -> add a comment to the changelog
      -> set a repo like xenial OR xenial-testing OR xenial-unstable
         (this determines, in which repo the package will be uploaded)
