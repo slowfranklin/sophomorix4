@@ -130,6 +130,7 @@ install-sophomorix-samba:
 	@install -d -m700 -oroot -groot $(LIBDIR)/tmp
 	@install -d -m700 -oroot -groot $(LIBDIR)/lock
 	@install -d -m700 -oroot -groot $(LIBDIR)/print-data
+	@install -d -m700 -oroot -groot $(LIBDIR)/check-result
 #	@install -d -m755 -oroot -groot $(CACHEDIR)
 	@install -d -m700 -oroot -groot $(LOGDIR)
 	@install -d -m700 -oroot -groot $(LOGDIR)/user
