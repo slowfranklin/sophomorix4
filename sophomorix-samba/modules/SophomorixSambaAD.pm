@@ -333,7 +333,9 @@ sub AD_get_name_tokened {
     # prepend <token> or not, depending on the users role/groups type 
     my ($name,$school_token,$role) = @_;
     my $name_tokened="";
-    if ($role eq "adminclass" or 
+    if ($role eq "adminclass" or
+        $role eq "room" or 
+        $role eq "roomws" or
         $role eq "examaccount" or
         $role eq "workstation"){
         if ($school_token eq "---" or $school_token eq ""){

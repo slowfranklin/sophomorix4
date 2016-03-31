@@ -22,6 +22,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_unbind_admin
                                  AD_get_base
                                  AD_user_create
+                                 AD_user_kill
                                  AD_object_search
                                     );
 use Sophomorix::SophomorixTest qw(
@@ -165,6 +166,7 @@ if ($add_ea==1){
                      plain_password=>$plain_password,
                      ou=>$ou,
                      role=>"examaccount",
+                     type=>"room",
                      school_token=>$school_token,
                      creationdate=>$time_stamp_AD,
                    });
@@ -232,7 +234,10 @@ if ($test_add_ea==1){    # j1010p01
 ############################################################
 # --kill-ea  
 if ($kill_ea==1){
-
+    &AD_user_kill({ldap=>$ldap,
+                   login=>"bsz-j1010p01",
+#                   identifier=>$identifier_to_kill
+                  });
 
 }
 ############################################################
