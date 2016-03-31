@@ -22,8 +22,11 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_unbind_admin
                                  AD_get_base
                                  AD_user_create
+                                 AD_group_create
+                                 AD_group_addmember
                                  AD_user_kill
                                  AD_object_search
+                                 AD_get_name_tokened
                                     );
 use Sophomorix::SophomorixTest qw(
                                  AD_object_nonexist
@@ -127,7 +130,9 @@ my @passwort_zeichen=&get_passwd_charlist();
 # ou's that have been created in this script
 my %ou_created=();
 $ou_created{$ou}="created";
-
+my $room_token;
+my $login_token;
+my $examaccount_token;
 
 ############################################################
 # Add Exam Accounts
@@ -170,6 +175,23 @@ if ($add_ea==1){
                      school_token=>$school_token,
                      creationdate=>$time_stamp_AD,
                    });
+
+  # make sure that the room exists
+  $login_token=&AD_get_name_tokened($login,$school_token,"examaccount");
+  $room_token=&AD_get_name_tokened($room,$school_token,"room");
+  $examaccount_token=$school_token."-".$DevelConf::examaccount;
+  
+  &AD_group_create({ldap=>$ldap,
+                    group=>$room_token,
+                    ou=>$ou,
+                    school_token=>$school_token,
+                    type=>"room",
+                   });
+  # add examaccount to its room
+  &AD_group_addmember({ldap => $ldap,
+                       group => $room_token,
+                       addmember => $login_token,
+                      });   
 }
 
 
@@ -202,9 +224,9 @@ if ($test_add_ea==1){    # j1010p01
     ##### Testing the exam accounts room
     &AD_test_object({ldap=>$ldap,
                    dn=>"CN=bsz-j1010,CN=Rooms,OU=BSZLEO,DC=linuxmuster,DC=local",
-                   sAMAccountname=>"bsz-m7ab",
-                   memberOf => "bsz-students",
-                   not_memberOf => "teachers",
+                   sAMAccountname=>"bsz-j1010",
+                   memberOf => "bsz-examaccounts",
+                   not_memberOf => "bsz-teachers",
                   });
     ##### Testing the examaccounts <token>-examaccounts group
     &AD_test_object({ldap=>$ldap,

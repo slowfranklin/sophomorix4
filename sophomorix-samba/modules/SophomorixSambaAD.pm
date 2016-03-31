@@ -178,18 +178,16 @@ sub AD_user_create {
         print("Identifier:         $identifier\n");
         print("OU:                 $ou\n"); # Organisatinal Unit
         print("School Token:       $school_token\n"); # Organisatinal Unit
-        print("Role:               $role\n");
-        print("AdminClass:         $group ($group_token)\n"); # lehrer oder klasse
+        print("Role(User):         $role\n");
+        print("Type(Group):        $type\n");
+        print("Group:              $group ($group_token)\n"); # lehrer oder klasse
         print("Unix-gid:           $wunsch_gid\n"); # lehrer oder klasse
         #print("GECOS:              $gecos\n");
         #print("Login (to check):   $login_name_to_check\n");
         print("Login (check OK):   $login ($login_token)\n");
         print("Password:           $plain_password\n");
         # sophomorix stuff
-
-
         print("Creationdate:       $creationdate\n");
-
         print("Unid:               $unid\n");
         print("Unix-id:            $wunsch_id\n");
     }
@@ -366,18 +364,23 @@ sub AD_get_container {
     my ($role,$group) = @_;
     my $group_strg="CN=".$group.",";
     my $container="";
+    # for user container
     if ($role eq "student"){
         $container=$group_strg.$DevelConf::AD_student_cn;
     }  elsif ($role eq "teacher"){
         $container=$group_strg.$DevelConf::AD_teacher_cn;
-    }  elsif ($role eq "adminclass"){
-        $container=$DevelConf::AD_class_cn;
-    }  elsif ($role eq "project"){
-        $container=$DevelConf::AD_project_cn;
     }  elsif ($role eq "workstation"){
         $container=$group_strg.$DevelConf::AD_workstation_cn;
     }  elsif ($role eq "examaccount"){
         $container=$group_strg.$DevelConf::AD_examaccount_cn;
+    # group container
+    }  elsif ($role eq "adminclass"){
+        $container=$DevelConf::AD_class_cn;
+    }  elsif ($role eq "project"){
+        $container=$DevelConf::AD_project_cn;
+    }  elsif ($role eq "room"){
+        $container=$DevelConf::AD_room_cn;
+    # other
     }  elsif ($role eq "management"){
         $container=$DevelConf::AD_management_cn;
     }  elsif ($role eq "printer"){
@@ -422,7 +425,7 @@ sub AD_ou_add {
     $result = $ldap->add($custom,attr => ['objectclass' => ['top', 'container']]);
     # Adding some groups
 
-    # token-teachers
+    # <token>-teachers
     my $group=$token."-".$DevelConf::teacher;
     my $dn_group="CN=".$group.",".$DevelConf::AD_class_cn.",".$dn;
     $result = $ldap->add( $dn_group,
@@ -434,7 +437,7 @@ sub AD_ou_add {
                          ]
                      );
 
-    # token-students
+    # <token>-students
     $group=$token."-".$DevelConf::student;
     $dn_group="CN=".$group.",".$DevelConf::AD_class_cn.",".$dn;
     $result = $ldap->add( $dn_group,
@@ -445,6 +448,31 @@ sub AD_ou_add {
                                                'group' ],
                          ]
                      );
+
+    # <token>-examaccounts
+    $group=$token."-".$DevelConf::examaccount;
+    $dn_group="CN=".$group.",".$DevelConf::AD_room_cn.",".$dn;
+    $result = $ldap->add( $dn_group,
+                         attr => [
+                             'cn'   => $group,
+                             'sAMAccountName' => $group,
+                             'objectclass' => ['top',
+                                               'group' ],
+                         ]
+                     );
+
+    ## <token>-workstations
+    ## workstations sind in keiner Gruppe
+    #$group=$token."-".$DevelConf::workstation;
+    #$dn_group="CN=".$group.",".$DevelConf::AD_room_cn.",".$dn;
+    #$result = $ldap->add( $dn_group,
+    #                     attr => [
+    #                         'cn'   => $group,
+    #                         'sAMAccountName' => $group,
+    #                         'objectclass' => ['top',
+    #                                           'group' ],
+    #                     ]
+    #                 );
 
     # OU=SOPHOMORIX
     my $sophomorix_dn="OU=SOPHOMORIX,".$base;
@@ -483,11 +511,11 @@ sub AD_ou_add {
                          ]
                      );
     # ExamAccounts in OU=SOPHMORIX
-    $sophomorix_dn_group="CN=".$DevelConf::exam_accounts.",".$DevelConf::AD_class_cn.",".$sophomorix_dn;
+    $sophomorix_dn_group="CN=".$DevelConf::examaccount.",".$DevelConf::AD_class_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
                          attr => [
-                             'cn'   => $DevelConf::exam_accounts,
-                             'sAMAccountName' => $DevelConf::exam_accounts,
+                             'cn'   => $DevelConf::examaccount,
+                             'sAMAccountName' => $DevelConf::examaccount,
                              'objectclass' => ['top',
                                                'group' ],
                          ]
@@ -567,9 +595,9 @@ sub AD_group_create {
     if ($count==0){
         # adding the group
         &Sophomorix::SophomorixBase::print_title("Creating Group:");
+        print("   DN:       $dn\n");
         print("   Group:    $group\n");
         print("   Type:     $type\n");
-        print("   dn:       $dn\n");
         my $result = $ldap->add( $dn,
                                 attr => [
                                     'cn'   => $group,
@@ -583,7 +611,6 @@ sub AD_group_create {
         print "   * Group $group exists already ($count results)\n";
         #return;
     }
-
     if ($type eq "adminclass"){
         my $teacher_group_expected=$school_token."-".$DevelConf::teacher;
         if ($group eq $teacher_group_expected){
@@ -601,12 +628,24 @@ sub AD_group_create {
                                  group => $token_students,
                                  addgroup => $group,
                                });
-            # add <token>-students tostudents
+            # add <token>-students to students
             &AD_group_addmember({ldap => $ldap,
                                  group => $DevelConf::student,
                                  addgroup => $token_students,
                                });
         }
+    } elsif ($type eq "room"){
+        my $token_examaccounts=$school_token."-".$DevelConf::examaccount;
+        # add the room to <token>-examaccounts
+        &AD_group_addmember({ldap => $ldap,
+                             group => $token_examaccounts,
+                             addgroup => $group,
+                           });
+        # add <token>-students to students
+        &AD_group_addmember({ldap => $ldap,
+                             group => $DevelConf::examaccount,
+                             addgroup => $token_examaccounts,
+                           });
     }
     return;
 }
@@ -620,7 +659,6 @@ sub AD_group_addmember {
     my $group = $arg_ref->{group};
     my $adduser = $arg_ref->{addmember};
     my $addgroup = $arg_ref->{addgroup};
-
     my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);
     if ($count_group==0){
         # group does not exist -> exit with warning
@@ -646,11 +684,10 @@ sub AD_group_addmember {
              return;
          }
      } elsif (defined $addgroup){
-         print "Adding Group $addgroup to $group\n";
+         print "Adding group $addgroup to $group\n";
          my ($count_group,$dn_exist_addgroup,$cn_exist_addgroup)=&AD_object_search($ldap,"group",$addgroup);
          if ($count_group > 0){
              print "   * Group $addgroup exists ($count_group results)\n";
-             print "Adding group $addgroup to group $group\n";
              my $mesg = $ldap->modify( $dn_exist_group,
      	    	                   add => {
                                        member => $dn_exist_addgroup,
