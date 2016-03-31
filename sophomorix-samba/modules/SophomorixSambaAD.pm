@@ -397,19 +397,23 @@ sub AD_ou_add {
     my $dn="OU=".$ou.",".$base;
     # provide that a ou exists
     my $result = $ldap->add($dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
-    #$result->code && warn "failed to add entry: ", $result->error ;
+    # for user container
     my $student=$DevelConf::AD_student_cn.",".$dn;
     $result = $ldap->add($student,attr => ['objectclass' => ['top', 'container']]);
     my $teacher=$DevelConf::AD_teacher_cn.",".$dn;
     $result = $ldap->add($teacher,attr => ['objectclass' => ['top', 'container']]);
-    my $class=$DevelConf::AD_class_cn.",".$dn;
-    $result = $ldap->add($class,attr => ['objectclass' => ['top', 'container']]);
-    my $project=$DevelConf::AD_project_cn.",".$dn;
-    $result = $ldap->add($project,attr => ['objectclass' => ['top', 'container']]);
     my $workstation=$DevelConf::AD_workstation_cn.",".$dn;
     $result = $ldap->add($workstation,attr => ['objectclass' => ['top', 'container']]);
     my $examaccount=$DevelConf::AD_examaccount_cn.",".$dn;
     $result = $ldap->add($examaccount,attr => ['objectclass' => ['top', 'container']]);
+    # group containers
+    my $class=$DevelConf::AD_class_cn.",".$dn;
+    $result = $ldap->add($class,attr => ['objectclass' => ['top', 'container']]);
+    my $project=$DevelConf::AD_project_cn.",".$dn;
+    $result = $ldap->add($project,attr => ['objectclass' => ['top', 'container']]);
+    my $room=$DevelConf::AD_room_cn.",".$dn;
+    $result = $ldap->add($room,attr => ['objectclass' => ['top', 'container']]);
+    # other
     my $management=$DevelConf::AD_management_cn.",".$dn;
     $result = $ldap->add($management,attr => ['objectclass' => ['top', 'container']]);
     my $printer=$DevelConf::AD_printer_cn.",".$dn;
