@@ -1,0 +1,254 @@
+#!/usr/bin/perl -w
+# This script (sophomorix-test-2) is maintained by Rüdiger Beck
+# It is Free Software (License GPLv3)
+# If you find errors, contact the author
+# jeffbeck@web.de  or  jeffbeck@linuxmuster.net
+
+# Bibliotheken
+use strict;
+use Getopt::Long;
+Getopt::Long::Configure ("bundling");
+use Sophomorix::SophomorixBase qw(
+                                 print_line
+                                 print_title
+                                 check_options
+                                 time_stamp_AD 
+                                 get_passwd_charlist
+                                 get_plain_password
+                                 );
+use Sophomorix::SophomorixSambaAD qw(
+                                 AD_ou_add
+                                 AD_bind_admin
+                                 AD_unbind_admin
+                                 AD_get_base
+                                 AD_user_create
+                                 AD_object_search
+                                    );
+use Sophomorix::SophomorixTest qw(
+                                 AD_object_nonexist
+                                 AD_test_object
+                                 );
+
+$Conf::log_level=1;
+my $help=0;
+
+my $add_ws=0;
+my $test_add_ws=0;
+my $kill_ws=0;
+my $test_kill_ws=0;
+
+my $add_ea=0;
+my $test_add_ea=0;
+my $kill_ea=0;
+my $test_kill_ea=0;
+
+my $ou="";
+my $school_token="";
+my $room="";
+my $computer="";
+my $role="";
+# calculated
+
+my $login="";
+my $plain_password;
+my $user_count=0;
+my $birthdate="1970-01-01";
+
+my $testopt=GetOptions(
+           "help|h" => \$help,
+           "add-ws" => \$add_ws,
+           "test-add-ws" => \$test_add_ws,
+           "kill-ws" => \$kill_ws,
+           "test-kill-ws" => \$test_kill_ws,
+           "add-ea" => \$add_ea,
+           "test-add-ea" => \$test_add_ea,
+           "kill-ea" => \$kill_ea,
+           "test-kill-ea" => \$test_kill_ea,
+  );
+
+
+# Prüfen, ob Optionen erkannt wurden, sonst Abbruch
+&check_options($testopt);
+
+
+
+
+my $ldap = &AD_bind_admin();
+
+my $testdata="/usr/share/sophomorix-developer/testdata";
+
+
+# --help
+if ($help==1) {
+   # Scriptname ermitteln
+   my @list = split(/\//,$0);
+   my $scriptname = pop @list;
+   # Befehlsbeschreibung
+   print('
+sophomorix-test-2 tests the addition of ExamAccounts and workstation accounts.
+
+Options
+  -h  / --help
+
+  Exam Accounts
+  --add-ea  
+    add Exam Accounts
+  --test-add-ea
+    test Exam Accounts
+  --kill-ea
+    kill Exam Accounts
+  --test-kill-ea
+    test killed Exam Accounts
+
+  Workstation Accounts:
+  --add-ws  
+    add Workstations
+  --test-add-ws
+    test Workstations
+  --kill-ws
+    kill Workstations
+  --test-kill-ws
+    test killed Workstations
+
+');
+   print "\n";
+   exit;
+}
+
+
+
+
+############################################################
+# Check preliminaries
+############################################################
+my $time_stamp_AD=&time_stamp_AD();
+my @passwort_zeichen=&get_passwd_charlist();
+# ou's that have been created in this script
+my %ou_created=();
+$ou_created{$ou}="created";
+
+
+############################################################
+# Add Exam Accounts
+############################################################
+# --add-ea  
+if ($add_ea==1){
+    $ou="BSZLEO";
+    $school_token="bsz";
+    $room="j1010";
+    $computer="p01";
+    $role="examaccount";
+    $plain_password=&get_plain_password($role,@passwort_zeichen);
+    # generate
+    $user_count++;
+    $login=$room.$computer;
+
+
+    ########################################################
+    # Beginn adding
+    if (not exists $ou_created{$ou}){
+        # create ou
+        &AD_ou_add($ldap,$ou,$school_token);
+        # remember ou
+        $ou_created{$ou}="already created";
+    }
+
+    &AD_user_create({ldap=>$ldap, 
+                     user_count=>$user_count,
+                     login=>$login,
+                     group=>$room,
+                     firstname_ascii=>"Exam",
+                     surname_ascii=>"Account",
+                     firstname_utf8=>"Exam",
+                     surname_utf8=>"Account",
+                     birthdate=>$birthdate,
+                     plain_password=>$plain_password,
+                     ou=>$ou,
+                     role=>"examaccount",
+                     school_token=>$school_token,
+                     creationdate=>$time_stamp_AD,
+                   });
+}
+
+
+
+
+############################################################
+# Test Exam Accounts
+############################################################
+# --test-add-ea  
+if ($test_add_ea==1){    # j1010p01
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=bsz-j1010p01,CN=bsz-j1010,CN=ExamAccounts,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   #####
+                   displayName=>"Exam Account",
+                   givenName=>"Exam",
+                   name=>"bsz-j1010p01",
+                   sAMAccountname=>"bsz-j1010p01",
+                   sn=>"Account",
+                   sophomorixAdminClass => "bsz-j1010",
+                   sophomorixExitAdminClass => "unknown",
+                   #sophomorixFirstPassword => "Muster!",
+                   sophomorixFirstnameASCII => "Exam",
+                   sophomorixSurnameASCII  => "Account",
+                   sophomorixRole => "examaccount",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                   memberOf => "bsz-j1010",
+                   not_memberOf => "bsz-students,teachers,bsz-teachers,lin-teachers",
+                  });
+    ##### Testing the exam accounts room
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=bsz-j1010,CN=Rooms,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   sAMAccountname=>"bsz-m7ab",
+                   memberOf => "bsz-students",
+                   not_memberOf => "teachers",
+                  });
+    ##### Testing the examaccounts <token>-examaccounts group
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=bsz-examaccounts,CN=Rooms,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   sAMAccountname=>"bsz-examaccounts",
+                   memberOf => "examaccounts",
+                   not_memberOf => "teachers,students",
+                  });
+
+}
+
+
+############################################################
+# Add Workstations
+############################################################
+
+
+
+############################################################
+# Test workstations
+############################################################
+
+
+
+############################################################
+# Delete Accounts
+############################################################
+# --kill-ea  
+if ($kill_ea==1){
+
+
+}
+############################################################
+# Check deletion
+############################################################
+
+
+# --test-kill-ea  
+if ($test_kill_ea==1){
+
+&AD_object_nonexist($ldap,"user","j1010p01");
+&AD_object_nonexist($ldap,"user","j1010p02");
+
+}
+
+&AD_unbind_admin($ldap);
+
+
+

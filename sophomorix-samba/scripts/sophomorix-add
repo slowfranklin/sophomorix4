@@ -35,7 +35,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_user_create
                                  AD_group_create
                                  AD_group_addmember
-                                 AD_get_group_by_token
+                                 AD_get_name_tokened
                                  get_forbidden_logins
                                     );
 
@@ -213,7 +213,7 @@ if ($info==1) {
        $school_token,
        $role)=split("::",$line);
 
-       my $group_token=&AD_get_group_by_token($class_group,$school_token,"adminclass");
+       my $group_token=&AD_get_name_tokened($class_group,$school_token,"adminclass");
 
        my $identifier_cut=substr($identifier,0,28);
        printf "%-11s%-29s%-10s%-6s%-6s%-10s%-10s\n",
@@ -389,9 +389,9 @@ while(<SOPHOMORIXADD>){
 
    # Klartext-Passwort
    if ($wunsch_passwort eq "---") {
-       $plain_password=&get_plain_password($class_group,@passwort_zeichen);
+       $plain_password=&get_plain_password($role,@passwort_zeichen);
    } else {
-       $plain_password=$wunsch_passwort
+       $plain_password=$wunsch_passwort;
    }
 
    # Abbruch, wenn nicht der richtige loginname angelegt wird
@@ -445,6 +445,7 @@ while(<SOPHOMORIXADD>){
                     wunsch_id=>$wunsch_id,
                     wunsch_gid=>$wunsch_gid,
                     role=>$role,
+                    type=>"adminclass",
                     school_token=>$school_token,
                     creationdate=>$time_stamp_AD,
                   });
@@ -481,7 +482,7 @@ while(<SOPHOMORIXADD>){
 
   # 5. Add user to all groups she is in (files must exist to create links)
   #&add_newuser_to_her_projects($login_check_ok,$class_group);
-  my $group_token=&AD_get_group_by_token($class_group,$school_token,"adminclass");
+  my $group_token=&AD_get_name_tokened($class_group,$school_token,"adminclass");
   &AD_group_create({ldap=>$ldap,
                     group=>$group_token,
                     ou=>$ou,

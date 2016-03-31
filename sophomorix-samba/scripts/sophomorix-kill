@@ -30,7 +30,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_bind_admin
                                  AD_unbind_admin
                                  AD_user_kill
-                                 AD_get_group_by_token
+                                 AD_get_name_tokened
                                     );
 
 my @arguments = @ARGV;
@@ -191,7 +191,7 @@ if ($info==1) {
         $linux_gruppe_to_kill,
         $school_token,
         $ou)=split(/::/,$line);
-       my $group_token=&AD_get_group_by_token($linux_gruppe_to_kill,$school_token,"---");
+       my $group_token=&AD_get_name_tokened($linux_gruppe_to_kill,$school_token,"---");
 
        printf "%-11s %-16s %-35s %-12s\n",
               $login_name_to_kill,

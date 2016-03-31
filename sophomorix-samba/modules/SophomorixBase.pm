@@ -398,24 +398,27 @@ sub get_passwd_charlist {
 
 
 sub get_plain_password {
-    my $gruppe=shift;
+    my $role=shift;
     my @password_chars=@_;
     my $password="";
     my $i;
-    if ($gruppe eq ${DevelConf::teacher}) {
+    if ($role eq "teacher") {
         # Teacher
         if ($Conf::teacher_password_random eq "yes") {
 	    $password=&create_plain_password($Conf::teacher_password_random_charnumber,@password_chars);
         } else {
             $password=$DevelConf::student_password_default;
 	}
-    } else {
+    } elsif ($role eq "student") {
         # Student
         if ($Conf::student_password_random eq "yes") {
 	    $password=&create_plain_password($Conf::student_password_random_charnumber,@password_chars);
         } else {
-            $password=$DevelConf::teacher_password_default;;
+            $password=$DevelConf::teacher_password_default;
         }
+    } elsif ($role eq "examaccount") {
+        # Exam Account 12 chars to avoid login 
+        $password=&create_plain_password(12,@password_chars);
     }
     return $password;
 }

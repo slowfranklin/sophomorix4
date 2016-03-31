@@ -33,7 +33,7 @@ $Data::Dumper::Terse = 1;
             AD_group_create
             AD_group_addmember
             AD_group_removemember
-            AD_get_group_by_token
+            AD_get_name_tokened
             get_forbidden_logins
             AD_ou_add
             AD_get_base
@@ -129,7 +129,22 @@ sub AD_user_create {
     my $ou = $arg_ref->{ou};
     my $school_token = $arg_ref->{school_token};
     my $role = $arg_ref->{role};
+    my $type = $arg_ref->{type};
     my $creationdate = $arg_ref->{creationdate};
+
+    # set defaults if not defined
+    if (not defined $identifier){
+        $identifier="---";
+    }
+    if (not defined $unid){
+        $unid="---";
+    }
+    if (not defined $wunsch_id){
+        $wunsch_id="---";
+    }
+    if (not defined $wunsch_gid){
+        $wunsch_gid="---";
+    }
 
     # calculate
     my $shell="/bin/false";
@@ -137,11 +152,12 @@ sub AD_user_create {
     my $user_principal_name = $login."\@"."linuxmuster.local";
     # dn
     my $base=&AD_get_base();
-    my $group_token=&AD_get_group_by_token($group,$school_token,$role);
+    my $group_token=&AD_get_name_tokened($group,$school_token,$type);
+    my $login_token=&AD_get_name_tokened($login,$school_token,$role);
     my $container=&AD_get_container($role,$group_token);
 
     my $dn_class = $container."OU=".$ou.",".$base;
-    my $dn = "cn=".$login.",".$container."OU=".$ou.",".$base;
+    my $dn = "cn=".$login_token.",".$container."OU=".$ou.",".$base;
  
     # password generation
     # build the conversion map from your local character set to Unicode    
@@ -167,7 +183,7 @@ sub AD_user_create {
         print("Unix-gid:           $wunsch_gid\n"); # lehrer oder klasse
         #print("GECOS:              $gecos\n");
         #print("Login (to check):   $login_name_to_check\n");
-        print("Login (check OK):   $login\n");
+        print("Login (check OK):   $login ($login_token)\n");
         print("Password:           $plain_password\n");
         # sophomorix stuff
 
@@ -181,7 +197,7 @@ sub AD_user_create {
     $ldap->add($dn_class,attr => ['objectclass' => ['top', 'container']]);
     my $result = $ldap->add( $dn,
                    attr => [
-                   'sAMAccountName' => $login,
+                   'sAMAccountName' => $login_token,
                    'givenName'   => $firstname_utf8,
                    'sn'   => $surname_utf8,
                    'displayName'   => [$display_name],
@@ -312,23 +328,29 @@ sub AD_get_base {
 
 
 
-sub AD_get_group_by_token {
-    my ($group,$school_token,$role) = @_;
-    my $groupname="";
-    if ($role eq "adminclass" or $role eq "student" or $role eq "teacher"){
+sub AD_get_name_tokened {
+    # $role is: group type / user role
+    # prepend <token> or not, depending on the users role/groups type 
+    my ($name,$school_token,$role) = @_;
+    my $name_tokened="";
+    if ($role eq "adminclass" or 
+        $role eq "examaccount" or
+        $role eq "workstation"){
         if ($school_token eq "---" or $school_token eq ""){
             # no multischool
-            $groupname=$group;
+            $name_tokened=$name;
         } else {
             # multischool
-            $groupname=$school_token."-".$group;
+            $name_tokened=$school_token."-".$name;
         }
-        return $groupname;
-    } elsif ($role eq "project"){
+        return $name_tokened;
+    } elsif ($role eq "project" or
+             $role eq "teacher" or
+             $role eq "student"){
         # project: no token-prefix
-        return $group;
+        return $name;
     } else {
-        return $group;
+        return $name;
     }
 }
 

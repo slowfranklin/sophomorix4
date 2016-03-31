@@ -28,7 +28,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_user_move
                                  AD_bind_admin
                                  AD_unbind_admin
-                                 AD_get_group_by_token
+                                 AD_get_name_tokened
                                     );
 my @arguments = @ARGV;
 
@@ -210,8 +210,8 @@ if ($info==1) {
         $role,
        )=split(/::/,$line);
 
-    my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old,"adminclass");
-    my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new,"adminclass");
+    my $group_token_old=&AD_get_name_tokened($alte_klasse,$school_token_old,"adminclass");
+    my $group_token_new=&AD_get_name_tokened($neue_klasse,$school_token_new,"adminclass");
     if (not defined $old_status){$old_status=""};
        # Ausgabe
        printf "%-13s%-15s%-15s%-3s%-16s%-17s\n",
@@ -320,8 +320,8 @@ while(<USERVERSETZEN>){
      }
    }
 
-    my $group_token_old=&AD_get_group_by_token($alte_klasse,$school_token_old,"adminclass");
-    my $group_token_new=&AD_get_group_by_token($neue_klasse,$school_token_new,"adminclass");
+    my $group_token_old=&AD_get_name_tokened($alte_klasse,$school_token_old,"adminclass");
+    my $group_token_new=&AD_get_name_tokened($neue_klasse,$school_token_new,"adminclass");
 
     &AD_user_move({ldap=>$ldap,
                    user=>$login_versetzen,

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# This script (sophomorix-test) is maintained by Rüdiger Beck
+# This script (sophomorix-test-1) is maintained by Rüdiger Beck
 # It is Free Software (License GPLv3)
 # If you find errors, contact the author
 # jeffbeck@web.de  or  jeffbeck@linuxmuster.net
@@ -123,8 +123,6 @@ Step by step Test:
   --u user / --users user
   --c class / --class class
   --lock / --unlock
-
-Please see the sophomorix-add(8) man pages for full documentation
 ');
    print "\n";
    exit;
