@@ -43,8 +43,6 @@ $Data::Dumper::Terse = 1;
 
 sub AD_get_passwd {
     my $smb_pwd="";
-    my $smb_rootdn=&AD_get_base();
-    #my $smb_rootdn="DC=linuxmuster,DC=local";
     if (-e $DevelConf::file_samba_pwd) {
         open (SECRET, $DevelConf::file_samba_pwd);
         while(<SECRET>){
@@ -57,39 +55,46 @@ sub AD_get_passwd {
                "be in $DevelConf::file_samba_pwd\n";
         exit;
     }
-    return($smb_pwd,$smb_rootdn);
+    return($smb_pwd);
 }
 
 
 sub AD_bind_admin {
-    my ($smb_pwd,$smb_rootdn)=&AD_get_passwd();
-    my $admin_dn="CN=Administrator,CN=Users,".$smb_rootdn;
+    my ($smb_pwd)=&AD_get_passwd();
+    my $host="ldaps://localhost";
     # check connection to Samba4 AD
     if($Conf::log_level>=3){
         print "   Checking Samba4 AD connection ...\n";
     }
 
     #my $ldap = Net::LDAP->new('ldaps://localhost')  or  die "$@";
-    my $ldap = Net::LDAP->new('ldaps://localhost')  or  
+    my $ldap = Net::LDAP->new($host)  or  
          &Sophomorix::SophomorixBase::log_script_exit(
                             "No connection to Samba4 AD!",
          1,1,0,@arguments);
 
-    print "Retrieving RootDSE\n";
+    if($Conf::log_level>=2){
+        print "Retrieving RootDSE...\n";
+    }
     my $dse = $ldap->root_dse();
     # get naming Contexts
     my @contexts = $dse->get_value('namingContexts');
+
     ## get supported LDAP versions as an array reference
     #my $versions = $dse->get_value('supportedLDAPVersion', asref => 1);
     my $root_dse=$contexts[0];
-    if($Conf::log_level>=2){
+    if($Conf::log_level>=3){
         foreach my $context (@contexts){
             print "      * NamingContext: <$context>\n";
         }
     }
-    print "   * RootDSE: $root_dse\n";
+
+    if($Conf::log_level>=2){
+        print "   * RootDSE: $root_dse\n";
+    }
 
     # admin bind
+    my $admin_dn="CN=Administrator,CN=Users,".$root_dse;
     my $mesg = $ldap->bind($admin_dn, password => $smb_pwd);
     # show errors from bind
     $mesg->code && die $mesg->error;
