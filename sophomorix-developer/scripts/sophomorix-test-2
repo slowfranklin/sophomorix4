@@ -205,7 +205,7 @@ if ($add_ea==1){
 # --test-add-ea  
 if ($test_add_ea==1){    # j1010p01
     &AD_test_object({ldap=>$ldap,
-                   dn=>"CN=bsz-j1010p01,CN=bsz-j1010,CN=ExamAccounts,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   dn=>"CN=bsz-j1010p01,CN=bsz-j1010,CN=ExamAccounts,OU=BSZLEO,".$root_dse,
                    #####
                    displayName=>"Exam Account",
                    givenName=>"Exam",
@@ -225,14 +225,14 @@ if ($test_add_ea==1){    # j1010p01
                   });
     ##### Testing the exam accounts room
     &AD_test_object({ldap=>$ldap,
-                   dn=>"CN=bsz-j1010,CN=Rooms,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   dn=>"CN=bsz-j1010,CN=Rooms,OU=BSZLEO,".$root_dse,
                    sAMAccountname=>"bsz-j1010",
                    memberOf => "bsz-examaccounts",
                    not_memberOf => "bsz-teachers",
                   });
     ##### Testing the examaccounts <token>-examaccounts group
     &AD_test_object({ldap=>$ldap,
-                   dn=>"CN=bsz-examaccounts,CN=Rooms,OU=BSZLEO,DC=linuxmuster,DC=local",
+                   dn=>"CN=bsz-examaccounts,CN=Rooms,OU=BSZLEO,".$root_dse,
                    sAMAccountname=>"bsz-examaccounts",
                    memberOf => "examaccounts",
                    not_memberOf => "teachers,students",

@@ -64,16 +64,18 @@ my $testopt=GetOptions(
 
 
 
-my $ldap = &AD_bind_admin();
+my ($ldap,$root_dse) = &AD_bind_admin();
 
+print "R:  $root_dse\n\n";
 
 ############################################################
 # Code goes here
 ############################################################
+my $user="lordjo42";
 
+my ($count,$dn,$rdn)=&AD_object_search($ldap,$root_dse,"user",$user);
 
-
-
+print "$count):   $dn\n";
 
 &AD_unbind_admin($ldap);
 
