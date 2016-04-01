@@ -81,12 +81,6 @@ sophomorix.add, .move, .kill
 
 
 
-
-get_forbidden_logins in 
-   What logins should be forbidden?
-
-
-
 sophomorix-useradd
   - replace default password 'linux' with 'LinuxMuster!'
   - maybe put all options for adding users  to sophomorix-add

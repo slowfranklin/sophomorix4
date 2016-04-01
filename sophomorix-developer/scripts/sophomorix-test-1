@@ -153,14 +153,21 @@ if ($add==1){
             exit;
         }
     }
-    my @users=("koehleju","maier");
+    my @users=("maiersa42",
+               "muellegr42",
+               "jonsonad42",
+               "samardze42",
+               "oe42",
+               "wu42",
+               "lordjo42",
+               "blackmri4",
+               "kep42",
+               "gal42");
     foreach my $user (@users){
         my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"user",$user);
         if ($count > 0){
             print "\nTo run this test $user must not exist in AD!\n\n";
-            if ($skip_warning==0){
                 exit;
-	    }
         }
     }
 }
