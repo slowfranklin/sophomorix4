@@ -43,7 +43,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_object_move
                                  AD_group_create
                                  AD_group_addmember
-                                 AD_get_group_by_token
+                                 AD_get_name_tokened
                                  get_forbidden_logins
                                     );
 
@@ -51,16 +51,28 @@ use Sophomorix::SophomorixSambaAD qw(
 
 
 $Conf::log_level=1;
+my $help=0;
+
+
+# Parsen der Optionen
+my $testopt=GetOptions(
+           "verbose|v+" => \$Conf::log_level,
+           "help|h" => \$help
+          );
+
+
+
+
 
 my $ldap = &AD_bind_admin();
 
-        &AD_ou_add($ldap,"HOMECATC","hcc");
+
+############################################################
+# Code goes here
+############################################################
 
 
-#my ($count,$dn,$rdn)=&AD_object_search($ldap,"user","koehleju");
-#print "Count:       $count\n";
-#print "OLD DN:      $dn\n";
-#print "OLD RDN:     $rdn\n";
+
 
 
 &AD_unbind_admin($ldap);
