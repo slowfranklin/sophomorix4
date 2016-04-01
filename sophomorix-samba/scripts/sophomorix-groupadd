@@ -113,18 +113,20 @@ if ($group eq ""){
 &log_script_start(@arguments);
 
 
-my $ldap = &AD_bind_admin();
+my ($ldap,$root_dse) = &AD_bind_admin();
 
 # make sure group exists
-&AD_group_create({ldap=>$ldap, 
-                 group=>$group,
-                 type=>"sophomorix-groupadd"
+&AD_group_create({ldap=>$ldap,
+                  root_dse=>$root_dse, 
+                  group=>$group,
+                  type=>"sophomorix-groupadd"
                 });
 
 
 # --removemember member
 if ($removemember ne ""){
     &AD_group_removemember({ldap => $ldap, 
+                            root_dse => $root_dse, 
                             group => $group,
                             removemember => $removemember,
                           });   
@@ -134,6 +136,7 @@ if ($removemember ne ""){
 # --addmember member
 if ($addmember ne ""){
     &AD_group_addmember({ldap => $ldap, 
+                         root_dse => $root_dse, 
                          group => $group,
                          addmember => $addmember,
                        });   

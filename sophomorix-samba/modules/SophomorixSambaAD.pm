@@ -36,7 +36,6 @@ $Data::Dumper::Terse = 1;
             AD_get_name_tokened
             get_forbidden_logins
             AD_ou_add
-            AD_get_base
             AD_object_search
             AD_object_move
             );
@@ -99,7 +98,7 @@ sub AD_bind_admin {
     # show errors from bind
     $mesg->code && die $mesg->error;
 
-    return $ldap;
+    return ($ldap,$root_dse);
 }
 
 
@@ -116,10 +115,11 @@ sub AD_unbind_admin {
 sub AD_user_kill {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
+    my $root_dse = $arg_ref->{root_dse};
     my $user = $arg_ref->{login};
     my $identifier = $arg_ref->{identifier};
 
-    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
+    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"user",$user);
     if ($count > 0){
         my $command="samba-tool user delete ". $user;
         print "   # $command\n";
@@ -136,6 +136,7 @@ sub AD_user_kill {
 sub AD_user_create {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
+    my $root_dse = $arg_ref->{root_dse};
     my $user_count = $arg_ref->{user_count};
     my $identifier = $arg_ref->{identifier};
     my $login = $arg_ref->{login};
@@ -174,13 +175,13 @@ sub AD_user_create {
     my $display_name = $firstname_utf8." ".$surname_utf8;
     my $user_principal_name = $login."\@"."linuxmuster.local";
     # dn
-    my $base=&AD_get_base();
+
     my $group_token=&AD_get_name_tokened($group,$school_token,$type);
     my $login_token=&AD_get_name_tokened($login,$school_token,$role);
     my $container=&AD_get_container($role,$group_token);
 
-    my $dn_class = $container."OU=".$ou.",".$base;
-    my $dn = "cn=".$login_token.",".$container."OU=".$ou.",".$base;
+    my $dn_class = $container."OU=".$ou.",".$root_dse;
+    my $dn = "cn=".$login_token.",".$container."OU=".$ou.",".$root_dse;
  
     # password generation
     # build the conversion map from your local character set to Unicode    
@@ -249,6 +250,7 @@ sub AD_user_create {
 sub AD_user_move {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
+    my $root_dse = $arg_ref->{root_dse};
     my $user = $arg_ref->{user};
     my $user_count = $arg_ref->{user_count};
     my $group_old = $arg_ref->{group_old};
@@ -260,25 +262,24 @@ sub AD_user_move {
     my $role_new = $arg_ref->{role};
 
     # calculate
-    my $base=&AD_get_base();
     my $group_type_old;
     my $group_type_new;
     my $target_branch;
     if ($role_new eq "student"){
-         $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$base;
+         $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$root_dse;
     } elsif ($role_new eq "teacher"){
-         $target_branch="CN=".$group_new.",CN=Teachers,OU=".$ou_new.",".$base;
+         $target_branch="CN=".$group_new.",CN=Teachers,OU=".$ou_new.",".$root_dse;
     }
 
     # fetch the dn (where the object really is)
-    my ($count,$dn,$rdn)=&AD_object_search($ldap,"user",$user);
+    my ($count,$dn,$rdn)=&AD_object_search($ldap,$root_dse,"user",$user);
     if ($count==0){
         print "\nWARNING: $user not found in ldap, skipping\n\n";
         next;
     }
     my ($count_group_old,
         $dn_group_old,
-        $rdn_group_old)=&AD_object_search($ldap,"group",$group_old);
+        $rdn_group_old)=&AD_object_search($ldap,$root_dse,"group",$group_old);
     if ($count_group_old==0){
         print "\nWARNING: Group $group_old not found in ldap, skipping\n\n";
         next;
@@ -299,17 +300,18 @@ sub AD_user_move {
     # make sure OU and tree exists
 #    if (not exists $ou_created{$ou_new}){
 #         # create new ou
-         &AD_ou_add($ldap,$ou_new,$school_token_new);
+         &AD_ou_add($ldap,$root_dse,$ou_new,$school_token_new);
 #         # remember new ou to add it only once
 #         $ou_created{$ou_new}="already created";
 #     }
 
     # make sure new group exits
     &AD_group_create({ldap=>$ldap,
-                     group=>$group_new,
-                     ou=>$ou_new,
-                     school_token=>$school_token_new,
-                     type=>"adminclass",
+                      root_dse=>$root_dse,
+                      group=>$group_new,
+                      ou=>$ou_new,
+                      school_token=>$school_token_new,
+                      type=>"adminclass",
                     });
 
     my $mesg = $ldap->modify( $dn,
@@ -324,11 +326,13 @@ sub AD_user_move {
     #print Dumper(\$mesg);
 
     # move user membership to new group
-    &AD_group_removemember({ldap => $ldap, 
+    &AD_group_removemember({ldap => $ldap,
+                            root_dse => $root_dse, 
                             group => $group_old,
                             removemember => $user,
                           });   
     &AD_group_addmember({ldap => $ldap,
+                         root_dse => $root_dse, 
                          group => $group_new,
                          addmember => $user,
                        }); 
@@ -339,12 +343,6 @@ sub AD_user_move {
                      rdn=>$rdn,
                      target_branch=>$target_branch,
                     });
-}
-
-
-sub AD_get_base {
-    # ?????
-    return "DC=linuxmuster,DC=local";
 }
 
 
@@ -418,9 +416,8 @@ sub AD_get_container {
 
 sub AD_ou_add {
     # if $result->code is not given, the add is silent
-    my ($ldap,$ou,$token) = @_;
-    my $base=&AD_get_base();
-    my $dn="OU=".$ou.",".$base;
+    my ($ldap,$root_dse,$ou,$token) = @_;
+    my $dn="OU=".$ou.",".$root_dse;
     # provide that a ou exists
     my $result = $ldap->add($dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     # for user container
@@ -498,7 +495,7 @@ sub AD_ou_add {
     #                 );
 
     # OU=SOPHOMORIX
-    my $sophomorix_dn="OU=SOPHOMORIX,".$base;
+    my $sophomorix_dn="OU=SOPHOMORIX,".$root_dse;
     $result = $ldap->add($sophomorix_dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     $class=$DevelConf::AD_class_cn.",".$sophomorix_dn;
     $result = $ldap->add($class,attr => ['objectclass' => ['top', 'container']]);
@@ -549,16 +546,15 @@ sub AD_ou_add {
 
 
 sub AD_object_search {
-    my ($ldap,$type,$name) = @_;
+    my ($ldap,$root_dse,$type,$name) = @_;
     # returns 0,"" or 1,"dn of object"
     # type: group, user, ...
     # check if object exists
     # (&(objectclass=user)(cn=pete)
     # (&(objectclass=group)(cn=7a)
     my $filter="(&(objectclass=".$type.") (cn=".$name."))"; 
-    my $base=&AD_get_base();
     my $mesg = $ldap->search(
-                      base   => $base,
+                      base   => $root_dse,
                       scope => 'sub',
                       filter => $filter,
                       attr => ['cn']
@@ -604,17 +600,17 @@ sub AD_object_move {
 sub AD_group_create {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
+    my $root_dse = $arg_ref->{root_dse};
     my $group = $arg_ref->{group};
     my $ou = $arg_ref->{ou};
     my $type = $arg_ref->{type};
     my $school_token = $arg_ref->{school_token};
 
     # calculate missing Attributes
-    my $base=&AD_get_base();
     my $container=&AD_get_container($type,$group);
-    my $dn = "cn=".$group.",".$container."OU=".$ou.",".$base;
+    my $dn = "cn=".$group.",".$container."OU=".$ou.",".$root_dse;
 
-    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"group",$group);
+    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"group",$group);
     if ($count==0){
         # adding the group
         &Sophomorix::SophomorixBase::print_title("Creating Group:");
@@ -639,6 +635,7 @@ sub AD_group_create {
         if ($group eq $teacher_group_expected){
             #print "Teacher group of the school: $group\n";
             &AD_group_addmember({ldap => $ldap,
+                                 root_dse => $root_dse, 
                                  group => $DevelConf::teacher,
                                  addgroup => $group,
                                });
@@ -648,11 +645,13 @@ sub AD_group_create {
             my $token_students=$school_token."-".$DevelConf::student;
             # add the group to <token>-students
             &AD_group_addmember({ldap => $ldap,
+                                 root_dse => $root_dse, 
                                  group => $token_students,
                                  addgroup => $group,
                                });
             # add <token>-students to students
             &AD_group_addmember({ldap => $ldap,
+                                 root_dse => $root_dse, 
                                  group => $DevelConf::student,
                                  addgroup => $token_students,
                                });
@@ -661,11 +660,13 @@ sub AD_group_create {
         my $token_examaccounts=$school_token."-".$DevelConf::examaccount;
         # add the room to <token>-examaccounts
         &AD_group_addmember({ldap => $ldap,
+                             root_dse => $root_dse, 
                              group => $token_examaccounts,
                              addgroup => $group,
                            });
         # add <token>-students to students
         &AD_group_addmember({ldap => $ldap,
+                             root_dse => $root_dse, 
                              group => $DevelConf::examaccount,
                              addgroup => $token_examaccounts,
                            });
@@ -679,10 +680,11 @@ sub AD_group_addmember {
     # requires token-group as groupname
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
+    my $root_dse = $arg_ref->{root_dse};
     my $group = $arg_ref->{group};
     my $adduser = $arg_ref->{addmember};
     my $addgroup = $arg_ref->{addgroup};
-    my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);
+    my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,$root_dse,"group",$group);
     if ($count_group==0){
         # group does not exist -> exit with warning
         print "   * WARNING: Group $group nonexisting ($count_group results)\n";
@@ -690,7 +692,7 @@ sub AD_group_addmember {
      }
 
      if (defined $adduser){
-         my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$adduser);
+         my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"user",$adduser);
          if ($count > 0){
              print "   * User $adduser exists ($count results)\n";
              print "Adding user $adduser to group $group\n";
@@ -708,7 +710,7 @@ sub AD_group_addmember {
          }
      } elsif (defined $addgroup){
          print "Adding group $addgroup to $group\n";
-         my ($count_group,$dn_exist_addgroup,$cn_exist_addgroup)=&AD_object_search($ldap,"group",$addgroup);
+         my ($count_group,$dn_exist_addgroup,$cn_exist_addgroup)=&AD_object_search($ldap,$root_dse,"group",$addgroup);
          if ($count_group > 0){
              print "   * Group $addgroup exists ($count_group results)\n";
              my $mesg = $ldap->modify( $dn_exist_group,
@@ -730,11 +732,12 @@ sub AD_group_removemember {
     # requires token-group as groupname
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
+    my $root_dse = $arg_ref->{root_dse};
     my $group = $arg_ref->{group};
     my $removeuser = $arg_ref->{removemember};
     my $removegroup = $arg_ref->{removegroup};
 
-    my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,"group",$group);
+    my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,$root_dse,"group",$group);
     if ($count_group==0){
         # group does not exist -> create group
         print "   * WARNING: Group $group nonexisting ($count_group results)\n";
@@ -742,7 +745,7 @@ sub AD_group_removemember {
     }
 
     if (defined $removeuser){
-        my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$removeuser);
+        my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"user",$removeuser);
         if ($count > 0){
             print "   * User $removeuser exists ($count results)\n";
             print "Removing $removeuser from group $group\n";
@@ -759,7 +762,7 @@ sub AD_group_removemember {
         }
     } elsif (defined $removegroup){
          print "Removing Group $removegroup from $group\n";
-         my ($count_group,$dn_exist_removegroup,$cn_exist_removegroup)=&AD_object_search($ldap,"group",$removegroup);
+         my ($count_group,$dn_exist_removegroup,$cn_exist_removegroup)=&AD_object_search($ldap,$root_dse,"group",$removegroup);
          if ($count_group > 0){
              print "   * Group $removegroup exists ($count_group results)\n";
              print "Removing group $removegroup from group $group\n";
@@ -779,14 +782,12 @@ sub AD_group_removemember {
 
 
 sub  get_forbidden_logins{
-    my ($ldap) = @_;
+    my ($ldap,$root_dse) = @_;
     my %forbidden_logins = %DevelConf::forbidden_logins;
 
-    my $base=&AD_get_base();
- 
     # users from ldap
     $mesg = $ldap->search( # perform a search
-                   base   => $base,
+                   base   => $root_dse,
                    scope => 'sub',
                    filter => '(objectClass=user)',
                    attr => ['sAMAccountName']
@@ -826,7 +827,7 @@ sub  get_forbidden_logins{
 
     # groups from ldap
     $mesg = $ldap->search( # perform a search
-                   base   => $base,
+                   base   => $root_dse,
                    scope => 'sub',
                    filter => '(objectClass=group)',
                    attr => ['sAMAccountName']

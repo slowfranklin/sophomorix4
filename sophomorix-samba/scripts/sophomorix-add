@@ -245,7 +245,7 @@ if ($gruppe ne "") {
   print "Gruppe/Klasse $gruppe angegeben.\n";
 }
 
-my $ldap = &AD_bind_admin();
+my ($ldap,$root_dse) = &AD_bind_admin();
 
 
 &log_script_start(@arguments);
@@ -291,7 +291,7 @@ if($Conf::log_level>=2){
 my @passwort_zeichen=&get_passwd_charlist();
 
 # ?????????????? more to forbid
-%forbidden_login_hash=&get_forbidden_logins($ldap);
+%forbidden_login_hash=&get_forbidden_logins($ldap,$root_dse);
 
 
 
@@ -424,12 +424,13 @@ while(<SOPHOMORIXADD>){
    # 1. Entry in AD
     if (not exists $ou_created{$ou}){
         # create ou
-        &AD_ou_add($ldap,$ou,$school_token);
+        &AD_ou_add($ldap,$root_dse,$ou,$school_token);
         # remember ou
         $ou_created{$ou}="already created";
    }
 
-   &AD_user_create({ldap=>$ldap, 
+   &AD_user_create({ldap=>$ldap,
+                    root_dse=>$root_dse, 
                     user_count=>$user_count,
                     identifier=>$identifier,
                     login=>$login_check_ok,
@@ -484,6 +485,7 @@ while(<SOPHOMORIXADD>){
   #&add_newuser_to_her_projects($login_check_ok,$class_group);
   my $group_token=&AD_get_name_tokened($class_group,$school_token,"adminclass");
   &AD_group_create({ldap=>$ldap,
+                    root_dse=>$root_dse,
                     group=>$group_token,
                     ou=>$ou,
                     school_token=>$school_token,
@@ -491,33 +493,38 @@ while(<SOPHOMORIXADD>){
                   });
   # add student/teacher to its group
   &AD_group_addmember({ldap => $ldap,
-                        group => $group_token,
-                        addmember => $login_check_ok,
+                       root_dse => $root_dse, 
+                       group => $group_token,
+                       addmember => $login_check_ok,
                       });   
 
     if ($role eq "student"){
         my $group=$school_token."-".$DevelConf::student;
         &AD_group_addmember({ldap => $ldap,
+                             root_dse => $root_dse, 
                              group => $DevelConf::student,
                              addgroup => $group,
                            });
         # <student> directly in <token>-students 
         #&AD_group_addmember({ldap => $ldap,
-        #                      group => $group,
-        #                      addmember => $login_check_ok,
+        #                     root_dse => $root_dse, 
+        #                     group => $group,
+        #                     addmember => $login_check_ok,
         #                    });
         # add token-students to students
    
     } elsif ($role eq "teacher"){
         my $group=$school_token."-".$DevelConf::teacher;
         &AD_group_addmember({ldap => $ldap,
+                             root_dse => $root_dse, 
                              group => $DevelConf::teacher,
                              addgroup => $group,
                            });
         ## <teacher> in <token>-teachers
         #&AD_group_addmember({ldap => $ldap,
-        #                      group => $DevelConf::teacher,
-        #                      addmember => $login_check_ok,
+#                             root_dse => $root_dse, 
+        #                     group => $DevelConf::teacher,
+        #                     addmember => $login_check_ok,
         #                    });   
         # add token-students to students
     }

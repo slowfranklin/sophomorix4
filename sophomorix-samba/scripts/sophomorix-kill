@@ -132,7 +132,7 @@ if ($loginname ne "") {
 }
 
 
-my $ldap = &AD_bind_admin();
+my ($ldap,$root_dse) = &AD_bind_admin();
 
 &log_script_start(@arguments);
 
@@ -246,6 +246,7 @@ if ($killuser ne ""){
     foreach my $user_to_kill (@userlist){
         print "Killing $user_to_kill\n";
         &AD_user_kill({ldap=>$ldap,
+                       root_dse=>$root_dse,
                        login=>$user_to_kill,
                        identifier=>$identifier_to_kill});
         #&kill_user($user_to_kill,$identifier_to_kill);
@@ -263,6 +264,7 @@ if ($killuser ne ""){
         print "Killing $login_name_to_kill\n";
 
         &AD_user_kill({ldap=>$ldap,
+                       root_dse=>$root_dse,
                        login=>$login_name_to_kill,
                        identifier=>$identifier_to_kill});
         $user_nummer++;

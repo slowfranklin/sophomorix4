@@ -20,7 +20,6 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_ou_add
                                  AD_bind_admin
                                  AD_unbind_admin
-                                 AD_get_base
                                  AD_user_create
                                  AD_group_create
                                  AD_group_addmember
@@ -77,7 +76,7 @@ my $testopt=GetOptions(
 
 
 
-my $ldap = &AD_bind_admin();
+my ($ldap,$root_dse) = &AD_bind_admin();
 
 my $testdata="/usr/share/sophomorix-developer/testdata";
 
@@ -154,12 +153,13 @@ if ($add_ea==1){
     # Beginn adding
     if (not exists $ou_created{$ou}){
         # create ou
-        &AD_ou_add($ldap,$ou,$school_token);
+        &AD_ou_add($ldap,$root_dse,$ou,$school_token);
         # remember ou
         $ou_created{$ou}="already created";
     }
 
     &AD_user_create({ldap=>$ldap, 
+                     root_dse=>$root_dse,
                      user_count=>$user_count,
                      login=>$login,
                      group=>$room,
@@ -182,6 +182,7 @@ if ($add_ea==1){
   $examaccount_token=$school_token."-".$DevelConf::examaccount;
   
   &AD_group_create({ldap=>$ldap,
+                    root_dse=>$root_dse,
                     group=>$room_token,
                     ou=>$ou,
                     school_token=>$school_token,
@@ -189,6 +190,7 @@ if ($add_ea==1){
                    });
   # add examaccount to its room
   &AD_group_addmember({ldap => $ldap,
+                       root_dse => $root_dse, 
                        group => $room_token,
                        addmember => $login_token,
                       });   
@@ -270,8 +272,8 @@ if ($kill_ea==1){
 # --test-kill-ea  
 if ($test_kill_ea==1){
 
-&AD_object_nonexist($ldap,"user","j1010p01");
-&AD_object_nonexist($ldap,"user","j1010p02");
+&AD_object_nonexist($ldap,$root_dse,"user","j1010p01");
+&AD_object_nonexist($ldap,$root_dse,"user","j1010p02");
 
 }
 

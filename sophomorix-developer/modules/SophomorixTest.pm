@@ -33,15 +33,14 @@ $Data::Dumper::Terse = 1;
 
 
 sub AD_object_nonexist {
-    my ($ldap,$type,$name) = @_;
+    my ($ldap,$root_dse,$type,$name) = @_;
     # type: group, user, ...
     # check if object exists
     # (&(objectclass=user)(cn=pete)
     # (&(objectclass=group)(cn=7a)
     my $filter="(&(objectclass=".$type.") (cn=".$name."))"; 
-    my $base=&Sophomorix::SophomorixSambaAD::AD_get_base();
     my $mesg = $ldap->search(
-                      base   => $base,
+                      base   => $root_dse,
                       scope => 'sub',
                       filter => $filter,
                       attr => ['cn']
@@ -61,6 +60,7 @@ sub AD_test_object {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
     my $dn = $arg_ref->{dn};
+    my $root_dse = $arg_ref->{root_dse};
 
     # user
     my $display_name = $arg_ref->{displayName};
@@ -81,7 +81,6 @@ sub AD_test_object {
     my $member_of = $arg_ref->{memberOf};
     my $not_member_of = $arg_ref->{not_memberOf};
 
-    my $base=&Sophomorix::SophomorixSambaAD::AD_get_base();
     my $filter="(cn=*)";
     my $mesg = $ldap->search(
                       base   => $dn,

@@ -234,7 +234,7 @@ if ($info==1) {
 # ===========================================================================
 # start
 # ===========================================================================
-my $ldap = &AD_bind_admin();
+my ($ldap,$root_dse) = &AD_bind_admin();
 
 &log_script_start(@arguments);
 
@@ -324,6 +324,7 @@ while(<USERVERSETZEN>){
     my $group_token_new=&AD_get_name_tokened($neue_klasse,$school_token_new,"adminclass");
 
     &AD_user_move({ldap=>$ldap,
+                   root_dse=>$root_dse,
                    user=>$login_versetzen,
                    user_count=>$user_nummer,
                    group_old=>$group_token_old,

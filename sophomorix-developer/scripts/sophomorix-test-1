@@ -16,7 +16,6 @@ use Sophomorix::SophomorixBase qw(
 use Sophomorix::SophomorixSambaAD qw(
                                  AD_bind_admin
                                  AD_unbind_admin
-                                 AD_get_base
                                  AD_object_search
                                     );
 use Sophomorix::SophomorixTest qw(
@@ -60,7 +59,7 @@ my $testopt=GetOptions(
 
 
 
-my $ldap = &AD_bind_admin();
+my ($ldap,$root_dse) = &AD_bind_admin();
 my $file_add=$DevelConf::path_result."/sophomorix.add";
 my $file_move=$DevelConf::path_result."/sophomorix.move";
 my $file_kill=$DevelConf::path_result."/sophomorix.kill";
@@ -156,7 +155,7 @@ if ($add==1){
     }
     my @users=("koehleju","maier");
     foreach my $user (@users){
-        my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,"user",$user);
+        my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"user",$user);
         if ($count > 0){
             print "\nTo run this test $user must not exist in AD!\n\n";
             if ($skip_warning==0){
@@ -911,16 +910,16 @@ if ($kill==1 or $test_kill==1){
     }
   
     ##### Testing the users
-    &AD_object_nonexist($ldap,"user","maiersa42");
-    &AD_object_nonexist($ldap,"user","muellegr42");
-    &AD_object_nonexist($ldap,"user","jonsonad42");
-    &AD_object_nonexist($ldap,"user","samardze42");
-    &AD_object_nonexist($ldap,"user","oe42");
-    &AD_object_nonexist($ldap,"user","wu42");
-    &AD_object_nonexist($ldap,"user","lordjo42");
-    &AD_object_nonexist($ldap,"user","blackmri42");
-    &AD_object_nonexist($ldap,"user","kep42");
-    &AD_object_nonexist($ldap,"user","gal42");
+    &AD_object_nonexist($ldap,$root_dse,"user","maiersa42");
+    &AD_object_nonexist($ldap,$root_dse,"user","muellegr42");
+    &AD_object_nonexist($ldap,$root_dse,"user","jonsonad42");
+    &AD_object_nonexist($ldap,$root_dse,"user","samardze42");
+    &AD_object_nonexist($ldap,$root_dse,"user","oe42");
+    &AD_object_nonexist($ldap,$root_dse,"user","wu42");
+    &AD_object_nonexist($ldap,$root_dse,"user","lordjo42");
+    &AD_object_nonexist($ldap,$root_dse,"user","blackmri42");
+    &AD_object_nonexist($ldap,$root_dse,"user","kep42");
+    &AD_object_nonexist($ldap,$root_dse,"user","gal42");
 }
 
 
