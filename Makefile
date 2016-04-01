@@ -149,9 +149,9 @@ install-sophomorix-samba:
 	@install -oroot -groot --mode=0644 sophomorix-samba/schema/2_sophomorix-classes.ldif $(SCHEMA)/
 	@install -oroot -groot --mode=0644 sophomorix-samba/schema/3_sophomorix-aux.ldif $(SCHEMA)/
 	@install -oroot -groot --mode=0755 sophomorix-samba/schema/sophomorix_schema_add.sh $(SCHEMA)/
-	@install -oroot -groot --mode=0755 sophomorix-samba/schema/samba-backup $(SCHEMA)/
-	@install -oroot -groot --mode=0755 sophomorix-samba/schema/samba-restore $(SCHEMA)/
-	@install -oroot -groot --mode=0755 sophomorix-samba/schema/samba-schema-load $(SCHEMA)/
+#	@install -oroot -groot --mode=0755 sophomorix-samba/schema/samba-backup $(SCHEMA)/
+#	@install -oroot -groot --mode=0755 sophomorix-samba/schema/samba-restore $(SCHEMA)/
+#	@install -oroot -groot --mode=0755 sophomorix-samba/schema/samba-schema-load $(SCHEMA)/
 # group owner is changed in postinst-script to lehrer
 #	@install -oroot -groot --mode=4750 sophomorix-base/scripts-teacher/sophomorix-*[a-z1-9] $(DESTDIR)/usr/bin
 # installing configs for root

@@ -73,7 +73,6 @@ Please see the sophomorix-add(8) man pages for full documentation
 # --backup-samba
 if ($backup_samba ne ""){
     print "\nBacking up samba databases with suffix -$backup_samba\n\n";
-    #system("/usr/share/sophomorix/schema/samba-backup $backup_samba");
     my @ldb_files = &get_ldb_files();
     print "##### saving ldb files: #####\n";
     foreach my $ldb (@ldb_files){
@@ -115,8 +114,6 @@ if ($restore_samba ne ""){
         system($command);
     } 
     &samba_start();
-    # does not work
-    #system("/usr/share/sophomorix/schema/samba-restore $restore_samba");
     exit;
 }
 
@@ -124,9 +121,13 @@ if ($restore_samba ne ""){
 # --schema-load
 if ($schema_load==1){
     print "\nLoading sophomorix schema into ldap\n\n";
-    system("/usr/share/sophomorix/schema/samba-schema-load");
+    my $dn=&get_dn_from_smb_conf();
+    &samba_stop();
+    system("cd /usr/share/sophomorix/schema; ./sophomorix_schema_add.sh $dn . -H /var/lib/samba/private/sam.ldb -writechanges");
+    &samba_start();
     exit;
 }
+
 
 
 ############################################################
@@ -135,14 +136,35 @@ if ($schema_load==1){
 
 sub samba_stop {
     system("/etc/init.d/samba stop");
-    #sleep 2;
 }
 
+
 sub samba_start {
-    #sleep 2;
     system("/etc/init.d/samba start");
 }
 
+
+sub get_dn_from_smb_conf {
+    my $domain="";
+    my $entry;
+    my $domain_dns;
+    open(SMBCONF, "/etc/samba/smb.conf");
+    while(<SMBCONF>) {
+        if (m/realm/){
+            ($entry,$domain)=split(/=/);
+            chomp($domain);
+            $domain=~s/^\s+//g;# remove leading whitespace
+            $domain=~s/\s+$//g;# remove trailing whitespace
+            $domain=~tr/A-Z/a-z/; # make lowercase
+            my @dns=split(/\./,$domain);
+            $domain_dns = join(',DC=', @dns);
+            $domain_dns="DC=".$domain_dns;
+            print "DomainDNS from smb.conf: $domain_dns\n";
+        }
+    }
+    close(SMBCONF);
+    return $domain_dns;
+}
 
 
 sub get_ldb_files {
@@ -159,6 +181,7 @@ sub get_ldb_files {
     @files = sort @files;
     return @files;
 }
+
 
 sub get_ldb_d_files {
     my @files=();
