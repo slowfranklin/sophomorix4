@@ -432,8 +432,6 @@ sub AD_ou_add {
     # group containers
     my $class=$DevelConf::AD_class_cn.",".$dn;
     $result = $ldap->add($class,attr => ['objectclass' => ['top', 'container']]);
-    my $project=$DevelConf::AD_project_cn.",".$dn;
-    $result = $ldap->add($project,attr => ['objectclass' => ['top', 'container']]);
     my $room=$DevelConf::AD_room_cn.",".$dn;
     $result = $ldap->add($room,attr => ['objectclass' => ['top', 'container']]);
     # other
@@ -495,12 +493,18 @@ sub AD_ou_add {
     #                 );
 
     # OU=SOPHOMORIX
-    my $sophomorix_dn="OU=SOPHOMORIX,".$root_dse;
+    my $sophomorix_dn=$DevelConf::AD_sophomorix_ou.",".$root_dse;
     $result = $ldap->add($sophomorix_dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
+
     # Multigroups container
     my $multigroup=$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add($multigroup,attr => ['objectclass' => ['top', 'container']]);
-    # students in OU=SOPHMORIX
+
+    # Projects container
+    my $projects=$DevelConf::AD_project_cn.",".$sophomorix_dn;
+    $result = $ldap->add($projects,attr => ['objectclass' => ['top', 'container']]);
+
+    # students in Multigroups,OU=SOPHOMORIX
     my $sophomorix_dn_group="CN=multi-".$DevelConf::student.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
                          attr => [
@@ -511,7 +515,7 @@ sub AD_ou_add {
                          ]
                      );
 
-    # teachers in OU=SOPHMORIX
+    # teachers in Multigroups,OU=SOPHOMORIX
     $sophomorix_dn_group="CN=multi-".$DevelConf::teacher.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
                          attr => [
@@ -521,7 +525,7 @@ sub AD_ou_add {
                                                'group' ],
                          ]
                      );
-    # workstations in OU=SOPHMORIX
+    # workstations in Multigroups,OU=SOPHOMORIX
     $sophomorix_dn_group="CN=multi-".$DevelConf::workstation.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
                          attr => [
@@ -531,7 +535,7 @@ sub AD_ou_add {
                                                'group' ],
                          ]
                      );
-    # ExamAccounts in OU=SOPHMORIX
+    # ExamAccounts in Multigroups,OU=SOPHOMORIX
     $sophomorix_dn_group="CN=multi-".$DevelConf::examaccount.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
                          attr => [
@@ -634,10 +638,10 @@ sub AD_group_create {
     if ($type eq "adminclass"){
         my $teacher_group_expected=$school_token."-".$DevelConf::teacher;
         if ($group eq $teacher_group_expected){
-            #print "Teacher group of the school: $group\n";
+            # add <token>-teachers to multi-teachers
             &AD_group_addmember({ldap => $ldap,
                                  root_dse => $root_dse, 
-                                 group => $DevelConf::teacher,
+                                 group => "multi-".$DevelConf::teacher,
                                  addgroup => $group,
                                });
         } else {
@@ -650,10 +654,10 @@ sub AD_group_create {
                                  group => $token_students,
                                  addgroup => $group,
                                });
-            # add <token>-students to students
+            # add <token>-students to multi-students
             &AD_group_addmember({ldap => $ldap,
                                  root_dse => $root_dse, 
-                                 group => $DevelConf::student,
+                                 group => "multi-".$DevelConf::student,
                                  addgroup => $token_students,
                                });
         }
