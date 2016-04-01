@@ -497,45 +497,46 @@ sub AD_ou_add {
     # OU=SOPHOMORIX
     my $sophomorix_dn="OU=SOPHOMORIX,".$root_dse;
     $result = $ldap->add($sophomorix_dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
-    $class=$DevelConf::AD_class_cn.",".$sophomorix_dn;
-    $result = $ldap->add($class,attr => ['objectclass' => ['top', 'container']]);
+    # Multigroups container
+    my $multigroup=$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
+    $result = $ldap->add($multigroup,attr => ['objectclass' => ['top', 'container']]);
     # students in OU=SOPHMORIX
-    my $sophomorix_dn_group="CN=".$DevelConf::student.",".$DevelConf::AD_class_cn.",".$sophomorix_dn;
+    my $sophomorix_dn_group="CN=multi-".$DevelConf::student.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
                          attr => [
-                             'cn'   => $DevelConf::student,
-                             'sAMAccountName' => $DevelConf::student,
+                             'cn'   => "multi-".$DevelConf::student,
+                             'sAMAccountName' => "multi-".$DevelConf::student,
                              'objectclass' => ['top',
                                                'group' ],
                          ]
                      );
 
     # teachers in OU=SOPHMORIX
-    $sophomorix_dn_group="CN=".$DevelConf::teacher.",".$DevelConf::AD_class_cn.",".$sophomorix_dn;
+    $sophomorix_dn_group="CN=multi-".$DevelConf::teacher.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
                          attr => [
-                             'cn'   => $DevelConf::teacher,
-                             'sAMAccountName' => $DevelConf::teacher,
+                             'cn'   => "multi-".$DevelConf::teacher,
+                             'sAMAccountName' => "multi-".$DevelConf::teacher,
                              'objectclass' => ['top',
                                                'group' ],
                          ]
                      );
     # workstations in OU=SOPHMORIX
-    $sophomorix_dn_group="CN=".$DevelConf::workstation.",".$DevelConf::AD_class_cn.",".$sophomorix_dn;
+    $sophomorix_dn_group="CN=multi-".$DevelConf::workstation.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
                          attr => [
-                             'cn'   => $DevelConf::workstation,
-                             'sAMAccountName' => $DevelConf::workstation,
+                             'cn'   => "multi-".$DevelConf::workstation,
+                             'sAMAccountName' => "multi-".$DevelConf::workstation,
                              'objectclass' => ['top',
                                                'group' ],
                          ]
                      );
     # ExamAccounts in OU=SOPHMORIX
-    $sophomorix_dn_group="CN=".$DevelConf::examaccount.",".$DevelConf::AD_class_cn.",".$sophomorix_dn;
+    $sophomorix_dn_group="CN=multi-".$DevelConf::examaccount.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
                          attr => [
-                             'cn'   => $DevelConf::examaccount,
-                             'sAMAccountName' => $DevelConf::examaccount,
+                             'cn'   => "multi-".$DevelConf::examaccount,
+                             'sAMAccountName' => "multi-".$DevelConf::examaccount,
                              'objectclass' => ['top',
                                                'group' ],
                          ]
