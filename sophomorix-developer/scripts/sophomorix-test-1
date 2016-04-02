@@ -38,6 +38,8 @@ my $help=0;
 my $skip_warning=0;
 
 my $testopt=GetOptions(
+           "help|h" => \$help,
+           "verbose|v+" => \$Conf::log_level,
            "cp-add" => \$cp_add,
            "cp-move" => \$cp_move,
            "cp-kill" => \$cp_kill,
@@ -48,7 +50,6 @@ my $testopt=GetOptions(
            "move|m" => \$move,
            "kill|k" => \$kill,
            "full|f" => \$full,
-           "help|h" => \$help,
            "skip|s" => \$skip_warning,
           );
 

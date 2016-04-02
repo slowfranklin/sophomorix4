@@ -59,6 +59,7 @@ my $birthdate="1970-01-01";
 
 my $testopt=GetOptions(
            "help|h" => \$help,
+           "verbose|v+" => \$Conf::log_level,
            "add-ws" => \$add_ws,
            "test-add-ws" => \$test_add_ws,
            "kill-ws" => \$kill_ws,

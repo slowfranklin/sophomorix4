@@ -246,7 +246,8 @@ sub AD_user_create {
                                      'user' ],
                            ]
                            );
-    $result->code && warn "failed to add entry: ", $result->error ;
+    $result->code && warn "Failed to add entry: ", $result->error ;
+    &AD_debug_logdump($result,2);
     &Sophomorix::SophomorixBase::print_title("Creating User $user_count (end)");
 }
 
@@ -328,7 +329,7 @@ sub AD_user_move {
                           sophomorixRole => $role_new,
                       }
                );
-    #print Dumper(\$mesg);
+    &AD_debug_logdump($mesg,2);
 
     # move user membership to new group
     &AD_group_removemember({ldap => $ldap,
@@ -570,7 +571,7 @@ sub AD_ou_add {
                                                'group' ],
                          ]
                      );
-    #print Dumper(\$result);
+    &AD_debug_logdump($result,2);
 }
 
 
@@ -589,7 +590,7 @@ sub AD_object_search {
                       filter => $filter,
                       attr => ['cn']
                             );
-    #print Dumper(\$mesg);
+    &AD_debug_logdump($mesg,2);
     my $count = $mesg->count;
     if ($count > 0){
         # process first entry
@@ -614,15 +615,14 @@ sub AD_object_move {
 
     # create branch
     my $result = $ldap->add($target_branch,attr => ['objectclass' => ['top', 'container']]);
-    #print Dumper(\$result);
-
+    &AD_debug_logdump($result,2);
     # move object
     $result = $ldap->moddn ( $dn,
                         newrdn => $rdn,
                         deleteoldrdn => '1',
                         newsuperior => $target_branch
                                );
-    #print Dumper(\$result);
+    &AD_debug_logdump($result,2);
 }
 
 
@@ -661,7 +661,6 @@ sub AD_group_create {
         #return;
     }
     if ($type eq "adminclass"){
-        #my $teacher_group_expected=$school_token."-".$DevelConf::teacher;
         my $teacher_group_expected=&AD_get_name_tokened($DevelConf::teacher,$school_token,"adminclass");
         if ($group eq $teacher_group_expected){
             # add <token>-teachers to multi-teachers
@@ -735,8 +734,7 @@ sub AD_group_addmember {
                                     member => $dn_exist,
                                }
                            );
-             #print Dumper(\$mesg);
-
+             &AD_debug_logdump($mesg,2);
              #my $command="samba-tool group addmembers ". $group." ".$adduser;
              #print "   # $command\n";
              #system($command);
@@ -752,7 +750,7 @@ sub AD_group_addmember {
                                        member => $dn_exist_addgroup,
                                    }
                                );
-             #print Dumper(\$mesg);
+             &AD_debug_logdump($mesg,2);
              return;
          }
      } else {
@@ -804,7 +802,7 @@ sub AD_group_removemember {
                                        member => $dn_exist_removegroup,
                                    }
                                );
-             #print Dumper(\$mesg);
+             &AD_debug_logdump($mesg,2);
              return;
          }
     } else {
@@ -898,6 +896,17 @@ sub  get_forbidden_logins{
 }
 
 
+
+sub AD_debug_logdump {
+    # dumping ldap message object in loglevels
+    my ($message,$level) = @_;
+    if($Conf::log_level>=$level){
+        if ( $message->code ) {
+            print "   Debug_info from server follows ...\n";
+            print Dumper(\$message);
+        }
+    }
+}
 
 
 
