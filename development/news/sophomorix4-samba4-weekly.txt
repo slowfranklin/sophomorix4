@@ -8,9 +8,13 @@ Info über Enwicklungs-Entscheidungen
 ------------------------------------------------------------
 Für Bugs/Feature-requests, ... zu samba4 gibt es im Bugtracker die
 Kategorie 'samba4'.
-  --> Bitte Tickets mit dieser Kategorie anlegen
+  --> Bitte Tickets zu sophomorix4/samba4 mit dieser Kategorie anlegen
 
+Klassennamen bei Multischool-Umgebungen:
+Z.B. Schule abc und Klasse 7a:
 
+7a-abc
+abc-7a
 
 Enwicklungs-Entscheidungen, die bald anstehen/Diskussion
 ------------------------------------------------------------
