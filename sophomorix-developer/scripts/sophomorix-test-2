@@ -260,7 +260,9 @@ if ($test_add_ea==1){    # j1010p01
 # --kill-ea  
 if ($kill_ea==1){
     &AD_user_kill({ldap=>$ldap,
+                   root_dse=>$root_dse,
                    login=>"bsz-j1010p01",
+                   user_count=>1,
 #                   identifier=>$identifier_to_kill
                   });
 

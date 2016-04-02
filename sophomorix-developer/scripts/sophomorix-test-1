@@ -36,6 +36,7 @@ my $test_kill=0;
 my $full=0;
 my $help=0;
 my $skip_warning=0;
+my $verbose_options="";
 
 my $testopt=GetOptions(
            "help|h" => \$help,
@@ -58,6 +59,13 @@ my $testopt=GetOptions(
 &check_options($testopt);
 
 
+if ($Conf::log_level==1){
+    $verbose_options="";
+} elsif ($Conf::log_level==2){
+    $verbose_options="-v";
+} elsif ($Conf::log_level==3){
+    $verbose_options="-vv";
+}
 
 
 my ($ldap,$root_dse) = &AD_bind_admin();
@@ -201,7 +209,7 @@ if ($add==1 or $test_add==1){
         # copy sophomorix.add
         system("cp -v $file_add_test $file_add");
         system("sophomorix-add -i");
-        system("sophomorix-add");
+        system("sophomorix-add $verbose_options");
     }
 
     ##### Testing the users
@@ -614,7 +622,7 @@ if ($move==1 or $test_move==1){
         # copy sophomorix.move
         system("cp -v $file_move_test $file_move");
         system("sophomorix-move -i");
-        system("sophomorix-move");
+        system("sophomorix-move $verbose_options");
     }
 
     ##### Testing the users
@@ -976,7 +984,7 @@ if ($kill==1 or $test_kill==1){
         # copy sophomorix.kill
         system("cp -v $file_kill_test $file_kill");
         system("sophomorix-kill -i");
-        system("sophomorix-kill");
+        system("sophomorix-kill $verbose_options");
     }
   
     ##### Testing the users

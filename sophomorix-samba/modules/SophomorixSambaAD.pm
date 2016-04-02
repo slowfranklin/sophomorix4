@@ -247,7 +247,7 @@ sub AD_user_create {
                            ]
                            );
     $result->code && warn "Failed to add entry: ", $result->error ;
-    &AD_debug_logdump($result,2);
+    &AD_debug_logdump($result,2,(caller(0))[3]);
     &Sophomorix::SophomorixBase::print_title("Creating User $user_count (end)");
 }
 
@@ -329,7 +329,7 @@ sub AD_user_move {
                           sophomorixRole => $role_new,
                       }
                );
-    &AD_debug_logdump($mesg,2);
+    &AD_debug_logdump($mesg,2,(caller(0))[3]);
 
     # move user membership to new group
     &AD_group_removemember({ldap => $ldap,
@@ -571,7 +571,7 @@ sub AD_ou_add {
                                                'group' ],
                          ]
                      );
-    &AD_debug_logdump($result,2);
+    &AD_debug_logdump($result,2,(caller(0))[3]);
 }
 
 
@@ -590,7 +590,7 @@ sub AD_object_search {
                       filter => $filter,
                       attr => ['cn']
                             );
-    &AD_debug_logdump($mesg,2);
+    &AD_debug_logdump($mesg,2,(caller(0))[3]);
     my $count = $mesg->count;
     if ($count > 0){
         # process first entry
@@ -615,14 +615,14 @@ sub AD_object_move {
 
     # create branch
     my $result = $ldap->add($target_branch,attr => ['objectclass' => ['top', 'container']]);
-    &AD_debug_logdump($result,2);
+    &AD_debug_logdump($result,2,(caller(0))[3]);
     # move object
     $result = $ldap->moddn ( $dn,
                         newrdn => $rdn,
                         deleteoldrdn => '1',
                         newsuperior => $target_branch
                                );
-    &AD_debug_logdump($result,2);
+    &AD_debug_logdump($result,2,(caller(0))[3]);
 }
 
 
@@ -734,7 +734,7 @@ sub AD_group_addmember {
                                     member => $dn_exist,
                                }
                            );
-             &AD_debug_logdump($mesg,2);
+             &AD_debug_logdump($mesg,2,(caller(0))[3]);
              #my $command="samba-tool group addmembers ". $group." ".$adduser;
              #print "   # $command\n";
              #system($command);
@@ -750,7 +750,7 @@ sub AD_group_addmember {
                                        member => $dn_exist_addgroup,
                                    }
                                );
-             &AD_debug_logdump($mesg,2);
+             &AD_debug_logdump($mesg,2,(caller(0))[3]);
              return;
          }
      } else {
@@ -802,7 +802,7 @@ sub AD_group_removemember {
                                        member => $dn_exist_removegroup,
                                    }
                                );
-             &AD_debug_logdump($mesg,2);
+             &AD_debug_logdump($mesg,2,(caller(0))[3]);
              return;
          }
     } else {
@@ -899,10 +899,10 @@ sub  get_forbidden_logins{
 
 sub AD_debug_logdump {
     # dumping ldap message object in loglevels
-    my ($message,$level) = @_;
+    my ($message,$level,$text) = @_;
     if($Conf::log_level>=$level){
-        if ( $message->code ) {
-            print "   Debug_info from server follows ...\n";
+        if ( $message->code) { # 0: no error
+            print "   Debug info from server($text):\n";
             print Dumper(\$message);
         }
     }
