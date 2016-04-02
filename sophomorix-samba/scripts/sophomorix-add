@@ -502,8 +502,6 @@ while(<SOPHOMORIXADD>){
 
     if ($role eq "student"){
         my $group_token=&AD_get_name_tokened($DevelConf::student,$school_token,"adminclass");
-
-        #my $group=$school_token."-".$DevelConf::student;
         &AD_group_addmember({ldap => $ldap,
                              root_dse => $root_dse, 
                              group => $DevelConf::student,
@@ -518,11 +516,12 @@ while(<SOPHOMORIXADD>){
         # add token-students to students
    
     } elsif ($role eq "teacher"){
-        my $group=$school_token."-".$DevelConf::teacher;
+        #my $group=$school_token."-".$DevelConf::teacher;
+        my $group_token=&AD_get_name_tokened($DevelConf::teacher,$school_token,"adminclass");
         &AD_group_addmember({ldap => $ldap,
                              root_dse => $root_dse, 
                              group => $DevelConf::teacher,
-                             addgroup => $group,
+                             addgroup => $group_token,
                            });
         ## <teacher> in <token>-teachers
         #&AD_group_addmember({ldap => $ldap,

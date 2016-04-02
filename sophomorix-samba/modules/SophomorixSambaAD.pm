@@ -669,7 +669,8 @@ sub AD_group_create {
         } else {
             # a group like 7a, 7b
             #print "Student class of the school: $group\n";
-            my $token_students=$school_token."-".$DevelConf::student;
+            my $token_students=&AD_get_name_tokened($DevelConf::student,$school_token,"adminclass");
+            #my $token_students=$school_token."-".$DevelConf::student;
             # add the group to <token>-students
             &AD_group_addmember({ldap => $ldap,
                                  root_dse => $root_dse, 
