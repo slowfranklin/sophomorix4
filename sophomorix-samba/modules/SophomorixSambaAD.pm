@@ -271,6 +271,9 @@ sub AD_user_move {
     my $group_type_old;
     my $group_type_new;
     my $target_branch;
+    $ou_old=&AD_get_ou_tokened($ou_old);
+    $ou_new=&AD_get_ou_tokened($ou_new);
+
     if ($role_new eq "student"){
          $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$root_dse;
     } elsif ($role_new eq "teacher"){
@@ -320,6 +323,7 @@ sub AD_user_move {
                       type=>"adminclass",
                     });
 
+    # update user entry
     my $mesg = $ldap->modify( $dn,
 		      replace => {
                           sophomorixAdminClass => $group_new,
@@ -613,6 +617,10 @@ sub AD_object_move {
     my $target_branch = $arg_ref->{target_branch};
     my $rdn = $arg_ref->{rdn};
 
+    &Sophomorix::SophomorixBase::print_title("Move object in tree:");
+    print "   * DN:     $dn\n";
+    print "   * Target: $target_branch\n";
+
     # create branch
     my $result = $ldap->add($target_branch,attr => ['objectclass' => ['top', 'container']]);
     &AD_debug_logdump($result,2,(caller(0))[3]);
@@ -636,6 +644,8 @@ sub AD_group_create {
     my $type = $arg_ref->{type};
     my $school_token = $arg_ref->{school_token};
 
+    $ou=&AD_get_ou_tokened($ou);
+
     # calculate missing Attributes
     my $container=&AD_get_container($type,$group);
     my $dn = "cn=".$group.",".$container."OU=".$ou.",".$root_dse;
@@ -656,6 +666,7 @@ sub AD_group_create {
                                 ]
                             );
         $result->code && warn "failed to add entry: ", $result->error ;
+        &AD_debug_logdump($result,2,(caller(0))[3]);
     } else {
         print "   * Group $group exists already ($count results)\n";
         #return;

@@ -964,6 +964,78 @@ if ($move==1 or $test_move==1){
                    not_memberOf => "multi-teachers",
                   });
 
+   # schneima42
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=schneima42,CN=s7ade,CN=Students,OU=SCHOOL,".$root_dse,
+                   #####
+                   displayName=>"Marina Schneider",
+                   givenName=>"Marina",
+                   name=>"schneima42",
+                   sAMAccountname=>"schneima42",
+                   sn=>"Schneider",
+                   sophomorixAdminClass => "s7ade",
+                   sophomorixExitAdminClass => "s6ade",
+                   sophomorixFirstPassword => "Muster!",
+                   sophomorixFirstnameASCII => "Marina",
+                   sophomorixSurnameASCII  => "Schneider",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "---",
+                   sophomorixSchoolname => "SCHOOL",
+                   memberOf => "s7ade",
+                   not_memberOf => "uni-teachers,lin-teachers,bsz-students",
+                  });
+    ##### Testing the users class
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=s7ade,CN=Classes,OU=SCHOOL,".$root_dse,
+                   sAMAccountname=>"s7ade",
+                   memberOf => "students",
+                   not_memberOf => "bsz-students,lin-students",
+                  });
+    ##### Testing the users ou-students group
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=students,CN=Classes,OU=SCHOOL,".$root_dse,
+                   sAMAccountname=>"students",
+                   memberOf => "multi-students",
+                   not_memberOf => "multi-teachers",
+                  });
+
+
+    
+    # sch42
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=sch42,CN=alumni,CN=Students,OU=SCHOOL,".$root_dse,
+                   #####
+                   displayName=>"Michael Schäfer",
+                   givenName=>"Michael",
+                   name=>"sch42",
+                   sAMAccountname=>"sch42",
+                   sn=>"Schäfer",
+                   sophomorixAdminClass => "alumni",
+                   sophomorixExitAdminClass => "teachers",
+                   sophomorixFirstPassword => "LinuxMuster!",
+                   sophomorixFirstnameASCII => "Michael",
+                   sophomorixSurnameASCII  => "Schaefer",
+                   sophomorixRole => "student",
+                   sophomorixSchoolPrefix => "---",
+                   sophomorixSchoolname => "SCHOOL",
+                   memberOf => "alumni",
+                   not_memberOf => "uni-teachers,lin-teachers,bsz-students",
+                  });
+    ##### Testing the users class
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=alumni,CN=Classes,OU=SCHOOL,".$root_dse,
+                   sAMAccountname=>"alumni",
+                   memberOf => "students",
+                   not_memberOf => "lin-students",
+                  });
+    ##### Testing the users ou-students group
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=students,CN=Classes,OU=SCHOOL,".$root_dse,
+                   sAMAccountname=>"students",
+                   memberOf => "multi-students",
+                   not_memberOf => "multi-teachers",
+                  });
+
 
     
 }
@@ -998,6 +1070,8 @@ if ($kill==1 or $test_kill==1){
     &AD_object_nonexist($ldap,$root_dse,"user","blackmri42");
     &AD_object_nonexist($ldap,$root_dse,"user","kep42");
     &AD_object_nonexist($ldap,$root_dse,"user","gal42");
+    &AD_object_nonexist($ldap,$root_dse,"user","schneima42");
+    &AD_object_nonexist($ldap,$root_dse,"user","sch42");
 }
 
 
