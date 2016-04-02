@@ -170,12 +170,12 @@ sub AD_test_object {
             my @should_be_member=split(/,/,$member_of);
             foreach my $should_be_member (@should_be_member){
                 is (exists $member_of{$should_be_member},1,
-		    "  * $sam_account IS member of $should_be_member");
+		    "  * Entry $sam_account IS member of $should_be_member");
 		$test_count++;
             } 
 
             # were all actual memberships tested
-            is ($membership_count,$test_count,"  * $sam_account has $membership_count memberOf entries: $test_count tested");
+            is ($membership_count,$test_count,"  * Entry $sam_account has $membership_count memberOf entries: $test_count tested");
 
             # test non-membership
             my @should_not_be_member=split(/,/,$not_member_of);

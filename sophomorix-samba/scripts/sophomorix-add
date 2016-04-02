@@ -493,20 +493,21 @@ while(<SOPHOMORIXADD>){
                     school_token=>$school_token,
                     type=>"adminclass",
                   });
-  # add student/teacher to its group
+  # add student/teacher to its adminclass-group
   &AD_group_addmember({ldap => $ldap,
                        root_dse => $root_dse, 
                        group => $group_token,
                        addmember => $login_check_ok,
                       });   
 
-    if ($role eq "student"){
-        my $group_token=&AD_get_name_tokened($DevelConf::student,$school_token,"adminclass");
-        &AD_group_addmember({ldap => $ldap,
-                             root_dse => $root_dse, 
-                             group => $DevelConf::student,
-                             addgroup => $group_token,
-                           });
+#    if ($role eq "student"){
+# not necessary ????????
+#        my $group_token=&AD_get_name_tokened($DevelConf::student,$school_token,"adminclass");
+#        &AD_group_addmember({ldap => $ldap,
+#                             root_dse => $root_dse, 
+#                             group => $DevelConf::student,
+#                             addgroup => $group_token,
+#                           });
         # <student> directly in <token>-students 
         #&AD_group_addmember({ldap => $ldap,
         #                     root_dse => $root_dse, 
@@ -515,14 +516,14 @@ while(<SOPHOMORIXADD>){
         #                    });
         # add token-students to students
    
-    } elsif ($role eq "teacher"){
-        #my $group=$school_token."-".$DevelConf::teacher;
-        my $group_token=&AD_get_name_tokened($DevelConf::teacher,$school_token,"adminclass");
-        &AD_group_addmember({ldap => $ldap,
-                             root_dse => $root_dse, 
-                             group => $DevelConf::teacher,
-                             addgroup => $group_token,
-                           });
+#    } elsif ($role eq "teacher"){
+#        #my $group=$school_token."-".$DevelConf::teacher;
+#        my $group_token=&AD_get_name_tokened($DevelConf::teacher,$school_token,"adminclass");
+#        &AD_group_addmember({ldap => $ldap,
+#                             root_dse => $root_dse, 
+#                             group => $DevelConf::teacher,
+#                             addgroup => $group_token,
+#                           });
         ## <teacher> in <token>-teachers
         #&AD_group_addmember({ldap => $ldap,
 #                             root_dse => $root_dse, 
