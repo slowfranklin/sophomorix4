@@ -12,9 +12,17 @@ Kategorie 'samba4'.
 
 Klassennamen bei Multischool-Umgebungen:
 Z.B. Schule abc und Klasse 7a:
+    7a-abc  ODER abc-7a?
 
-7a-abc
-abc-7a
+An den Versionsnummern lässt sich der Entwicklungsstand von 
+sophomorix4 in etwa ablesen:
+  3.0 Start
+  3.2 20% der Features umgesetzt
+  3.4 40% "
+  3.6 40% "
+  3.8 40% "
+  4.0 Erste Version mit allen Features
+
 
 Enwicklungs-Entscheidungen, die bald anstehen/Diskussion
 ------------------------------------------------------------
@@ -27,15 +35,26 @@ Enwicklungs-Entscheidungen, die bald anstehen/Diskussion
 
 Was habe ich seit dem letzten Weekly erledigt/verändert?
 ----------------------------------------------------------------------
-Verbotene Loginnamenliste ergänzt (Dank an Holger)
-- ExamAccounts testweise anlegen: sophomorix-test-2
+- Verbotene Loginnamenliste ergänzt (Dank an Holger!)
+- ExamAccounts (Klassenarbeit) testweise anlegen tut: sophomorix-test-2
+- Erweiterte Tests in sophomorix-test-1 
+  - User in der default OU=SCHOOL
+  - Versetzen in andere OU's
+- Debugging-Info hinzugenommen (bei option -v werden error/warnings gedumpt)
+- Script ermittelt RootDSE per anonymous LDAP-Abfrage übers Netz
+- Schema Installation ermittelt RootDSE aus realm in smb.conf
+- Neues Paket 3.2.2-1
 
 
 Was mache ich als nächstes?
 ----------------------------------------------------------------------
-- domainDNS per script ermitteln (schema install smb.conf, sonst Abfrage)
+- sophomorix-test-1
+  Vieeel mehr tests
+  - jede Kombinationsmöglichkeit (Verschieben eines users) gescriptet testen
+- Statt Objekte in samba anzulegen (auch wenn es sie schon gibt) vorher abfragen, 
+  ob sie schon existieren (-> Performanzgewinn testen) 
 - Workstations anlegen
-- Gruppen-Schema (Gruppenteil soll kommende Woche fertig sein)
+- Gruppen-Schema (Gruppenteil soll Ende erste Aprilwoche Woche fertig sein)
 
 
 Kleinere Aufgaben, bei denen ich unterstützung brauchen könnte:

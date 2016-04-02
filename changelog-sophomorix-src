@@ -6,6 +6,12 @@
 4.0.0-1 (2016-??-??)
 
 
+3.2.2-1 (2016-04-02)
+      - RootDSE automagically asked from Server
+      - Default OU=SCHOOL
+      - Tests and Bugfixes
+      - Errors and Warnings are dumped (Option -v)
+
 3.2.1-1 (2016-03-30)
       - install test with package
       - small fixes

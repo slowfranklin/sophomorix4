@@ -1,8 +1,8 @@
-sophomorix4 (3.2.1-1) xgenial-unstable; urgency=medium
+sophomorix4 (3.2.2-1) xenial-unstable; urgency=medium
 
-  * New upstream, small fixes
+  * New upsteam, get ROOTDSE automagically
 
- -- jeff <bz@adler>  Wed, 30 Mar 2016 17:59:19 +0200
+ -- jeff <bz@adler>  Sat, 02 Apr 2016 20:06:18 +0200
 
 sophomorix4 (3.2.0-1) xenial-unstable; urgency=medium
 
