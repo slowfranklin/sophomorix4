@@ -33,6 +33,7 @@ $Data::Dumper::Terse = 1;
             AD_group_create
             AD_group_addmember
             AD_group_removemember
+            AD_get_ou_tokened
             AD_get_name_tokened
             get_forbidden_logins
             AD_ou_add
@@ -169,6 +170,7 @@ sub AD_user_create {
     if (not defined $wunsch_gid){
         $wunsch_gid="---";
     }
+    $ou=&AD_get_ou_tokened($ou);
 
     # calculate
     my $shell="/bin/false";
@@ -346,6 +348,17 @@ sub AD_user_move {
 }
 
 
+sub AD_get_ou_tokened {
+    my ($ou) = @_;
+    if ($ou eq "---"){ # use default OU: SCHOOL
+        # remove OU= from configured value
+        my $string=$DevelConf::AD_school_ou;
+        print "STR: <$string>\n";
+        $string=~s/^OU=//;
+        $ou=$string;
+    }
+    return $ou;
+}
 
 sub AD_get_name_tokened {
     # $role is: group type / user role
@@ -417,6 +430,13 @@ sub AD_get_container {
 sub AD_ou_add {
     # if $result->code is not given, the add is silent
     my ($ldap,$root_dse,$ou,$token) = @_;
+    $ou=&AD_get_ou_tokened($ou);
+    if ($token eq "---"){
+        $token=""; # OU=SCHOOL
+    } else {
+        $token=$token."-";
+    }
+
     my $dn="OU=".$ou.",".$root_dse;
     # provide that a ou exists
     my $result = $ldap->add($dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
@@ -441,10 +461,10 @@ sub AD_ou_add {
     $result = $ldap->add($printer,attr => ['objectclass' => ['top', 'container']]);
     my $custom=$DevelConf::AD_custom_cn.",".$dn;
     $result = $ldap->add($custom,attr => ['objectclass' => ['top', 'container']]);
+ 
     # Adding some groups
-
-    # <token>-teachers
-    my $group=$token."-".$DevelConf::teacher;
+    # <token>teachers
+    my $group=$token.$DevelConf::teacher;
     my $dn_group="CN=".$group.",".$DevelConf::AD_class_cn.",".$dn;
     $result = $ldap->add( $dn_group,
                          attr => [
@@ -455,8 +475,8 @@ sub AD_ou_add {
                          ]
                      );
 
-    # <token>-students
-    $group=$token."-".$DevelConf::student;
+    # <token>students
+    $group=$token.$DevelConf::student;
     $dn_group="CN=".$group.",".$DevelConf::AD_class_cn.",".$dn;
     $result = $ldap->add( $dn_group,
                          attr => [
@@ -467,8 +487,8 @@ sub AD_ou_add {
                          ]
                      );
 
-    # <token>-examaccounts
-    $group=$token."-".$DevelConf::examaccount;
+    # <token>examaccounts
+    $group=$token.$DevelConf::examaccount;
     $dn_group="CN=".$group.",".$DevelConf::AD_room_cn.",".$dn;
     $result = $ldap->add( $dn_group,
                          attr => [
@@ -479,9 +499,9 @@ sub AD_ou_add {
                          ]
                      );
 
-    ## <token>-workstations
+    ## <token>workstations
     ## workstations sind in keiner Gruppe
-    #$group=$token."-".$DevelConf::workstation;
+    #$group=$token.$DevelConf::workstation;
     #$dn_group="CN=".$group.",".$DevelConf::AD_room_cn.",".$dn;
     #$result = $ldap->add( $dn_group,
     #                     attr => [
@@ -492,6 +512,8 @@ sub AD_ou_add {
     #                     ]
     #                 );
 
+
+    ############################################################
     # OU=SOPHOMORIX
     my $sophomorix_dn=$DevelConf::AD_sophomorix_ou.",".$root_dse;
     $result = $ldap->add($sophomorix_dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);

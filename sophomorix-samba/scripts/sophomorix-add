@@ -35,6 +35,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_user_create
                                  AD_group_create
                                  AD_group_addmember
+                                 AD_get_ou_tokened
                                  AD_get_name_tokened
                                  get_forbidden_logins
                                     );
@@ -419,7 +420,8 @@ while(<SOPHOMORIXADD>){
    ##############################
    $user_count++;
 
-
+   # --- -> SCHOOL
+   $ou=&AD_get_ou_tokened($ou);
 
    # 1. Entry in AD
     if (not exists $ou_created{$ou}){
@@ -499,11 +501,13 @@ while(<SOPHOMORIXADD>){
                       });   
 
     if ($role eq "student"){
-        my $group=$school_token."-".$DevelConf::student;
+        my $group_token=&AD_get_name_tokened($DevelConf::student,$school_token,"adminclass");
+
+        #my $group=$school_token."-".$DevelConf::student;
         &AD_group_addmember({ldap => $ldap,
                              root_dse => $root_dse, 
                              group => $DevelConf::student,
-                             addgroup => $group,
+                             addgroup => $group_token,
                            });
         # <student> directly in <token>-students 
         #&AD_group_addmember({ldap => $ldap,
