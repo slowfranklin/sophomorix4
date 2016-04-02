@@ -119,6 +119,9 @@ sub AD_user_kill {
     my $root_dse = $arg_ref->{root_dse};
     my $user = $arg_ref->{login};
     my $identifier = $arg_ref->{identifier};
+    my $user_count = $arg_ref->{user_count};
+
+    &Sophomorix::SophomorixBase::print_title("Killing User $user ($user_count):");
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"user",$user);
     if ($count > 0){
@@ -194,28 +197,28 @@ sub AD_user_create {
     if($Conf::log_level>=1){
         print "\n";
         &Sophomorix::SophomorixBase::print_title("Creating User $user_count :");
-        print("DN:                 $dn\n");
-        print("DN (Parent):        $dn_class\n");
-        print("Surname (ASCII):    $surname_ascii\n");
-        print("Surname (UTF8):     $surname_utf8\n");
-        print("Firstname (ASCII):  $firstname_ascii\n");
-        print("Firstname (UTF8):   $firstname_utf8\n");
-        print("Birthday:           $birthdate\n");
-        print("Identifier:         $identifier\n");
-        print("OU:                 $ou\n"); # Organisatinal Unit
-        print("School Token:       $school_token\n"); # Organisatinal Unit
-        print("Role(User):         $role\n");
-        print("Type(Group):        $type\n");
-        print("Group:              $group ($group_token)\n"); # lehrer oder klasse
-        print("Unix-gid:           $wunsch_gid\n"); # lehrer oder klasse
-        #print("GECOS:              $gecos\n");
-        #print("Login (to check):   $login_name_to_check\n");
-        print("Login (check OK):   $login ($login_token)\n");
-        print("Password:           $plain_password\n");
+        print "   DN:                 $dn\n";
+        print "   DN(Parent):         $dn_class\n";
+        print "   Surname(ASCII):     $surname_ascii\n";
+        print "   Surname(UTF8):      $surname_utf8\n";
+        print "   Firstname(ASCII):   $firstname_ascii\n";
+        print "   Firstname(UTF8):    $firstname_utf8\n";
+        print "   Birthday:           $birthdate\n";
+        print "   Identifier:         $identifier\n";
+        print "   OU:                 $ou\n"; # Organisatinal Unit
+        print "   School Token:       $school_token\n"; # Organisatinal Unit
+        print "   Role(User):         $role\n";
+        print "   Type(Group):        $type\n";
+        print "   Group:              $group ($group_token)\n"; # lehrer oder klasse
+        print "   Unix-gid:           $wunsch_gid\n"; # lehrer oder klasse
+        #print "   GECOS:              $gecos\n";
+        #print "   Login (to check):   $login_name_to_check\n";
+        print "   Login (check OK):   $login ($login_token)\n";
+        print "   Password:           $plain_password\n";
         # sophomorix stuff
-        print("Creationdate:       $creationdate\n");
-        print("Unid:               $unid\n");
-        print("Unix-id:            $wunsch_id\n");
+        print "   Creationdate:       $creationdate\n";
+        print "   Unid:               $unid\n";
+        print "   Unix-id:            $wunsch_id\n";
     }
 
     $ldap->add($dn_class,attr => ['objectclass' => ['top', 'container']]);
@@ -245,6 +248,7 @@ sub AD_user_create {
                            ]
                            );
     $result->code && warn "failed to add entry: ", $result->error ;
+    &Sophomorix::SophomorixBase::print_title("Creating User $user_count (end)");
 }
 
 
@@ -290,13 +294,13 @@ sub AD_user_move {
         print "\n";
         &Sophomorix::SophomorixBase::print_title("Moving User $user ($user_count):");
 
-        print("DN:                $dn\n");
-        print("Target DN:         $target_branch\n");
-        print("Group (Old):       $group_old\n");
-        print("Group (New):       $group_new\n");
-        print("Role (New):        $role_new\n");
-        print("School(Old):       $school_token_old ($ou_old)\n");
-        print("School(New):       $school_token_new ($ou_new)\n");
+        print "   DN:             $dn\n";
+        print "   Target DN:      $target_branch\n";
+        print "   Group (Old):    $group_old\n";
+        print "   Group (New):    $group_new\n";
+        print "   Role (New):     $role_new\n";
+        print "   School(Old):    $school_token_old ($ou_old)\n";
+        print "   School(New):    $school_token_new ($ou_new)\n";
     }
 
     # make sure OU and tree exists
@@ -345,6 +349,7 @@ sub AD_user_move {
                      rdn=>$rdn,
                      target_branch=>$target_branch,
                     });
+    &Sophomorix::SophomorixBase::print_title("Moving User $user (end)");
 }
 
 
@@ -640,7 +645,7 @@ sub AD_group_create {
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"group",$group);
     if ($count==0){
         # adding the group
-        &Sophomorix::SophomorixBase::print_title("Creating Group:");
+        &Sophomorix::SophomorixBase::print_title("Creating Group (begin):");
         print("   DN:       $dn\n");
         print("   Group:    $group\n");
         print("   Type:     $type\n");
@@ -699,6 +704,7 @@ sub AD_group_create {
                              addgroup => $token_examaccounts,
                            });
     }
+    &Sophomorix::SophomorixBase::print_title("Creating Group (end)");
     return;
 }
 
@@ -713,6 +719,8 @@ sub AD_group_addmember {
     my $adduser = $arg_ref->{addmember};
     my $addgroup = $arg_ref->{addgroup};
     my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,$root_dse,"group",$group);
+
+    &Sophomorix::SophomorixBase::print_title("Adding member to $group:");
     if ($count_group==0){
         # group does not exist -> exit with warning
         print "   * WARNING: Group $group nonexisting ($count_group results)\n";
@@ -721,9 +729,9 @@ sub AD_group_addmember {
 
      if (defined $adduser){
          my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"user",$adduser);
+         print "   * Adding user $adduser to group $group\n";
          if ($count > 0){
              print "   * User $adduser exists ($count results)\n";
-             print "Adding user $adduser to group $group\n";
              my $mesg = $ldap->modify( $dn_exist_group,
      	        	              add => {
                                     member => $dn_exist,
@@ -737,7 +745,7 @@ sub AD_group_addmember {
              return;
          }
      } elsif (defined $addgroup){
-         print "Adding group $addgroup to $group\n";
+         print "   * Adding group $addgroup to $group\n";
          my ($count_group,$dn_exist_addgroup,$cn_exist_addgroup)=&AD_object_search($ldap,$root_dse,"group",$addgroup);
          if ($count_group > 0){
              print "   * Group $addgroup exists ($count_group results)\n";
@@ -764,6 +772,7 @@ sub AD_group_removemember {
     my $group = $arg_ref->{group};
     my $removeuser = $arg_ref->{removemember};
     my $removegroup = $arg_ref->{removegroup};
+    &Sophomorix::SophomorixBase::print_title("Removing member from $group:");
 
     my ($count_group,$dn_exist_group,$cn_exist_group)=&AD_object_search($ldap,$root_dse,"group",$group);
     if ($count_group==0){
@@ -774,10 +783,9 @@ sub AD_group_removemember {
 
     if (defined $removeuser){
         my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"user",$removeuser);
+        print "   * Removing user $removeuser from group $group\n";
         if ($count > 0){
             print "   * User $removeuser exists ($count results)\n";
-            print "Removing $removeuser from group $group\n";
-
             my $mesg = $ldap->modify( $dn_exist_group,
 	  	                  delete => {
                                       member => $dn_exist,
@@ -789,11 +797,10 @@ sub AD_group_removemember {
             return;
         }
     } elsif (defined $removegroup){
-         print "Removing Group $removegroup from $group\n";
+         print "   * Removing group $removegroup from $group\n";
          my ($count_group,$dn_exist_removegroup,$cn_exist_removegroup)=&AD_object_search($ldap,$root_dse,"group",$removegroup);
          if ($count_group > 0){
              print "   * Group $removegroup exists ($count_group results)\n";
-             print "Removing group $removegroup from group $group\n";
              my $mesg = $ldap->modify( $dn_exist_group,
      	    	                   delete => {
                                        member => $dn_exist_removegroup,

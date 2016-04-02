@@ -36,7 +36,7 @@ use Sophomorix::SophomorixSambaAD qw(
 my @arguments = @ARGV;
 
 my $time_stamp_file=&time_stamp_file();
-my $user_nummer=0;
+my $user_count=0;
 
 my $identifier_to_kill="";
 my $login_name_to_kill="";
@@ -241,15 +241,16 @@ open(YETTOKILL,">$kill_file_new")
 
 if ($killuser ne ""){
     # killing users given by option --killuser
-    print "Killing the following List of users: $killuser\n";
+    #print "Killing the following List of users: $killuser\n";
     my @userlist=split /,/,$killuser;
     foreach my $user_to_kill (@userlist){
-        print "Killing $user_to_kill\n";
+        $user_count++;
         &AD_user_kill({ldap=>$ldap,
                        root_dse=>$root_dse,
                        login=>$user_to_kill,
-                       identifier=>$identifier_to_kill});
-        #&kill_user($user_to_kill,$identifier_to_kill);
+                       identifier=>$identifier_to_kill,
+                       user_count=>$user_count,
+                     });
     }
 } else {
     # killing users from file
@@ -259,16 +260,15 @@ if ($killuser ne ""){
  	    next;
         }
         chomp();
-        ($identifier_to_kill, 
-         $login_name_to_kill)=split(/::/);
-        print "Killing $login_name_to_kill\n";
+        $user_count++;
+        ($identifier_to_kill,$login_name_to_kill)=split(/::/);
 
         &AD_user_kill({ldap=>$ldap,
                        root_dse=>$root_dse,
                        login=>$login_name_to_kill,
-                       identifier=>$identifier_to_kill});
-        $user_nummer++;
-        #&kill_user($login_name_to_kill,$identifier_to_kill);
+                       identifier=>$identifier_to_kill,
+                       user_count=>$user_count,
+                     });
     }
     close(KILL);
     close(YETTOKILL);
@@ -289,7 +289,7 @@ rename("$kill_file_new","$kill_file");
 
 
 # Creating Mailing Aliases and Lists
-#if ($user_nummer>0) {
+#if ($user_count>0) {
 #    system("${DevelConf::executable_pfad}/sophomorix-mail --skiplock");
 #    &nscd_stop();
 #} else {
@@ -299,7 +299,7 @@ rename("$kill_file_new","$kill_file");
 
 #&imap_disconnect($imap);
 
-&print_title("$user_nummer users killed");
+&print_title("$user_count users killed");
 
 &AD_unbind_admin($ldap);
 
@@ -396,9 +396,9 @@ rename("$kill_file_new","$kill_file");
 
 #      # Jetzt wird gelöscht
 #      # Ermittelte Daten ausgeben
-#      $user_nummer++;
+#      $user_count++;
 #       if($Conf::log_level>=1){
-#         &print_title("Removing User $user_nummer:");
+#         &print_title("Removing User $user_count:");
 #         print("Identifier:          $identifier_to_kill\n");
 #         print("Login-Name:          $login_name_to_kill\n");
 #         print("Home-Verzeichnis:    $home_verzeichnis_to_kill\n");

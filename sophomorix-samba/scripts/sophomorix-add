@@ -531,7 +531,7 @@ while(<SOPHOMORIXADD>){
         #                     addmember => $login_check_ok,
         #                    });   
         # add token-students to students
-    }
+#    }
 
 
 
