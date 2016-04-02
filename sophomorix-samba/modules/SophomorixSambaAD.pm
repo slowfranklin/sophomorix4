@@ -122,7 +122,6 @@ sub AD_user_kill {
     my $user_count = $arg_ref->{user_count};
 
     &Sophomorix::SophomorixBase::print_title("Killing User $user ($user_count):");
-
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"user",$user);
     if ($count > 0){
         my $command="samba-tool user delete ". $user;
@@ -358,7 +357,6 @@ sub AD_get_ou_tokened {
     if ($ou eq "---"){ # use default OU: SCHOOL
         # remove OU= from configured value
         my $string=$DevelConf::AD_school_ou;
-        print "STR: <$string>\n";
         $string=~s/^OU=//;
         $ou=$string;
     }
@@ -663,8 +661,8 @@ sub AD_group_create {
         #return;
     }
     if ($type eq "adminclass"){
-        my $teacher_group_expected=$school_token."-".$DevelConf::teacher;
-        
+        #my $teacher_group_expected=$school_token."-".$DevelConf::teacher;
+        my $teacher_group_expected=&AD_get_name_tokened($DevelConf::teacher,$school_token,"adminclass");
         if ($group eq $teacher_group_expected){
             # add <token>-teachers to multi-teachers
             &AD_group_addmember({ldap => $ldap,

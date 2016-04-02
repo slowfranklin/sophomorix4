@@ -569,6 +569,34 @@ if ($add==1 or $test_add==1){
                    memberOf => "multi-students",
                    not_memberOf => "bsz-students,uni-students",
                   });
+    # sch42
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=sch42,CN=teachers,CN=Teachers,OU=SCHOOL,".$root_dse,
+                   #####
+                   displayName=>"Michael Schäfer",
+                   givenName=>"Michael",
+                   name=>"sch42",
+                   sAMAccountname=>"sch42",
+                   sn=>"Schäfer",
+                   sophomorixAdminClass => "teachers",
+                   sophomorixExitAdminClass => "unknown",
+                   sophomorixFirstPassword => "LinuxMuster!",
+                   sophomorixFirstnameASCII => "Michael",
+                   sophomorixSurnameASCII  => "Schaefer",
+                   sophomorixRole => "teacher",
+                   sophomorixSchoolPrefix => "---",
+                   sophomorixSchoolname => "SCHOOL",
+                   memberOf => "teachers",
+                   not_memberOf => "multi-teachers,uni-teachers,lin-teachers,bsz-teachers,students",
+                  });
+    ##### Testing the users ou-teachers group
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=teachers,CN=Classes,OU=SCHOOL,".$root_dse,
+                   sAMAccountname=>"teachers",
+                   memberOf => "multi-teachers",
+                   not_memberOf => "multi-students,uni-students",
+                  });
+
 }
 
 
