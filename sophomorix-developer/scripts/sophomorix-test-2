@@ -106,13 +106,13 @@ Options
 
   Workstation Accounts:
   --add-ws  
-    add Workstations
+    add workstations
   --test-add-ws
-    test Workstations
+    test workstations
   --kill-ws
-    kill Workstations
+    kill workstations
   --test-kill-ws
-    test killed Workstations
+    test killed workstations
 
 ');
    print "\n";

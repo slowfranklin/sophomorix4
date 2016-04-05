@@ -1,0 +1,215 @@
+#!/usr/bin/perl -w
+# This script (sophomorix-test-3) is maintained by Rüdiger Beck
+# It is Free Software (License GPLv3)
+# If you find errors, contact the author
+# jeffbeck@web.de  or  jeffbeck@linuxmuster.net
+
+# Bibliotheken
+use strict;
+use Getopt::Long;
+Getopt::Long::Configure ("bundling");
+use Sophomorix::SophomorixBase qw(
+                                 print_line
+                                 print_title
+                                 check_options
+                                 time_stamp_AD 
+                                 get_passwd_charlist
+                                 get_plain_password
+                                 );
+use Sophomorix::SophomorixSambaAD qw(
+                                 AD_ou_add
+                                 AD_bind_admin
+                                 AD_unbind_admin
+                                 AD_user_create
+                                 AD_group_create
+                                 AD_group_addmember
+                                 AD_user_kill
+                                 AD_object_search
+                                 AD_debug_logdump
+                                 AD_get_name_tokened
+                                    );
+use Sophomorix::SophomorixTest qw(
+                                 AD_object_nonexist
+                                 AD_test_object
+                                 );
+
+$Conf::log_level=1;
+my $help=0;
+my $full=1;
+my $add_pro=0;
+my $test_add_pro=0;
+
+my $mod_pro=0;
+my $test_mod_pro=0;
+
+my $kill_pro=0;
+my $test_kill_pro=0;
+
+my $verbose_options="";
+
+my $testopt=GetOptions(
+           "help|h" => \$help,
+           "full|f" => \$full,
+           "verbose|v+" => \$Conf::log_level,
+           "add-pro" => \$add_pro,
+           "test-add-pro" => \$test_add_pro,
+           "mod-pro" => \$mod_pro,
+           "test-mod-pro" => \$test_mod_pro,
+           "kill-pro" => \$kill_pro,
+           "test-kill-pro" => \$test_kill_pro,
+  );
+
+
+# Prüfen, ob Optionen erkannt wurden, sonst Abbruch
+&check_options($testopt);
+
+
+
+if ($Conf::log_level==1){
+    $verbose_options="";
+} elsif ($Conf::log_level==2){
+    $verbose_options="-v";
+} elsif ($Conf::log_level==3){
+    $verbose_options="-vv";
+}
+
+
+
+
+my ($ldap,$root_dse) = &AD_bind_admin();
+
+my $testdata="/usr/share/sophomorix-developer/testdata";
+
+
+# --help
+if ($help==1) {
+   # Scriptname ermitteln
+   my @list = split(/\//,$0);
+   my $scriptname = pop @list;
+   # Befehlsbeschreibung
+   print('
+sophomorix-test-3 tests the addition of ExamAccounts and workstation accounts.
+
+Options
+  -h  / --help
+
+  Projects:
+  --add-pro  
+    add some projects
+  --test-add-pro
+    test the added projects
+
+  --mod-pro
+    modify added projects
+  --test-mod-pro
+    test modified projects
+
+  --kill-pro
+    kill all added projects
+  --test-kill-pro
+    test killed projects
+
+');
+   print "\n";
+   exit;
+}
+
+
+
+
+
+############################################################
+# Check preliminaries
+############################################################
+
+# --full
+if ($full==1){
+    $add_pro=1;
+    $mod_pro=1;
+    $kill_pro=1;
+    $test_add_pro=1;
+    $test_mod_pro=1;
+    $test_kill_pro=1;
+}
+
+
+
+############################################################
+# Add projects
+############################################################
+# --add-pro  
+if ($add_pro==1){
+    system("sophomorix-project $verbose_options --create -p mathe");
+    system("sophomorix-project $verbose_options --create -p Chemie-AG");
+}
+
+############################################################
+# Test added projects
+############################################################
+# --test-add-pro  
+if ($test_add_pro==1){
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=p_Chemie-AG,OU=Projects,OU=SOPHOMORIX,".$root_dse,
+                   sAMAccountname=>"p_Chemie-AG",
+                   memberOf => "",
+                   not_memberOf => "teachers",
+                  });
+
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=p_mathe,OU=Projects,OU=SOPHOMORIX,".$root_dse,
+                   sAMAccountname=>"p_mathe",
+                   memberOf => "",
+                   not_memberOf => "teachers",
+                  });
+
+}
+
+
+
+
+############################################################
+# Modify added projects
+############################################################
+# --mod-pro  
+if ($mod_pro==1){
+    print "\nNothing to do so far(--mod-pro), ...\n\n";
+}
+
+############################################################
+#  Test modified  projects
+############################################################
+# --test-mod-pro  
+if ($test_mod_pro==1){
+    print "\nNothing to do so far (--test-mod-pro), ...\n\n";
+}
+
+
+
+
+############################################################
+# Kill projects
+############################################################
+# --kill-pro  
+if ($kill_pro==1){
+    system("sophomorix-project $verbose_options --kill -p mathe");
+    system("sophomorix-project $verbose_options --kill -p Chemie-AG");
+}
+
+############################################################
+#  Test killed  projects
+############################################################
+# --test-kill-pro  
+if ($test_kill_pro==1){
+    &AD_object_nonexist($ldap,$root_dse,"group","p_mathe");
+    &AD_object_nonexist($ldap,$root_dse,"group","p_Chemie-AG");
+}
+
+
+
+
+
+
+&AD_unbind_admin($ldap);
+
+
+

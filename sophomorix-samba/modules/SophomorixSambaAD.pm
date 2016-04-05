@@ -40,6 +40,7 @@ $Data::Dumper::Terse = 1;
             AD_ou_add
             AD_object_search
             AD_object_move
+            AD_debug_logdump
             );
 
 sub AD_get_passwd {

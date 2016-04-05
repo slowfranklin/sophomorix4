@@ -28,6 +28,7 @@ $Data::Dumper::Terse = 1;
 @EXPORT = qw(
             AD_object_nonexist
             AD_test_object
+
             );
 
 
@@ -46,9 +47,11 @@ sub AD_object_nonexist {
                       attr => ['cn']
                             );
     #print Dumper(\$mesg);
+    #&Sophomorix::SophomorixSambaAD::AD_debug_logdump($mesg,2,(caller(0))[3]);
     my $count = $mesg->count;
     is ($count,0,"  * $type-Object $name does not exist");
 }
+
 
 
 
