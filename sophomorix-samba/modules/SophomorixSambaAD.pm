@@ -31,6 +31,7 @@ $Data::Dumper::Terse = 1;
             AD_user_move
             AD_user_kill
             AD_group_create
+            AD_group_kill
             AD_group_addmember
             AD_group_removemember
             AD_get_ou_tokened
@@ -130,6 +131,28 @@ sub AD_user_kill {
         return;
     } else {
         print "   * User $user nonexisting ($count results)\n";
+        return;
+    }
+}
+
+
+
+sub AD_group_kill {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $root_dse = $arg_ref->{root_dse};
+    my $group = $arg_ref->{group};
+    my $type = $arg_ref->{type};
+
+    &Sophomorix::SophomorixBase::print_title("Killing Group($type) $group:");
+    my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"group",$group);
+    if ($count > 0){
+        my $command="samba-tool group delete ". $group;
+        print "   # $command\n";
+        system($command);
+        return;
+    } else {
+        print "   * Group $group nonexisting ($count results)\n";
         return;
     }
 }
@@ -390,6 +413,10 @@ sub AD_get_name_tokened {
              $role eq "teacher" or
              $role eq "student"){
         # project: no token-prefix
+        unless ($name =~ m/^p\_/) { 
+            # add refix to projects: p_ 
+            $name="p_".$name;
+        }
         return $name;
     } else {
         return $name;
