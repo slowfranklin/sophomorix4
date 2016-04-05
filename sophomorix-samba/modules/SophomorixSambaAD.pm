@@ -220,7 +220,7 @@ sub AD_user_create {
         print "   Unix-id:            $wunsch_id\n";
     }
 
-    $ldap->add($dn_class,attr => ['objectclass' => ['top', 'container']]);
+    $ldap->add($dn_class,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     my $result = $ldap->add( $dn,
                    attr => [
                    'sAMAccountName' => $login_token,
@@ -275,9 +275,9 @@ sub AD_user_move {
     $ou_new=&AD_get_ou_tokened($ou_new);
 
     if ($role_new eq "student"){
-         $target_branch="CN=".$group_new.",CN=Students,OU=".$ou_new.",".$root_dse;
+         $target_branch="OU=".$group_new.",OU=Students,OU=".$ou_new.",".$root_dse;
     } elsif ($role_new eq "teacher"){
-         $target_branch="CN=".$group_new.",CN=Teachers,OU=".$ou_new.",".$root_dse;
+         $target_branch="OU=".$group_new.",OU=Teachers,OU=".$ou_new.",".$root_dse;
     }
 
     # fetch the dn (where the object really is)
@@ -404,7 +404,7 @@ sub AD_get_container {
     # first option: role(user) OR type(group)
     # second option: groupname (with token, i.e. pks-7a) 
     my ($role,$group) = @_;
-    my $group_strg="CN=".$group.",";
+    my $group_strg="OU=".$group.",";
     my $container="";
     # for user container
     if ($role eq "student"){
@@ -444,36 +444,46 @@ sub AD_ou_add {
     } else {
         $token=$token."-";
     }
+    if($Conf::log_level>=2){
+        print "Adding OU=$ou ($token) ...\n";
+    }
 
     my $dn="OU=".$ou.",".$root_dse;
-    # provide that a ou exists
+    # provide that a ou SCHOOLNAME exists
     my $result = $ldap->add($dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
-    # for user container
+
+    if($Conf::log_level>=2){
+        print "   * Adding sub ou's ...\n";
+    }
+    # ous for users
     my $student=$DevelConf::AD_student_cn.",".$dn;
-    $result = $ldap->add($student,attr => ['objectclass' => ['top', 'container']]);
+    $result = $ldap->add($student,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     my $teacher=$DevelConf::AD_teacher_cn.",".$dn;
-    $result = $ldap->add($teacher,attr => ['objectclass' => ['top', 'container']]);
+    $result = $ldap->add($teacher,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     my $workstation=$DevelConf::AD_workstation_cn.",".$dn;
-    $result = $ldap->add($workstation,attr => ['objectclass' => ['top', 'container']]);
+    $result = $ldap->add($workstation,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     my $examaccount=$DevelConf::AD_examaccount_cn.",".$dn;
-    $result = $ldap->add($examaccount,attr => ['objectclass' => ['top', 'container']]);
-    # group containers
+    $result = $ldap->add($examaccount,attr => ['objectclass' => ['top', 'organizationalUnit']]);
+    # group ou
     my $class=$DevelConf::AD_class_cn.",".$dn;
-    $result = $ldap->add($class,attr => ['objectclass' => ['top', 'container']]);
+    $result = $ldap->add($class,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     my $room=$DevelConf::AD_room_cn.",".$dn;
-    $result = $ldap->add($room,attr => ['objectclass' => ['top', 'container']]);
+    $result = $ldap->add($room,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     # other
     my $management=$DevelConf::AD_management_cn.",".$dn;
-    $result = $ldap->add($management,attr => ['objectclass' => ['top', 'container']]);
+    $result = $ldap->add($management,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     my $printer=$DevelConf::AD_printer_cn.",".$dn;
-    $result = $ldap->add($printer,attr => ['objectclass' => ['top', 'container']]);
+    $result = $ldap->add($printer,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     my $custom=$DevelConf::AD_custom_cn.",".$dn;
-    $result = $ldap->add($custom,attr => ['objectclass' => ['top', 'container']]);
- 
+    $result = $ldap->add($custom,attr => ['objectclass' => ['top', 'organizationalUnit']]);
+
     # Adding some groups
     # <token>teachers
     my $group=$token.$DevelConf::teacher;
     my $dn_group="CN=".$group.",".$DevelConf::AD_class_cn.",".$dn;
+    if($Conf::log_level>=2){
+        print "   * Adding group $group\n";
+    }
     $result = $ldap->add( $dn_group,
                          attr => [
                              'cn'   => $group,
@@ -486,6 +496,9 @@ sub AD_ou_add {
     # <token>students
     $group=$token.$DevelConf::student;
     $dn_group="CN=".$group.",".$DevelConf::AD_class_cn.",".$dn;
+    if($Conf::log_level>=2){
+        print "   * Adding group $group\n";
+    }
     $result = $ldap->add( $dn_group,
                          attr => [
                              'cn'   => $group,
@@ -498,6 +511,9 @@ sub AD_ou_add {
     # <token>examaccounts
     $group=$token.$DevelConf::examaccount;
     $dn_group="CN=".$group.",".$DevelConf::AD_room_cn.",".$dn;
+    if($Conf::log_level>=2){
+        print "   * Adding group $group\n";
+    }
     $result = $ldap->add( $dn_group,
                          attr => [
                              'cn'   => $group,
@@ -511,6 +527,9 @@ sub AD_ou_add {
     ## workstations sind in keiner Gruppe
     #$group=$token.$DevelConf::workstation;
     #$dn_group="CN=".$group.",".$DevelConf::AD_room_cn.",".$dn;
+    #if($Conf::log_level>=2){
+    #    print "   * Adding group $group\n";
+    #} 
     #$result = $ldap->add( $dn_group,
     #                     attr => [
     #                         'cn'   => $group,
@@ -524,15 +543,21 @@ sub AD_ou_add {
     ############################################################
     # OU=SOPHOMORIX
     my $sophomorix_dn=$DevelConf::AD_sophomorix_ou.",".$root_dse;
+    if($Conf::log_level>=2){
+        print "Adding $sophomorix_dn\n";
+    }
     $result = $ldap->add($sophomorix_dn,attr => ['objectclass' => ['top', 'organizationalUnit']]);
 
-    # Multigroups container
+    if($Conf::log_level>=2){
+        print "   * Adding sub ou's ...\n";
+    }
+    # Multigroups ou
     my $multigroup=$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
-    $result = $ldap->add($multigroup,attr => ['objectclass' => ['top', 'container']]);
+    $result = $ldap->add($multigroup,attr => ['objectclass' => ['top', 'organizationalUnit']]);
 
-    # Projects container
+    # Projects ou
     my $projects=$DevelConf::AD_project_cn.",".$sophomorix_dn;
-    $result = $ldap->add($projects,attr => ['objectclass' => ['top', 'container']]);
+    $result = $ldap->add($projects,attr => ['objectclass' => ['top', 'organizationalUnit']]);
 
     # students in Multigroups,OU=SOPHOMORIX
     my $sophomorix_dn_group="CN=multi-".$DevelConf::student.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
@@ -544,7 +569,9 @@ sub AD_ou_add {
                                                'group' ],
                          ]
                      );
-
+    if($Conf::log_level>=2){
+        print "   * Adding OU=SOPHOMOROX multi-groups ...\n";
+    }
     # teachers in Multigroups,OU=SOPHOMORIX
     $sophomorix_dn_group="CN=multi-".$DevelConf::teacher.",".$DevelConf::AD_multigroup_cn.",".$sophomorix_dn;
     $result = $ldap->add( $sophomorix_dn_group,
@@ -622,7 +649,7 @@ sub AD_object_move {
     print "   * Target: $target_branch\n";
 
     # create branch
-    my $result = $ldap->add($target_branch,attr => ['objectclass' => ['top', 'container']]);
+    my $result = $ldap->add($target_branch,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     &AD_debug_logdump($result,2,(caller(0))[3]);
     # move object
     $result = $ldap->moddn ( $dn,
@@ -648,7 +675,7 @@ sub AD_group_create {
 
     # calculate missing Attributes
     my $container=&AD_get_container($type,$group);
-    my $dn = "cn=".$group.",".$container."OU=".$ou.",".$root_dse;
+    my $dn = "CN=".$group.",".$container."OU=".$ou.",".$root_dse;
 
     my ($count,$dn_exist,$cn_exist)=&AD_object_search($ldap,$root_dse,"group",$group);
     if ($count==0){
