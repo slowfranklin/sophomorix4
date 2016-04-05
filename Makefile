@@ -237,6 +237,7 @@ install-developer:
 	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/sophomorix.add-1 $(TESTDATA)
 	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/sophomorix.move-1 $(TESTDATA)
 	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/sophomorix.kill-1 $(TESTDATA)
+	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/workstations-1 $(TESTDATA)
 # installing sources.list examples
 #	@install -d $(TOOLS)/apt/s-lists
 #	@install -oroot -groot --mode=0644 sophomorix-developer/tools/apt/s-lists/*sources.list $(TOOLS)/apt/s-lists
