@@ -759,7 +759,7 @@ sub AD_group_create {
                                  group => $token_students,
                                  addgroup => $group,
                                });
-            # add <token>-students to multi-students
+            # add group <token>-students to multi-students
             &AD_group_addmember({ldap => $ldap,
                                  root_dse => $root_dse, 
                                  group => "multi-".$DevelConf::student,
@@ -774,10 +774,10 @@ sub AD_group_create {
                              group => $token_examaccounts,
                              addgroup => $group,
                            });
-        # add <token>-students to students
+        # add group <token>-examaccounts to multi-examaccounts
         &AD_group_addmember({ldap => $ldap,
                              root_dse => $root_dse, 
-                             group => $DevelConf::examaccount,
+                             group => "multi-".$DevelConf::examaccount,
                              addgroup => $token_examaccounts,
                            });
     }

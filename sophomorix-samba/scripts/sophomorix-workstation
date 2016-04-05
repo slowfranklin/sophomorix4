@@ -540,7 +540,6 @@ if($Conf::log_level>=2){
 # calculate according to file
 $ou="BSZLEO";
 $school_token="bsz";
-$role="examaccount";
 
 
 if ($no_sync==0){ # $no_sync==0 -> SYNC
@@ -558,6 +557,7 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
     &print_title("Adding ExamAccounts:");
     $user_count=1;
     foreach my $exam_account (@adding_examaccount){
+        my $role="examaccount";
         my ($room,$user,@rest)=split(/;/,$exam_account);
         print "   * Adding ExamAccount $user_count: $user in group $room\n";
         $plain_password=&get_plain_password($role,@passwort_zeichen);
