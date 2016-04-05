@@ -39,6 +39,7 @@ $Data::Dumper::Terse = 1;
             get_forbidden_logins
             AD_ou_add
             AD_object_search
+            AD_workstation_fetch
             AD_object_move
             AD_debug_logdump
             );
@@ -661,6 +662,19 @@ sub AD_object_search {
     } else {
         return (0,"","");
     }
+}
+
+sub AD_workstation_fetch {
+    my %domcomputers_system = ();
+    my %rooms_system = ();
+    my %examaccounts_system = ();
+
+    print "\nWARNING: not fetching workstation data from AD\n\n";
+
+    return(\%domcomputers_system, 
+           \%rooms_system, 
+           \%examaccounts_system, 
+          );
 }
 
 

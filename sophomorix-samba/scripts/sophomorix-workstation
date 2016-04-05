@@ -1,9 +1,8 @@
 #!/usr/bin/perl -w
-# $Id$
 # This script (sophomorix-workstation) is maintained by Rüdiger Beck
 # It is Free Software (License GPLv3)
 # If you find errors, contact the author
-# jeffbeck@web.de  or  jeffbeck@gmx.de
+# jeffbeck@web.de  or  jeffbeck@linuxmuster.net
 
 # valid pxe options
 # pxe==0 -> no pxe, accounts nach field 10
@@ -75,35 +74,49 @@ use strict;
 use Getopt::Long;
 Getopt::Long::Configure ("bundling");
 #use Schedule::at;
-use String::Approx 'amatch';
+#use String::Approx 'amatch';
 use Sophomorix::SophomorixConfig;
-use Sophomorix::SophomorixBase;
+#use Sophomorix::SophomorixBase;
 use Time::Local;
 use Time::localtime;
 use Term::ANSIColor qw(:constants); # farbiger Text RED, BLUE, ...
 # nach jedem Printbefehl wieder auf Standardfarbe zurücksetzen
 $Term::ANSIColor::AUTORESET = 1;
-use IMAP::Admin;
-use DBI;
+#use IMAP::Admin;
+#use DBI;
 use Net::LDAP;
 use Net::MAC;
 use Date::Calc qw(check_date);
-use Sophomorix::SophomorixPgLdap qw(show_modulename
-                                    db_connect
-                                    db_disconnect
-                                    check_connections
-                                    search_user
-                                    fetchdata_from_account
-                                    forbidden_login_hash
-                                    update_user_db_entry
-                                    date_pg2perl
-                                    user_deaktivieren
-                                    user_reaktivieren     
-                                    check_sophomorix_user
-                                    set_sophomorix_passwd
-                                    fetchstudents_from_adminclass
-                                    db_connect
-                                   );
+
+use Sophomorix::SophomorixBase qw(
+                                 print_line
+                                 print_title
+                                 time_stamp_AD
+                                 time_stamp_file
+                                 unlock_sophomorix
+                                 lock_sophomorix
+                                 log_script_start
+                                 log_script_end
+                                 log_script_exit
+                                 backup_amku_file
+                                 get_passwd_charlist
+                                 get_plain_password
+                                 check_options
+                                 );
+use Sophomorix::SophomorixSambaAD qw(
+                                 AD_ou_add
+                                 AD_bind_admin
+                                 AD_unbind_admin
+                                 AD_user_create
+                                 AD_group_create
+                                 AD_group_addmember
+                                 AD_get_ou_tokened
+                                 AD_get_name_tokened
+                                 AD_workstation_fetch
+                                 get_forbidden_logins
+                                    );
+
+
 
 my @arguments = @ARGV;
 
@@ -116,9 +129,9 @@ chomp($today);
 $Conf::log_level=1;
 my $help=0;
 my $info=0;
+my $no_sync=0;
+
 my $print=0;
-my $full_check=0;
-my $sync_accounts=0;
 my $pass="12345678";
 my $password="";
 
@@ -159,14 +172,14 @@ my %italc_rooms=();
 my @italc_rooms=();
 
 # classrooms
-my $classroom_conf="/etc/linuxmuster/classrooms";
 my %class_rooms=();
 my @class_rooms=();
 
 my $set_computer_passwords=0;
 
-# ??? develconf ???
-my $workstation_conf="/etc/linuxmuster/workstations";
+my $host_workstation=$DevelConf::path_conf_host."/workstations";
+my $host_classrooms=$DevelConf::path_conf_host."/classrooms";
+
 
 my %host_seen=();
 my %mac_seen=();
@@ -187,8 +200,7 @@ my $testopt=GetOptions(
        "help|h" => \$help,
        "i|info" => \$info,
        "p|print" => \$print,
-       "full-check" => \$full_check,
-       "sync-accounts" => \$sync_accounts,
+       "no-sync" => \$no_sync,
        "set-computer-passwords" => \$set_computer_passwords,
        "password=s" => \$password,
        "italc-dir=s" => \$italc_dir,
@@ -197,7 +209,9 @@ my $testopt=GetOptions(
 
 # Prüfen, ob Optionen erkannt wurden
 &check_options($testopt);
-&check_connections();
+
+#&check_connections();
+my ($ldap,$root_dse) = &AD_bind_admin();
 
 # ===========================================================================
 # --help
@@ -209,7 +223,9 @@ if ($help==1) {
    # Befehlbeschreibung
    print('
 sophomorix-workstation adds the DomainComputer and Examaccount 
-  from /etc/linuxmuster/workstation
+  from ');
+   print "$host_workstation";
+   print('
 
 Options:
   -h   /  --help
@@ -218,9 +234,6 @@ Options:
   -vv  /  --verbose --verbose
 
 Managing accounts:
-  --full-check              (check ALL fields of workstation file)
-  --sync-accounts           (add, delete accounts as necessary, 
-                             check only account data: hostname,room)
   --set-computer-passwords  (set computer passwords to 12345678)
   --password password       (use password instead of 12345678)
 
@@ -236,22 +249,18 @@ Please see the sophomorix-workstation(8) man pages for full documentation
 }
 
 
-if ($full_check==1 and $sync_accounts==1){
-    print "\nOptions --full-check and --sync-accounts ",
-          "cannot be used together\n\n";
-    exit 0;
-}
-
-
-
 
 
 # ===========================================================================
 # fetching data
 # ===========================================================================
-&titel("Asking the system for exam and computer accounts ...");
+&print_title("Asking the system for exam and computer accounts ...");
 
-my ($ref_domcomputers,$ref_rooms,$ref_examaccounts) = &get_sys_workstations();
+#my ($ref_domcomputers,$ref_rooms,$ref_examaccounts) = &get_sys_workstations();
+my ($ref_domcomputers,$ref_rooms,$ref_examaccounts) = &AD_workstation_fetch();
+
+
+
 
 # system
 my %domcomputers_system = %$ref_domcomputers;
@@ -265,12 +274,14 @@ my %hosts_file=();
 
 
 
+
+
 # ===========================================================================
 # --print     (does not modify system)
 # ===========================================================================
 if ($print==1){
-    if (not -e ${workstation_conf}){
-        print "\n$workstation_conf does not exist\n\n";
+    if (not -e ${host_workstation}){
+        print "\n$host_workstation does not exist\n\n";
         exit 1;
     }
 
@@ -329,7 +340,7 @@ if ($print==1){
           '      \hline ',"\n",
           '   \endlastfoot',"\n";
 
-    open(IN, "<${workstation_conf}");
+    open(IN, "<${host_workstation}");
     while(<IN>){
         chomp();
         my $line=$_;
@@ -430,16 +441,15 @@ if ($info==1){
 
 
 
-
 # ===========================================================================
 # checking data
 # ===========================================================================
-print "Checking $workstation_conf for syntax errors ...\n";
-if (not -e ${workstation_conf}){
-    print "\n$workstation_conf does not exist\n\n";
+print "Checking $host_workstation for syntax errors ...\n";
+if (not -e ${host_workstation}){
+    print "\n$host_workstation does not exist\n\n";
     exit 1;
 }
-open(WORKSTATION,"<${workstation_conf}");
+open(WORKSTATION,"<${host_workstation}");
 while(<WORKSTATION>){
     &analyze_line($_);
 }
@@ -450,7 +460,10 @@ close(WORKSTATION);
 #return 0;
 # systax ERROR -> 1
 
-print "* No syntax errors in $workstation_conf!\n";
+print "* No syntax errors in $host_workstation!\n";
+
+
+
 
 # ===========================================================================
 # What will be done
@@ -474,42 +487,26 @@ while (my ($computer,$room) = each %domcomputers_system){
 
 
 
-if ($full_check==1 and $sync_accounts==0){
-    print "\nExamaccounts that must be killed:\n";
-    print "------------------------------------",
-          "------------------------------------\n"; 
+if($Conf::log_level>=2){
+    # show info about what will be done
+    &print_title("Examaccounts that must be killed:");
     foreach my $ws (@killing_examaccount){
         print "KILL: $ws\n";
     }
-
-    print "\nExamaccounts that must be added:\n";
-    print "------------------------------------",
-          "------------------------------------\n";
+    &print_title("Examaccounts that must be added:");
     foreach my $ws (@adding_examaccount){
         print "ADD: $ws\n";
     }
-
-    print "\nComputers that must be killed:\n";
-    print "------------------------------------",
-          "------------------------------------\n";
+    &print_title("Workstations that must be killed:");
     foreach my $ws (@killing_computer){
         print "KILL: $ws\n";
     }
-
-    print "\nComputers that must be added:\n";
-    print "------------------------------------",
-          "------------------------------------\n";
+    &print_title("Workstations that must be added:");
     foreach my $ws (@adding_computer){
         print "ADD: $ws\n";
     }
-
     print "\nCheck finished. Nothing changed!\n";
-    exit 0;
-} elsif($sync_accounts==1) {
-    print "\n Only checking hostname and room\n",
-          "   Use option --full-check to check all fields!\n";
-} else {
-}
+} 
 
 
 # ===========================================================================
@@ -517,51 +514,42 @@ if ($full_check==1 and $sync_accounts==0){
 # ===========================================================================
 
 &log_script_start(@arguments);
-&get_italcrooms();
+#&get_italcrooms();
 
 
 # ===========================================================================
-# --sync-accounts # synchronizing workstation/computer accounts to the system 
+# Synchronizing ExamAccounts and Workstations
 # ===========================================================================
-if ($sync_accounts==1){
-    print "\nKilling examaccounts:\n";
-    print "------------------------------------",
-          "------------------------------------\n";
+
+if ($no_sync==0){ # $no_sync==0 -> SYNC
+    &print_title("Killing ExamAccounts:");
     foreach my $exam_account (@killing_examaccount){
-        system("/usr/sbin/sophomorix-kill --killuser $exam_account");
+        print "   * Killing ExamAccount $exam_account ...\n";
+        #system("/usr/sbin/sophomorix-kill --killuser $exam_account");
     }
-
-    print "\nAdding examaccounts:\n";
-    print "------------------------------------",
-          "------------------------------------\n";
+    &print_title("Adding ExamAccounts:");
     foreach my $exam_account (@adding_examaccount){
         my ($g,$u,@rest)=split(/;/,$exam_account);
-        print "Adding $u in group $g\n";
-        system("/usr/sbin/sophomorix-useradd --examaccount $u --unix-group $g");
-        system("/usr/sbin/sophomorix-passwd -u $u --random --hide");
-        system("/usr/sbin/sophomorix-quota -u $u");
+        print "   * Adding $u in group $g\n";
+        #system("/usr/sbin/sophomorix-useradd --examaccount $u --unix-group $g");
+        #system("/usr/sbin/sophomorix-passwd -u $u --random --hide");
+        #system("/usr/sbin/sophomorix-quota -u $u");
     }
-
-    print "\nKilling computers:\n";
-    print "------------------------------------",
-          "------------------------------------\n";
+    &print_title("Killing Workstations:");
     foreach my $computer (@killing_computer){
-        system("/usr/sbin/sophomorix-kill --killuser $computer");
+        print "   * Killing Workstation $computer ...\n";
+        #system("/usr/sbin/sophomorix-kill --killuser $computer");
     }
-
-    print "\nAdding computers:\n";
-    print "------------------------------------",
-          "------------------------------------\n";
+    &print_title("Adding Workstations:");
     foreach my $computer (@adding_computer){
         my ($g,$u,@rest)=split(/;/,$computer);
         my $u_comp=$u."\$";
-        print "Adding computer $u_comp\n";
-        system("/usr/sbin/sophomorix-useradd --computer $u_comp");
-        system("/usr/sbin/sophomorix-passwd --force -u $u_comp --pass $pass");
+        print "   * Adding workstation $u_comp\n";
+        #system("/usr/sbin/sophomorix-useradd --computer $u_comp");
+        #system("/usr/sbin/sophomorix-passwd --force -u $u_comp --pass $pass");
     }
     &log_script_exit("",0,1,0,@arguments);
-} 
-
+}
 
 
 # ===========================================================================
@@ -569,9 +557,12 @@ if ($sync_accounts==1){
 # ===========================================================================
 if ($set_computer_passwords==1){
     print "Setting password for all Computer accounts:\n";
+#    my ($ref_domcomputers,
+#        $ref_rooms,
+#        $ref_examaccounts) = &get_sys_workstations();
     my ($ref_domcomputers,
         $ref_rooms,
-        $ref_examaccounts) = &get_sys_workstations();
+        $ref_examaccounts) = &AD_workstation_fetch();
     # system
     my %domcomputers_system = %$ref_domcomputers;
     my $count=1;
@@ -791,7 +782,6 @@ exit 0;
 
 
 
-
 # ===========================================================================
 # subs
 # ===========================================================================
@@ -928,9 +918,6 @@ sub check_host {
 
 sub check_hwk {
     my ($hwk) = @_;
-    if ($sync_accounts==1){
-        return $hwk;
-    }
     if($Conf::log_level>=3){
         print "   HWK:     $hwk\n";
     }
@@ -948,9 +935,6 @@ sub check_hwk {
 
 sub check_mac {
     my ($old_mac) = @_;
-    if ($sync_accounts==1){
-        return $old_mac;
-    }
     if($Conf::log_level>=3){
        print "   MAC:     $old_mac\n";
     }
@@ -984,9 +968,6 @@ sub check_mac {
 
 sub check_ip {
     my ($ip) = @_;
-    if ($sync_accounts==1){
-        return $ip;
-    }
     if($Conf::log_level>=3){
         print "   IP:      $ip";
     }
@@ -1028,9 +1009,6 @@ sub check_ip {
 
 sub check_netmask {
     my ($netmask) = @_;
-    if ($sync_accounts==1){
-        return $netmask;
-    }
     if($Conf::log_level>=3){
         print "   NETMASK: $netmask";
     }
@@ -1079,9 +1057,6 @@ sub check_account_flag {
 
 sub check_pxe {
     my ($pxe) = @_;
-    if ($sync_accounts==1){
-        return $pxe;
-    }
     if($Conf::log_level>=3){
         print "   PXE:     $pxe\n";
     }
@@ -1104,9 +1079,6 @@ sub check_option {
         $option="";
         # ??? warning ???
     }
-    if ($sync_accounts==1){
-        return $option;
-    }
     if($Conf::log_level>=3){
         print "   OPTION:     $option\n";
     }
@@ -1115,6 +1087,9 @@ sub check_option {
 
 
 
+
+
+# old
 sub get_sys_workstations {
     my %domcomputers_system = ();
     my %rooms_system = ();
@@ -1181,7 +1156,10 @@ sub get_sys_workstations {
 
 
 
-    &db_disconnect($dbh);
+    # &db_disconnect($dbh);
+    &AD_unbind_admin($ldap);
+
+
     # returns some Hashes, as a list
     # 1:  workstation - room
     # 2:  room - workstation
@@ -1222,14 +1200,14 @@ sub push_kill_computer {
 
 
 sub get_classrooms {
-    print "* Fetching classrooms from $classroom_conf:\n";
-    if (not -e $classroom_conf){
-        print "   * File $classroom_conf does not exist!\n";
+    &print_title("Fetching classrooms from $host_classrooms:");
+    if (not -e $host_classrooms){
+        print "   * File $host_classrooms does not exist!\n";
         return;
     } else {
-        print "   * File $classroom_conf exists\n";
+        print "   * File $host_classrooms exists\n";
     }
-    open(CLASSROOM, "<$classroom_conf");
+    open(CLASSROOM, "<$host_classrooms");
     while(<CLASSROOM>){
         chomp();
         s/ //g;
