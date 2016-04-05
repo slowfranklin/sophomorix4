@@ -1,0 +1,1333 @@
+#!/usr/bin/perl -w
+# $Id$
+# This script (sophomorix-workstation) is maintained by Rüdiger Beck
+# It is Free Software (License GPLv3)
+# If you find errors, contact the author
+# jeffbeck@web.de  or  jeffbeck@gmx.de
+
+# valid pxe options
+# pxe==0 -> no pxe, accounts nach field 10
+# pxe==alle anderen -> pxe, accounts nach field 10    (option ml)
+#
+
+# field 6, old netmask option, not used anymore
+# netztsegment: string: [a-z0-9-.]
+
+
+# field 7, first bpbatch option
+# linbo server ip:  ip server, falls ip, normale ip falls integer
+
+# field 8:
+# unused, fuer linuxmuster.net reserviert [0-9a-zA-Z_-.,]
+
+# field 9:
+# permanently unused. sysadmin can use it [0-9a-zA-Z_-.,]
+# 
+
+# field 10, last bpbatch option: new: account_flag
+# 0         : device ohne account, mit firewall
+# 1         : device ohne account, ohne firewall
+# 2-6   
+# 
+# 
+
+# sophomorix-workstations macht
+# - kein syntaxcheck
+# - obsolete accounts und raeume entfernen
+# - neue accounts und raume anlegen
+# - Aufruf: sophomorix-workstations
+# - Rueckgabewerte:
+# - 0: alles OK
+# - 1: Fehler Allgemein. import_workstations bricht ab
+
+
+
+## ???? additional:
+# remove workstation homes that have no matching account
+
+
+## --print
+# add this to doku and man page:
+# 1. Die Ergebnisdatei entsteht in /etc/linuxmuster/
+
+# 2. Formatieren Sie /etc/linuxmuster/workstations mit Kommentaren:
+#      # Das wird eine Überschrift     (1 #-Zeichen)
+#      ## Das bleibt unberücksichtigt  (2 #-Zeichen) 
+
+# Todo für ML 6.0
+# oneside/twoside konfigurierbar
+# Unter 1 aufgeführte Variablen selber ermitteln
+# Text in lang-Datei auslagern
+
+# show italcrooms/teacherhosts and classrooms at --print
+
+
+
+# ===========================================================================
+# Bibliotheken
+# ===========================================================================
+
+# uncomment to suppress warnings about longer than FFFFFFFF hex values as MAC
+#no warnings 'portable';  
+#no warnings 'overflow';
+
+use strict;
+use Getopt::Long;
+Getopt::Long::Configure ("bundling");
+#use Schedule::at;
+use String::Approx 'amatch';
+use Sophomorix::SophomorixConfig;
+use Sophomorix::SophomorixBase;
+use Time::Local;
+use Time::localtime;
+use Term::ANSIColor qw(:constants); # farbiger Text RED, BLUE, ...
+# nach jedem Printbefehl wieder auf Standardfarbe zurücksetzen
+$Term::ANSIColor::AUTORESET = 1;
+use IMAP::Admin;
+use DBI;
+use Net::LDAP;
+use Net::MAC;
+use Date::Calc qw(check_date);
+use Sophomorix::SophomorixPgLdap qw(show_modulename
+                                    db_connect
+                                    db_disconnect
+                                    check_connections
+                                    search_user
+                                    fetchdata_from_account
+                                    forbidden_login_hash
+                                    update_user_db_entry
+                                    date_pg2perl
+                                    user_deaktivieren
+                                    user_reaktivieren     
+                                    check_sophomorix_user
+                                    set_sophomorix_passwd
+                                    fetchstudents_from_adminclass
+                                    db_connect
+                                   );
+
+my @arguments = @ARGV;
+
+my $today=`date +%d.%m.%Y`;
+chomp($today);
+
+# ===========================================================================
+# Optionen verarbeiten
+# ==========================================================================
+$Conf::log_level=1;
+my $help=0;
+my $info=0;
+my $print=0;
+my $full_check=0;
+my $sync_accounts=0;
+my $pass="12345678";
+my $password="";
+
+# where data from workstation file is saved
+my %domcomputers_file=();
+my %rooms_file=();
+my %examaccounts_file=();
+
+# italc
+
+my $italc_owner="root";
+
+my $italc_dir="";
+
+my $italc_conf_dir="/etc/sophomorix/italc";
+my $italc_conf=$italc_conf_dir."/italcrooms.conf";
+my $italc_key_dir=$italc_conf_dir."/private";
+my $italc_key_dir_admin=$italc_key_dir."/admin";
+my $italc_key_dir_supporter=$italc_key_dir."/supporter";
+my $italc_key_dir_teacher=$italc_key_dir."/teacher";
+
+# italc
+my $w_coord=169;
+my $h_coord=126;
+my $x_coord="xxxxxxxxxxxx";
+my $y_coord="yyyyyyyyyyyy";
+my @x_coord=(0,171,342,513,0,171,342,513,
+             0,171,342,513,0,171,342,513,
+             0,171,342,513,0,171,342,513,
+             0,171,342,513,0,171,342,513,
+             0,171,342,513,0,171,342,513); # max 40 hosts
+my @y_coord=(0,0,0,0,128,128,128,128,
+             256,256,256,256,384,384,384,384,
+             512,512,512,512,640,640,640,640,
+             768,768,768,768,896,896,896,896,
+             1024,1024,1024,1024,1152,1152,1152,1152); # max 40 hosts
+my %italc_rooms=();
+my @italc_rooms=();
+
+# classrooms
+my $classroom_conf="/etc/linuxmuster/classrooms";
+my %class_rooms=();
+my @class_rooms=();
+
+my $set_computer_passwords=0;
+
+# ??? develconf ???
+my $workstation_conf="/etc/linuxmuster/workstations";
+
+my %host_seen=();
+my %mac_seen=();
+my %ip_seen=();
+
+my @adding_examaccount=();
+my @killing_examaccount=();
+my @adding_computer=();
+my @killing_computer=();
+
+my %pxe = qw(ml ok
+            );
+
+
+# Parsen der Optionen
+my $testopt=GetOptions(
+       "verbose|v+" => \$Conf::log_level,
+       "help|h" => \$help,
+       "i|info" => \$info,
+       "p|print" => \$print,
+       "full-check" => \$full_check,
+       "sync-accounts" => \$sync_accounts,
+       "set-computer-passwords" => \$set_computer_passwords,
+       "password=s" => \$password,
+       "italc-dir=s" => \$italc_dir,
+          );
+
+
+# Prüfen, ob Optionen erkannt wurden
+&check_options($testopt);
+&check_connections();
+
+# ===========================================================================
+# --help
+# ===========================================================================
+if ($help==1) {
+   # Scriptname ermitteln
+   my @list = split(/\//,$0);
+   my $scriptname = pop @list;
+   # Befehlbeschreibung
+   print('
+sophomorix-workstation adds the DomainComputer and Examaccount 
+  from /etc/linuxmuster/workstation
+
+Options:
+  -h   /  --help
+  -i   /  --info
+  -v   /  --verbose
+  -vv  /  --verbose --verbose
+
+Managing accounts:
+  --full-check              (check ALL fields of workstation file)
+  --sync-accounts           (add, delete accounts as necessary, 
+                             check only account data: hostname,room)
+  --set-computer-passwords  (set computer passwords to 12345678)
+  --password password       (use password instead of 12345678)
+
+Managing italc:
+  --italc-dir /path/to/dir  (create italc files in /path/to/dir:
+                             italcroom/globalconfig.xml)
+
+
+Please see the sophomorix-workstation(8) man pages for full documentation
+');
+   print "\n";
+   exit 0;
+}
+
+
+if ($full_check==1 and $sync_accounts==1){
+    print "\nOptions --full-check and --sync-accounts ",
+          "cannot be used together\n\n";
+    exit 0;
+}
+
+
+
+
+
+# ===========================================================================
+# fetching data
+# ===========================================================================
+&titel("Asking the system for exam and computer accounts ...");
+
+my ($ref_domcomputers,$ref_rooms,$ref_examaccounts) = &get_sys_workstations();
+
+# system
+my %domcomputers_system = %$ref_domcomputers;
+my %rooms_system = %$ref_rooms;
+my %examaccounts_system = %$ref_examaccounts; 
+
+# /etc/linuxmuster/workstation
+my %hosts_file=();
+
+&get_classrooms();
+
+
+
+# ===========================================================================
+# --print     (does not modify system)
+# ===========================================================================
+if ($print==1){
+    if (not -e ${workstation_conf}){
+        print "\n$workstation_conf does not exist\n\n";
+        exit 1;
+    }
+
+    my $admins="";
+    if (defined $Conf::admins_print){
+        if ($Conf::admins_print ne ""){
+	    $admins=$Conf::admins_print;
+        }
+    }
+
+    my $out_base="/etc/linuxmuster/workstations_formatted";
+    my $out_dir="/etc/linuxmuster";
+    my $out_file="$out_base".".tex";
+    my $out_file_dvi="$out_base".".dvi";
+    my @line=();
+    my $host=0; # counter for the hosts
+    # draw a horizontal line in the table after this many lines of text
+    my $hor_lines=5; 
+    my $line_count=1;
+
+    print "Writing to $out_file";
+    open(TEX, ">$out_file");
+
+    print TEX '\documentclass[a4paper, twoside]{article}',"\n",
+          '\usepackage{longtable}',"\n",
+          '\usepackage{ngerman}',"\n",
+          '\usepackage{layout}',"\n",
+          '\usepackage{fancyhdr}',"\n",
+          '\usepackage{lastpage}',"\n",
+          '\setlength{\oddsidemargin}{-5mm}',"\n",
+          '\setlength{\evensidemargin}{-16.8mm}',"\n",
+          '\setlength{\textwidth}{180mm}',"\n",
+          '\setlength{\textheight}{255mm}',"\n",
+          '\setlength{\topmargin}{-20mm}',"\n",
+          '\pagestyle{fancy}',"\n",
+          "\\lhead{$Conf::schul_name}","\n",
+          "\\rhead{Seite \\thepage/\\pageref{LastPage}}","\n",
+          "\\cfoot{$admins}","\n",
+          '\pagestyle{fancy}',"\n",
+          '\renewcommand{\baselinestretch}{1.2}',"\n\n",
+
+          '\begin{document}',"\n\n",
+          # show layout of page
+          # '\layout',"\n\n",
+          '\begin{longtable}{|r|c|c|c|c|c|} ',"\n",
+          '   \caption*{\large \bfseries Rechner und ',
+          '             Drucker ',
+          "($Conf::schul_name)",
+          '}\\\\ \\hline',"\n",
+          '   \bfseries Nr. & \bfseries DNS-Name & \bfseries Raum & ',
+          '      \bfseries HW-Klasse & \bfseries IP-Adresse & ',
+          '      \bfseries MAC-Adresse \\\\ \hline \hline',"\n",
+          '   \endhead',"\n",
+          '      \hline \multicolumn{6}{r}{Fortsetzung auf der n\"{a}chsten Seite ...}',"\n",
+          '   \endfoot',"\n",
+          '      \hline ',"\n",
+          '   \endlastfoot',"\n";
+
+    open(IN, "<${workstation_conf}");
+    while(<IN>){
+        chomp();
+        my $line=$_;
+        if ($line eq "") {
+	    next;
+        } elsif(/^\#\#/){
+	    print "Comment $line \n";
+        } elsif (/^\#/){
+	    print "Header $line \n";
+            s/^\#//g;
+            if ($line eq "") {
+	        next;
+            }
+            $line=&latexize_string($line);
+            print TEX "\\hline \\hline  ",
+                 "\\multicolumn{6}{|l|}{\\rule{0mm}{4mm}\\bfseries $line}",
+                 " \\\\ \\hline ","\n";
+        } else {
+            @line = split(/;/);
+            $host++;
+            $host=&latexize_string($host);
+            $line[1]=&latexize_string($line[1]);
+            $line[2]=&latexize_string($line[2]);
+            $line[3]=&latexize_string($line[3]);
+            $line[4]=&latexize_string($line[4]);
+            $line="$host & $line[1] & $line[0] & $line[2]".
+                  " & $line[4] & \\texttt{$line[3]} \\\\ ";
+            print TEX $line; 
+            # Horizontal lines
+             if ($line_count==$hor_lines){
+                 print TEX ' \hline',"\n";
+                 $line_count=0;
+             } else {
+                 print TEX "\n";
+             }
+             $line_count++;
+        }
+    }
+    close(IN);
+
+    print TEX '\end{longtable}',"\n";
+    print TEX "\\textbf{$host Rechner/Drucker sind im p\"{a}dagogischen ",
+              "Netz ($Conf::schul_name).} \n \n";
+    print TEX "Ausdruck: \\today .",
+              "\n \n",
+              "\\textbf{Die Netzwerkadministratoren:}",
+              "\n",
+              "$admins","\n";
+    print TEX "\n",'\end{document}',"\n";
+    close(TEX);
+
+    # latex
+    system("cd $out_dir; latex $out_file");
+    system("cd $out_dir; latex $out_file");
+    system("cd $out_dir; dvips $out_file_dvi");
+    exit;
+}
+
+
+
+# ===========================================================================
+# --info (does not modify system)
+# ===========================================================================
+if ($info==1){
+    # fetch and sort rooms
+    my @rooms=();
+    while (my ($room,$v) = each %rooms_system){
+        push @rooms, $room;
+    }
+    @rooms = sort @rooms;
+
+    foreach my $room (@rooms){
+        my $classroom="";
+        my $italcroom="";
+        if (exists $class_rooms{$room}){
+            $classroom="(CLASSROOM) ";
+        }
+        if (exists $italc_rooms{$room}){
+            $italcroom="(ITALC ROOM) ";
+        }
+	print "ROOM: $room ${classroom}${italcroom}\n";
+        # fetch and sort examaccounts
+        my @examaccounts=();
+        while (my ($account,$room_entry) = each %examaccounts_system){
+            #print $account , " ", $roomentry, "\n";
+            if ($room_entry eq $room){
+                push @examaccounts,$account;
+            }
+        }
+        @examaccounts = sort @examaccounts;
+        foreach my $account (@examaccounts){
+            print "    HOST: $account\n";
+        }
+    }
+    exit 0;
+}
+
+
+
+
+
+# ===========================================================================
+# checking data
+# ===========================================================================
+print "Checking $workstation_conf for syntax errors ...\n";
+if (not -e ${workstation_conf}){
+    print "\n$workstation_conf does not exist\n\n";
+    exit 1;
+}
+open(WORKSTATION,"<${workstation_conf}");
+while(<WORKSTATION>){
+    &analyze_line($_);
+}
+
+close(WORKSTATION);
+
+# syntax OK: -> 0
+#return 0;
+# systax ERROR -> 1
+
+print "* No syntax errors in $workstation_conf!\n";
+
+# ===========================================================================
+# What will be done
+# ===========================================================================
+
+# examaccounts to kill
+while (my ($examaccount,$room) = each %examaccounts_system){
+    if (not exists $hosts_file{$examaccount}){
+        # host is not in file anymore
+        &push_kill_examaccount($examaccount);
+    }
+}
+
+# computers to kill
+while (my ($computer,$room) = each %domcomputers_system){
+    if (not exists $hosts_file{$computer}){
+        # host is not in file anymore
+        &push_kill_computer($computer);
+    }
+}
+
+
+
+if ($full_check==1 and $sync_accounts==0){
+    print "\nExamaccounts that must be killed:\n";
+    print "------------------------------------",
+          "------------------------------------\n"; 
+    foreach my $ws (@killing_examaccount){
+        print "KILL: $ws\n";
+    }
+
+    print "\nExamaccounts that must be added:\n";
+    print "------------------------------------",
+          "------------------------------------\n";
+    foreach my $ws (@adding_examaccount){
+        print "ADD: $ws\n";
+    }
+
+    print "\nComputers that must be killed:\n";
+    print "------------------------------------",
+          "------------------------------------\n";
+    foreach my $ws (@killing_computer){
+        print "KILL: $ws\n";
+    }
+
+    print "\nComputers that must be added:\n";
+    print "------------------------------------",
+          "------------------------------------\n";
+    foreach my $ws (@adding_computer){
+        print "ADD: $ws\n";
+    }
+
+    print "\nCheck finished. Nothing changed!\n";
+    exit 0;
+} elsif($sync_accounts==1) {
+    print "\n Only checking hostname and room\n",
+          "   Use option --full-check to check all fields!\n";
+} else {
+}
+
+
+# ===========================================================================
+# Modifying System
+# ===========================================================================
+
+&log_script_start(@arguments);
+&get_italcrooms();
+
+
+# ===========================================================================
+# --sync-accounts # synchronizing workstation/computer accounts to the system 
+# ===========================================================================
+if ($sync_accounts==1){
+    print "\nKilling examaccounts:\n";
+    print "------------------------------------",
+          "------------------------------------\n";
+    foreach my $exam_account (@killing_examaccount){
+        system("/usr/sbin/sophomorix-kill --killuser $exam_account");
+    }
+
+    print "\nAdding examaccounts:\n";
+    print "------------------------------------",
+          "------------------------------------\n";
+    foreach my $exam_account (@adding_examaccount){
+        my ($g,$u,@rest)=split(/;/,$exam_account);
+        print "Adding $u in group $g\n";
+        system("/usr/sbin/sophomorix-useradd --examaccount $u --unix-group $g");
+        system("/usr/sbin/sophomorix-passwd -u $u --random --hide");
+        system("/usr/sbin/sophomorix-quota -u $u");
+    }
+
+    print "\nKilling computers:\n";
+    print "------------------------------------",
+          "------------------------------------\n";
+    foreach my $computer (@killing_computer){
+        system("/usr/sbin/sophomorix-kill --killuser $computer");
+    }
+
+    print "\nAdding computers:\n";
+    print "------------------------------------",
+          "------------------------------------\n";
+    foreach my $computer (@adding_computer){
+        my ($g,$u,@rest)=split(/;/,$computer);
+        my $u_comp=$u."\$";
+        print "Adding computer $u_comp\n";
+        system("/usr/sbin/sophomorix-useradd --computer $u_comp");
+        system("/usr/sbin/sophomorix-passwd --force -u $u_comp --pass $pass");
+    }
+    &log_script_exit("",0,1,0,@arguments);
+} 
+
+
+
+# ===========================================================================
+# --set-computer-passwords (setting computer passwords)
+# ===========================================================================
+if ($set_computer_passwords==1){
+    print "Setting password for all Computer accounts:\n";
+    my ($ref_domcomputers,
+        $ref_rooms,
+        $ref_examaccounts) = &get_sys_workstations();
+    # system
+    my %domcomputers_system = %$ref_domcomputers;
+    my $count=1;
+    while (my ($comp,$v) = each %domcomputers_system){
+        my $pw;
+        if ($password ne ""){
+            # password by option
+            $pw=$password;
+        } else {
+            # default password
+            $pw=$pass;
+        }
+        print "\n*** $count: $comp  --> $pw\n";
+        system("/usr/sbin/sophomorix-passwd --force -u $comp --pass $pw");
+        $count++;
+    }
+    &log_script_exit("",0,1,0,@arguments);
+}
+
+
+
+# ===========================================================================
+# --italc-dir  (create config files for italc)
+# ===========================================================================
+if ($italc_dir ne ""){
+    print "Creating italc files in $italc_dir\n";
+    system("mkdir -p $italc_dir");
+    system("chown $italc_owner.${DevelConf::teacher} $italc_dir");
+    system("chmod 0755 $italc_dir");
+
+    my $file_global="globalconfig.xml";
+    my $file_personal="personalconfig.xml";
+    my $dir_snapshots="snapshots";
+
+    foreach my $room (@italc_rooms){
+        my @teacher_hosts=();
+        my $classroom_name=$italc_rooms{$room}{'NAME'};
+        my $master_host=$italc_rooms{$room}{'MASTER'};
+
+        my $italc_parent=$italc_dir."/".$room;
+        my $italc_file_global=$italc_parent."/".$file_global;
+        my $italc_file_personal=$italc_parent."/".$file_personal;
+        my $italc_snapshots_dir=$italc_parent."/".$dir_snapshots;
+
+        system("mkdir -p $italc_parent");
+        system("chown $italc_owner.${DevelConf::teacher} $italc_parent");
+        system("chmod 0755 $italc_parent");
+
+        system("mkdir -p $italc_snapshots_dir");
+        system("chmod 0777 $italc_snapshots_dir");
+
+        print "Creating $italc_file_global for italcroom $room ...\n";
+        open(ITALCGLOBAL, ">$italc_file_global");
+        print ITALCGLOBAL '<?xml version="1.0"?>'."\n";
+        print ITALCGLOBAL '<!DOCTYPE italc-config-file>'."\n";
+        print ITALCGLOBAL '<globalclientconfig version="1.0.7" >'."\n";
+        print ITALCGLOBAL '  <body>'."\n";
+        print ITALCGLOBAL '    <classroom name="'.$classroom_name.'" >'."\n";
+
+        print "Creating $italc_file_personal for italcroom $room ...\n";
+        open(ITALCPERSONAL, ">$italc_file_personal");
+        print ITALCPERSONAL '<?xml version="1.0"?>'."\n";
+        print ITALCPERSONAL '<!DOCTYPE italc-config-file>'."\n";
+        print ITALCPERSONAL '<personalconfig version="1.0.7" >'."\n";
+        print ITALCPERSONAL '  <head>'."\n";
+
+        my @host_list_global=();
+        my @host_list_personal=();
+        my %host_lines_global=();
+        my %host_lines_personal=();
+        for my $host ( keys %{ $rooms_file{$room}{"HOSTS"} } ) {
+            my $ip=$domcomputers_file{$host}{"IP"};
+            my $mac=$domcomputers_file{$host}{"MAC"};
+            my $account_flag=$domcomputers_file{$host}{"ACCOUNT"};
+            # type? 0/1 
+            my $type=0;
+            if (exists $italc_rooms{$room}{"$host"}{'TYPE'}){
+               if ($italc_rooms{$room}{"$host"}{'TYPE'} eq "teacher host"){
+		    $type=1;
+                    # remember teacher hosts
+                    push @teacher_hosts, $host;
+                }
+            }
+
+            # visible? yes/no
+            my $visible="yes";
+            if (exists $italc_rooms{$room}{"$host"}{'INVISIBLE'}){
+               if ($italc_rooms{$room}{"$host"}{'INVISIBLE'} eq "yes"){
+                    $visible="no";
+                }
+            }
+
+            # id is 6 digits of MAC-address converted to decimal
+            # more digits are not suppoorted bay italc 1.0.7
+            # perl can calculate lager hex numbers.
+            # warnings must be be disabled if you need more 
+            # -> see beginning of script: no warnings ....
+            my $hex_mac=$mac;
+            $hex_mac=~s/://g;
+            $hex_mac=substr($hex_mac,6,6);
+	    my $dec_mac =  hex($hex_mac);
+            my $id=$dec_mac;
+
+            my $line_global="      <client localip=\"".$ip."\" ".
+                                              "mac=\"".$mac."\" ".
+                                             "type=\"".$type."\" ".
+                                               "id=\"".$id."\" ".
+                                             "name=\"".$host."\" ".
+                            "/>\n";
+            my $line_personal="      <client w=\"".$w_coord."\" ".
+                                            "x=\"".$x_coord."\" ".
+                                            "y=\"".$y_coord."\" ".
+                                            "h=\"".$h_coord."\" ".
+                                      "visible=\"".$visible."\" ".
+                                           "id=\"".$id."\" ".
+                              "/> <!-- $host -->\n";
+            if ($account_flag eq "1"){
+                # for sorting
+                push @host_list_global, $host;
+                push @host_list_personal, $host;
+                # save lines for later use
+                $host_lines_global{$host}=$line_global;
+                $host_lines_personal{$host}=$line_personal;
+            } else {
+                # no account flag -> no italc account 
+            }
+        }
+
+        @host_list_global = sort @host_list_global;
+        @host_list_personal = sort @host_list_personal;
+
+        foreach my $host (@host_list_global){
+		print ITALCGLOBAL "$host_lines_global{$host}";
+        }
+        
+        # italc global file
+        print ITALCGLOBAL '    </classroom>'."\n";
+        print ITALCGLOBAL '  </body>'."\n";
+        print ITALCGLOBAL '</globalclientconfig>'."\n";
+        close(ITALCGLOBAL);
+        system("chown $italc_owner.${DevelConf::teacher} $italc_file_global");
+        system("chmod 0755 $italc_file_global");
+
+        # italc personal file
+        my $master_ip=$domcomputers_file{$master_host}{"IP"};
+        print ITALCPERSONAL '  <globalsettings '.
+                            "demo-master-ip=\"".$master_ip."\" ".
+                            'opened-tab="5" '.
+                            'demoquality="0" '.
+                            'defaultdomain="" '.
+                            'role="1" '.
+                            'demo-net-iface="eth0" '.
+                            'client-update-interval="1" '.
+                            'wincfg="AAAA/wAAAAD9AAAAAAAABAAAAAJfAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AdABvAG8AbABiAGEAcgEAAAAAAAAEAAAAAAAAAAAA" '.
+                            'notooltips="0" '.
+                            'win-height="663" '.
+                            'win-x="0" '.
+                            'ismaximized="1" '.
+                            'win-y="0" '.
+                            'clientdoubleclickaction="0" '.
+                            'win-width="1024" '.
+                            'showUserColumn="0" />'."\n";
+        print ITALCPERSONAL '  </head>'."\n";
+        print ITALCPERSONAL '  <body>'."\n";
+        print ITALCPERSONAL '    <classroom name="'.$classroom_name.'" >'."\n";
+        my $host_index=0; # index for array: index=0 --> first element
+        foreach my $host (@host_list_personal){
+	    my $line_to_print=$host_lines_personal{$host};
+            # replace coordinates
+            $line_to_print=~s/$x_coord/$x_coord[$host_index]/g;
+            $line_to_print=~s/$y_coord/$y_coord[$host_index]/g;
+            print ITALCPERSONAL "$line_to_print";
+            # old: print unmodified
+	    #print ITALCPERSONAL "$host_lines_personal{$host}";
+            $host_index++;
+        }
+        print ITALCPERSONAL '    </classroom>'."\n";
+        print ITALCPERSONAL '  </body>'."\n";
+        print ITALCPERSONAL '</personalconfig>'."\n";
+        close(ITALCPERSONAL);
+        system("chown $italc_owner.${DevelConf::teacher} $italc_file_personal");
+        system("chmod 0755 $italc_file_personal");
+
+        foreach my $teacher_host (@teacher_hosts){
+            # create links for teacher hosts
+            system("cd $italc_dir; ln -s $room $teacher_host");
+        }
+    }
+
+    # copying the keys
+    print "* Copying italc keys to $italc_dir\n";
+    system("cp -r $italc_key_dir $italc_dir");
+    system("chown -R $italc_owner.${DevelConf::teacher} $italc_dir");
+    if (-e "${italc_key_dir_admin}/key"){
+        system("chmod 440 ${italc_key_dir_admin}/key");
+    } else {
+        print "\nPlease add a key ${italc_key_dir_admin}/key!\n\n";
+    }
+    if (-e "${italc_key_dir_supporter}/key"){
+        system("chmod 440 ${italc_key_dir_supporter}/key");
+    } else {
+        print "\nPlease add a key ${italc_key_dir_supporter}/key!\n\n";
+    }
+    if (-e "${italc_key_dir_teacher}/key"){
+        system("chmod 440 ${italc_key_dir_teacher}/key");
+    } else {
+        print "\nPlease add a key ${italc_key_dir_teacher}/key!\n\n";
+    }
+    &log_script_end(@arguments);
+}
+
+
+exit 0;
+
+
+
+
+
+
+
+# ===========================================================================
+# subs
+# ===========================================================================
+sub analyze_line {
+    my ($line) = @_;
+    if (/^#/ or /^\s*$/){
+        return 0;
+    } else {
+        if($Conf::log_level>=2){
+            print "$line";
+        }
+        chomp($line);
+        my ($room,
+            $host,
+            $hwk,
+            $mac,
+            $ip,
+            $netmask,
+            $linbo_server,
+            $unused,
+            $sysadmin_field,
+            $account_flag,
+            $pxe,
+            $option)=split(/;/,$line);
+
+        $room=&check_room($room);
+        $host=&check_host($host);
+        $hwk=&check_hwk($hwk);
+        $mac=&check_mac($mac);
+        $ip=&check_ip($ip);
+        $netmask=&check_netmask($netmask);
+        # linbo server can contain an integer as well
+        #$linbo_server=&check_ip($linbo_server);
+#        print "   UNUSED:  $unused\n";
+#        print "   SYSADM:  $sysadmin_field\n";
+        $account_flag=&check_account_flag($account_flag);
+        $pxe=&check_pxe($pxe);
+        $option=&check_option($option);
+
+        # save data into hashes for reuse
+        $domcomputers_file{$host}{"HWK"}=$hwk;
+        $domcomputers_file{$host}{"MAC"}=$mac;
+        $domcomputers_file{$host}{"IP"}=$ip;
+        $domcomputers_file{$host}{"NETMASK"}=$netmask;
+        $domcomputers_file{$host}{"ROOM"}=$room;
+        $domcomputers_file{$host}{"ACCOUNT"}=$account_flag;
+
+        $rooms_file{$room}{"HOSTS"}{$host}="seen";
+        $rooms_file{$room}{"MAC"}{$mac}="seen";
+        $rooms_file{$room}{"IP"}{$ip}="seen";
+
+
+        # line is correct
+        my $line_correct=$room.";".$host.";".$hwk.";".$mac.";".
+                         $ip.";".$netmask.";".
+                         $linbo_server.";".$unused.";".
+                         $sysadmin_field.";".$account_flag.";".
+                         $pxe.";".$option.";";
+
+        if($Conf::log_level>=2){
+            print "$line_correct\n\n";
+        }
+
+        # field 10 decides 
+        # $account_flag==0 (no account)
+        # $account_flag==1 (create account) 1and all other values
+        if ($account_flag==1){
+            $hosts_file{$host}=$line_correct;
+            my $computer=$host."\$";
+            $hosts_file{$computer}=$line_correct;
+        } else {
+            # no need to check that it should be added
+            return;
+        }
+
+        # check examaccount
+        if (not exists $examaccounts_system{$host}){
+            # nonexisting --> add account
+            &push_add_examaccount($line_correct);
+        } else {
+            if ($examaccounts_system{$host} ne $room){
+                # exists in wrong room ---> kill/add account
+                &push_kill_examaccount($host);
+                &push_add_examaccount($line_correct);
+            }
+        } 
+
+        # check computer account
+        my $host_computer = $host."\$";
+        if (not exists $domcomputers_system{$host_computer} ){
+            # nonexisting --> add account
+            &push_add_computer($line_correct);
+        }
+    }
+}
+
+
+
+sub check_room {
+    my ($room) = @_;
+    if($Conf::log_level>=3){
+        print "   ROOM:    $room\n";
+    }
+    # allow a-z0-9-_ lowercase
+    if ( $room=~/[^A-Za-z0-9\-]/ ) {
+        print "\nERROR: $room contains invalid characters\n\n";
+        exit 1;
+    } else {
+
+    }
+    return $room;
+}
+
+
+
+sub check_host {
+    my ($host) = @_;
+    if($Conf::log_level>=3){
+        print "   HOST:    $host\n";
+    }
+    # allow a-z0-9-  , convert to lowercase later
+    if ( $host=~/[^A-Za-z0-9\-]/ ) {
+        print "\nERROR: $host contains invalid characters\n\n";
+        exit 1;
+    } else {
+        $host=~tr/A-Z/a-z/; # in Kleinbuchstaben umwandeln
+        # correct
+        $host_seen{$host}="seen";
+    }
+    return $host;
+}
+
+
+
+sub check_hwk {
+    my ($hwk) = @_;
+    if ($sync_accounts==1){
+        return $hwk;
+    }
+    if($Conf::log_level>=3){
+        print "   HWK:     $hwk\n";
+    }
+    # allow A-Za-z0-9   
+    if ( $hwk=~/[^A-Za-z0-9\-_]/ ) {
+        print "\nERROR: $hwk contains invalid characters\n\n";
+        exit 1;
+    } else {
+
+    }
+    return $hwk;
+}
+
+
+
+sub check_mac {
+    my ($old_mac) = @_;
+    if ($sync_accounts==1){
+        return $old_mac;
+    }
+    if($Conf::log_level>=3){
+       print "   MAC:     $old_mac\n";
+    }
+    my $mac = Net::MAC->new('mac' => $old_mac , base => 16); 
+    my $new_mac = $mac->convert(
+          'base'      => 16,   # convert to base 16, if necessary
+          'bit_group' => 8,    # 16 bit grouping
+          'delimiter' => ':',  # dot-delimited
+          'die'       => 1     # die if conversion fails
+	);
+    # should die when mac is wrong
+
+    # convert to uppercase
+    $new_mac=~tr/a-z/A-Z/; # in Grossbuchstaben umwandeln
+
+    # correct
+    if (exists $mac_seen{$new_mac}){
+        print "\nERROR: MAC $new_mac is double!\n\n";
+        exit 1;
+    } else {
+        $mac_seen{$new_mac}="seen";
+    }
+    if($Conf::log_level>=3){
+        print "      OLD: $old_mac\n";
+        print "      NEW: $new_mac\n";
+    }
+    return $new_mac;
+}
+
+
+
+sub check_ip {
+    my ($ip) = @_;
+    if ($sync_accounts==1){
+        return $ip;
+    }
+    if($Conf::log_level>=3){
+        print "   IP:      $ip";
+    }
+    # check for 3 .
+    my $dots_in_string=$ip=~tr/\.//;
+    if($Conf::log_level>=3){
+        print " ($dots_in_string dots)\n";
+    }
+    if ($dots_in_string!=3){
+        print "\nERROR: ->$ip<- does not contain 3 dots\n\n";
+        exit 1;        
+    }
+    
+    # check for correct octets    
+    my @octets = split(/\./,$ip);
+    foreach my $octet (@octets){
+        if($Conf::log_level>=3){
+            print "      Octet:    $octet\n";
+        }
+        if ( int($octet) < 1 or int($octet) > 255) {
+            print "\nERROR: ->$ip<- is invalid Option in ip octet\n\n";
+            exit 1;
+        } else {
+
+        }
+    }
+
+    # check for double ip
+    if (exists $ip_seen{$ip}){
+        print "\nERROR: IP $ip is double!\n\n";
+        exit 1;
+    } else {
+        $ip_seen{$ip}="seen";
+    }
+    return $ip;
+}
+
+
+
+sub check_netmask {
+    my ($netmask) = @_;
+    if ($sync_accounts==1){
+        return $netmask;
+    }
+    if($Conf::log_level>=3){
+        print "   NETMASK: $netmask";
+    }
+    # check for 3 .
+    my $dots_in_string=$netmask=~tr/\.//;
+    if($Conf::log_level>=3){
+        print " ($dots_in_string dots)\n";
+    }
+    if ($dots_in_string!=3){
+        print "\nERROR: ->$netmask<- does not contain 3 dots\n\n";
+        exit 1;        
+    }
+
+    my @octets = split(/\./,$netmask);
+    foreach my $octet (@octets){
+        if($Conf::log_level>=3){
+            print "      Octet:    $octet\n";
+        }
+        if ( int($octet) < 0 or int($octet) > 255) {
+            print "\nERROR: ->$netmask<- is invalid Option in netmask\n\n";
+            exit 1;
+        } else {
+
+        }
+    }
+    return $netmask;
+}
+
+
+
+sub check_account_flag {
+    my ($account_flag) = @_;
+    if ($account_flag eq 0){
+        # ok
+        $account_flag="0";
+    } else {
+        $account_flag="1";
+    }
+    if($Conf::log_level>=3){
+        print "   ACCOUNT FLAG:     $account_flag\n";
+    }
+    return $account_flag;
+}
+
+
+
+sub check_pxe {
+    my ($pxe) = @_;
+    if ($sync_accounts==1){
+        return $pxe;
+    }
+    if($Conf::log_level>=3){
+        print "   PXE:     $pxe\n";
+    }
+    if ( $pxe=~/[0-9]/ ) {
+        # this is correct
+        return $pxe;
+    }
+    if ( not exists $pxe{$pxe} ) {
+        print "\nERROR: ->$pxe<- is invalid Option in pxe field\n\n";
+        exit 1;
+    }
+    return $pxe;
+}
+
+
+
+sub check_option {
+    my ($option) = @_;
+    if (not defined $option){
+        $option="";
+        # ??? warning ???
+    }
+    if ($sync_accounts==1){
+        return $option;
+    }
+    if($Conf::log_level>=3){
+        print "   OPTION:     $option\n";
+    }
+    return $option;
+}
+
+
+
+sub get_sys_workstations {
+    my %domcomputers_system = ();
+    my %rooms_system = ();
+    my %examaccounts_system = ();
+
+    my $dbh=&db_connect();
+
+    # domcomputers
+
+    # select the columns that i need
+    my $sth= $dbh->prepare( "SELECT uid,gid,homedirectory 
+                               FROM userdata 
+                              WHERE gid='domcomputers'" );
+    $sth->execute();
+
+    my $array_ref = $sth->fetchall_arrayref();
+
+    foreach my $row (@$array_ref){
+        # split the array, to give better names
+        # or use numbers and look in the SELECT statement
+        my $account_type="",
+
+        my ($domcomputer,
+            $room,
+            $home,
+           ) = @$row;
+        #print "\n";
+        #print "Host:  $domcomputer\n";
+        #print "Room:  $room\n";
+        #print "Home:  $home\n";
+        $domcomputers_system{$domcomputer}=$room;
+    }
+
+    # examaccounts
+
+    # select the columns that i need
+    my $sth2= $dbh->prepare( "SELECT uid,gid,homedirectory 
+                               FROM userdata 
+                              WHERE homedirectory LIKE '/home/workstations%'" );
+    $sth2->execute();
+
+    my $array_ref2 = $sth2->fetchall_arrayref();
+
+    foreach my $row (@$array_ref2){
+        # split the array, to give better names
+        # or use numbers and look in the SELECT statement
+        my $account_type="",
+
+        my ($exam_account,
+            $room,
+            $home,
+           ) = @$row;
+        #print "\n";
+        #print "EXAM:  $exam_account\n";
+        #print "Room:  $room\n";
+        #print "Home:  $home\n";
+        $examaccounts_system{$exam_account}=$room;
+        $rooms_system{$room}="seen";
+    }
+
+
+
+    # room sortieren
+
+
+
+    &db_disconnect($dbh);
+    # returns some Hashes, as a list
+    # 1:  workstation - room
+    # 2:  room - workstation
+    return(\%domcomputers_system, 
+           \%rooms_system, 
+           \%examaccounts_system, 
+          );
+}
+
+
+
+sub push_add_examaccount {
+    my ($add) = @_;
+    push @adding_examaccount, $add;
+}
+
+
+
+sub push_kill_examaccount {
+    my ($kill) = @_;
+    push @killing_examaccount, $kill;
+}
+
+
+
+sub push_add_computer {
+    my ($add) = @_;
+    push @adding_computer, $add;
+}
+
+
+
+sub push_kill_computer {
+    my ($kill) = @_;
+    push @killing_computer, $kill;
+}
+
+
+
+sub get_classrooms {
+    print "* Fetching classrooms from $classroom_conf:\n";
+    if (not -e $classroom_conf){
+        print "   * File $classroom_conf does not exist!\n";
+        return;
+    } else {
+        print "   * File $classroom_conf exists\n";
+    }
+    open(CLASSROOM, "<$classroom_conf");
+    while(<CLASSROOM>){
+        chomp();
+        s/ //g;
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        my $line=$_;
+        if($Conf::log_level>=2){
+            print "   * $line\n";
+        }
+        push @class_rooms, $line;
+        $class_rooms{$line}="seen";
+    }
+    close(CLASSROOM);
+}
+
+
+
+sub get_italcrooms {
+    print "* Fetching italc rooms from $italc_conf:\n";
+    #if (not -e $italc_conf_dir){
+    #    system("mkdir -p $italc_conf_dir");
+    #}
+    if (not -e $italc_conf){
+        &log_script_exit("$italc_conf is missing",1,1,0,@arguments);
+        exit;
+    } 
+    if (not -e $italc_key_dir_admin){
+        system("mkdir -p $italc_key_dir_admin");
+    }
+    if (not -e $italc_key_dir_supporter){
+        system("mkdir -p $italc_key_dir_supporter");
+    }
+    if (not -e $italc_key_dir_teacher){
+        system("mkdir -p $italc_key_dir_teacher");
+    }
+    open(ITALCROOM, "<$italc_conf");
+    while(<ITALCROOM>){
+        chomp();
+        s/ //g;
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        if($_ eq ""){ 
+            next;
+        }
+
+        my $line=$_;
+        my ($room,$italc_classroom_name,
+            $host_string,$invisible_host_string) = split(/:/,$line);
+        if($Conf::log_level>=2){
+            print "   * $room\n";
+        }
+
+        # room
+        push @italc_rooms, $room;
+
+        # classroom name
+        if ($italc_classroom_name eq ""){
+            $italc_classroom_name=$room;
+        } 
+        $italc_rooms{$room}{'NAME'}=$italc_classroom_name;
+
+        # hosts that can use italc
+        if (not defined $host_string or $host_string eq ""){
+            $italc_rooms{$room}="seen";
+            # ERROR: italc rooms must have a master
+            &log_script_exit("$room without master (italc)",1,1,0,@arguments);
+        } else {
+            my @teacher_hosts = split(/,/,$host_string);
+            my $i=1;
+            foreach my $host (@teacher_hosts){
+                if($Conf::log_level>=2){
+                    print "      * $host is teacher host (type=1)\n";
+                }
+                $italc_rooms{$room}{"$host"}{'TYPE'}="teacher host";
+                if ($i==1){
+                    #remember first entry
+                    $italc_rooms{$room}{'MASTER'}="$host";
+                }
+                $i++;
+            }
+        }
+
+        # invisible hosts
+        if (not defined $invisible_host_string or 
+                        $invisible_host_string eq ""){
+            # do nothing
+        } else {
+            my @invisible_hosts = split(/,/,$invisible_host_string);
+            foreach my $host (@invisible_hosts){
+                if($Conf::log_level>=2){
+                    print "      * $host is an invisible host (visible=no)\n";
+                }
+                $italc_rooms{$room}{"$host"}{'INVISIBLE'}="yes";
+            }
+        }
+    }
+    close(ITALCROOM);
+}
+
