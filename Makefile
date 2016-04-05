@@ -69,7 +69,6 @@ LANGUAGE=$(DESTDIR)/usr/share/sophomorix/lang
 
 # Testfiles
 DEVELOPERDIR=$(DESTDIR)/usr/share/sophomorix-developer
-DEVELEX=$(DESTDIR)/usr/share/sophomorix-developer/examples
 TESTDATA=$(DESTDIR)/usr/share/sophomorix-developer/testdata
 
 # sophomorix-virusscan
@@ -232,10 +231,6 @@ install-developer:
 	@install -oroot -groot --mode=0644 sophomorix-developer/modules/SophomorixTest.pm $(PERLMOD)
 # installing  examples
 	@install -d $(DEVELOPERDIR)
-	@install -d $(DEVELEX)
-	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.add $(DEVELEX)
-	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.move $(DEVELEX)
-	@install -oroot -groot --mode=0644 sophomorix-developer/examples/sophomorix.kill $(DEVELEX)
 # installing  testdata
 	@install -d $(TESTDATA)
 	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/sophomorix.add-1 $(TESTDATA)

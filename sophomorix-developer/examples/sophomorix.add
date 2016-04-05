@@ -1,5 +1,0 @@
-###### class::identifier_ascii::login::password::uid::gid::unid::OU::school_token::role::firstname_utf8::surname_utf8:: ######
-7a::Mueller;Gregor;26.01.1992::muellegr::---::---::---::unid2345::BSZLEO::bsz::student::Müller::Gregor::
-7a::Maier;Sarina;25.01.1991::maiersa::Muster!::---::---::unid1234::BSZLEO::bsz::student::Maier::Sarina::
-7a::Becker;Gregor;02.01.1972::---::---::---::---::unid3456::BSZLEO::bsk::student::Becker::Gregor::
-7a::Koehler;Juergen;14.02.2002::---::Muster!::---::---::unid4567::PKS::pks::student::Köhler::Jürgen::
