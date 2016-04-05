@@ -1,0 +1,1037 @@
+#!/usr/bin/perl -w
+# $Id$
+# This script (sophomorix-project) is maintained by Rüdiger Beck
+# It is Free Software (License GPLv3)
+# If you find errors, contact the author
+# jeffbeck@web.de  or  jeffbeck@gmx.de
+
+
+
+# ===========================================================================
+# Bibliotheken
+# ===========================================================================
+use strict;
+use Getopt::Long;
+Getopt::Long::Configure ("bundling");
+use Sophomorix::SophomorixConfig;
+use Sophomorix::SophomorixBase;
+use Sophomorix::SophomorixAPI;
+use DBI;
+use Net::LDAP;
+use Sophomorix::SophomorixPgLdap qw(show_modulename
+                                    db_connect
+                                    db_disconnect
+                                    check_connections
+                                    show_project_list
+                                    show_project_admin_list
+                                    show_project
+                                    show_project_userinfo
+                                    dump_all_projects
+                                    create_project
+                                    update_project
+                                    remove_project
+                                    remove_class_db_entry
+                                    fetchinfo_from_project
+                                    adduser_to_project
+                                    addadmin_to_project
+                                    deleteuser_from_project
+                                    deleteadmin_from_project
+                                    addgroup_to_project
+                                    deletegroup_from_project
+                                    addproject_to_project
+                                    deleteproject_from_project
+                                    fetchprojects_from_school
+                                    fetchprojects_from_project
+                                    fetchgroups_from_project
+                                    fetchusers_from_project
+                                    fetchmembers_by_option_from_project
+                                    fetchadmins_from_project
+                                   );
+
+my @arguments = @ARGV;
+
+# ===========================================================================
+# Optionen verarbeiten
+# ==========================================================================
+
+my $pg_timestamp=&pg_timestamp();
+
+# Variablen für Optionen
+$Conf::log_level=1;
+my $help=0;
+my $tree=0;
+my $info=0;
+my $user_info=0;
+my $admininfo=0;
+my $create=0;
+my $kill=0;
+$Conf::log_level=1;
+
+my $project="";
+
+my $k;
+my $v;
+
+my $addmembers="";
+my $removemembers="";
+my $addadmins="";
+my $removeadmins="";
+my $addmembergroups="";
+my $removemembergroups="";
+my $addmemberprojects="";
+my $removememberprojects="";
+
+my $p_long_name;
+my $p_admins;
+my $p_groups;
+my $p_members;
+my $p_projects;
+my $p_add_quota;
+my $p_add_mail_quota;
+my $p_max_members;
+my $mailalias;
+my $p_mailalias;
+my $maillist;
+my $p_maillist;
+my $p_status;
+my $join; # 0,1
+my $p_join="TRUE"; # FALSE,TRUE
+
+my $caller="";
+my $curr_member="";
+my $new_member="";
+
+
+my $dump_all_projects=""; 
+my $create_from_file="";
+my $update_from_file="";
+
+my $update=0;
+
+my %all_projects=(); # hash with projects and their options
+
+my %seen_projects=();   # projects sorted into @addorder_list
+my %unseen_projects=(); # projects still to sort in @addorder_list
+my @addorder_list=();   # order in which projects have to be added
+
+# Parsen der Optionen
+my $testopt=GetOptions(
+           "help|h" => \$help,
+           "info|i" => \$info,
+           "user|user-info|u" => \$user_info,
+           "admininfo" => \$admininfo,
+           "create" => \$create,
+           "kill" => \$kill,
+           "verbose|v+" => \$Conf::log_level,
+           "join!" => \$join,
+           "tree" => \$tree,
+           "caller=s" => \$caller,
+           "addmembers=s" => \$addmembers,
+           "removemembers=s" => \$removemembers,
+           "addadmins=s" => \$addadmins,
+           "removeadmins=s" => \$removeadmins,
+           "addmembergroups=s" => \$addmembergroups,
+           "removemembergroups=s" => \$removemembergroups,
+           "addmemberprojects=s" => \$addmemberprojects,
+           "removememberprojects=s" => \$removememberprojects,
+           "name|project|p=s" => \$project,
+           "longname=s" => \$p_long_name,
+           "admins=s" => \$p_admins,
+           "members=s" => \$p_members,
+           "membergroups=s" => \$p_groups,
+           "memberprojects=s" => \$p_projects,
+           "addquota=s" => \$p_add_quota,
+           "addmailquota=s" => \$p_add_mail_quota,
+           "maxmembers=s" => \$p_max_members,
+           "mailalias!" => \$mailalias,
+           "maillist!" => \$maillist,
+           "dump=s" => \$dump_all_projects,
+           "create-from-file=s" => \$create_from_file,
+           "update-from-file=s" => \$update_from_file,
+           "update" => \$update,
+           "curr-member|current-member=s" => \$curr_member,
+           "new-member|newmember=s" => \$new_member,
+         );
+
+# Prüfen, ob Optionen erkannt wurden
+&check_options($testopt);
+
+
+# help if no project is given
+# and no useful option
+if ($project eq "" 
+     and $info==0
+     and $admininfo==0
+     and $user_info==0
+     and $tree==0
+     and $dump_all_projects eq ""
+     and $create_from_file eq ""
+     and $update_from_file eq ""
+     and $curr_member eq ""
+    ){
+    $help=1;
+}
+
+
+# help if project is given
+# and no useful option
+if ($project ne "" 
+      and not defined $p_admins
+      and not defined $p_members
+      and not defined $p_groups 
+      and not defined $p_projects
+      and $addmembers eq ""
+      and $removemembers eq ""
+      and $addadmins eq ""
+      and $removeadmins eq ""
+      and $addmembergroups eq ""
+      and $removemembergroups eq ""
+      and $addmemberprojects eq ""
+      and $removememberprojects eq ""
+      and $info==0
+      and $admininfo==0
+      and $tree==0
+      and $kill==0
+      and $create==0
+      and not defined $maillist
+      and not defined $mailalias
+      and not defined $join
+      and $p_add_quota eq "" 
+      and $p_add_mail_quota eq "" 
+      and $dump_all_projects eq ""
+      and $create_from_file eq ""
+      and $update_from_file eq ""
+    ){
+    $help=1;
+}
+
+# if (($project eq "" 
+#      and $info==0
+#      and $admininfo==0
+#      and $user_info==0
+#      and $tree==0
+#      and $dump_all_projects eq ""
+#      and $create_from_file eq ""
+#      and $update_from_file eq ""
+#      and $curr_member eq ""
+#     )
+#     or
+#     (not defined $p_admins
+#      and not defined $p_members
+#      and not defined $p_groups eq ""
+#      and not defined $p_projects eq ""
+#      and $addmembers eq ""
+#      and $removemembers eq ""
+#      and $addadmins eq ""
+#      and $removeadmins eq ""
+#      and $addmembergroups eq ""
+#      and $removemembergroups eq ""
+#      and $addmemberprojects eq ""
+#      and $removememberprojects eq ""
+#      and $info==0
+#      and $admininfo==0
+#      and $tree==0
+#      and not defined $maillist
+#      and not defined $mailalias
+#      and not defined $join
+#      and $dump_all_projects eq ""
+#      and $create_from_file eq ""
+#      and $update_from_file eq ""
+#     )
+#     ){
+#     $help=1;
+# }
+
+
+
+# --help
+if ($help==1) {
+   # Scriptname ermitteln
+   my @list = split(/\//,$0);
+   my $scriptname = pop @list;
+   # Befehlbeschreibung
+   print('
+sophomorix-project adds projects to the sophomorix database and adds users
+   or groups as members to the project
+
+Options
+  -h  / --help
+  -v  / --verbose
+  -vv / --verbose --verbose
+
+Getting information:
+  --admininfo
+  --tree
+  -i / --info
+  -i -p projectname
+  -u  / --user / --user-info -p project
+
+Changing a project:
+  -p projectname, / --project projectname 
+  --create 
+  --kill
+  --join,  --nojoin
+  --longname projectname(long)
+  --admins user1,user2,user3, ... 
+  --members user1,user2,user3, ... 
+  --membergroups group1,group2,group3, ... 
+  --memberprojects project1,project2,project3, ... 
+  --addquota quotastring
+  --addmailquota number
+  --maxmembers number
+
+  --mailalias, --nomailalias
+  --maillist, --nomaillist 
+
+  -p project --addmembers user1,user2,user3, ...
+  -p project --removemembers user1,user2,user3, ...
+  -p project --addadmins user1,user2,user3, ...
+  -p project --removeadmins user1,user2,user3, ...
+  -p project --addmembergroups group1,group2,group3, ...
+  -p project --removemembergroups group1,group2,group3, ...
+  -p project --addmemberprojects project1,project2,project3, ...
+  -p project --removememberprojects project1,project2,project3, ...
+
+
+Dumping data into a file:
+  --dump file
+  --create-from-file file
+  --update-from-file file
+
+
+Listing or replacing a users memberships:
+  --current-member user  (List meberships (admin,member) of user)
+  --current-member user --new-member newuser   
+    (replace membeships of user with newuser interactively)
+
+
+Please see the sophomorix-project(8) man pages for full documentation
+');
+   print "\n";
+   exit;
+}
+
+
+# --tree
+if ($tree==1) {
+    print "Project Membership Tree:\n";
+    my @projects=&fetchprojects_from_school();
+    foreach my $pro (@projects){
+        print "$pro: \n";
+        my @projects=&fetchprojects_from_project($pro);
+        foreach my $pro (@projects){
+           print " ### $pro (project) \n";
+        }
+        my @groups=&fetchgroups_from_project($pro);
+        foreach my $group (@groups){
+           print "   # $group (group) \n";
+        }
+        my @admins=&fetchadmins_from_project($pro);
+           print " *** admin:";
+        foreach my $adm (@admins){
+           print " $adm,";
+        }
+        print "\n";
+        print "   * users: \n";
+        my @users=&fetchusers_from_project($pro);
+
+	my $number=6;
+        my $index_number=$number-1;
+        my @linelist=();
+        my $all=$#users+1;
+        my $left=$all % $number;
+        my $to_add=$number-$left;
+        my $i;
+        # add the missing elements
+        if ($all!=$number){
+           for ($i = 1; $i <= $to_add; $i++) {  # count from 1 to 10
+              push @users, "";
+           }
+        }
+
+      foreach my $user (@users){
+          push @linelist, $user;
+          if ($#linelist==$index_number){
+	      printf "     %-12s%-12s%-12s%-12s%-12s%-12s\n",@linelist;
+          @linelist=();
+          } 
+      }
+    }
+    exit;
+}
+
+
+
+# show the Database Modules that are loaded
+&check_connections();
+
+
+# --info
+if ($project eq "" and $info==1){
+    &show_project_list();
+    exit;
+}
+
+
+# --info --project name
+if ($project ne "" and $info==1){
+    &show_project($project);
+    exit;
+}
+
+
+# --admininfo
+if ($admininfo==1){
+    if ($project eq ""){
+        &show_project_admin_list();
+        exit;
+    } else {
+        print "\n   Option --admininfo cannot be used together with a project\n\n";
+        exit;
+    }
+}
+
+
+# --user-info --project name
+if ($user_info==1){
+    if ($project ne ""){
+        &show_project_userinfo($project);
+        exit;
+        #&log_script_exit("Project $project showed!",
+        #                  1,1,0,@arguments);
+    } else {
+        print "\n   Option --userinfo has be used together with a project\n\n";
+        exit;
+    }
+}
+
+
+
+&log_script_start(@arguments);
+
+# --current-member
+# --new-member
+if ($curr_member ne ""){
+    # fetch all projects
+    my @projects=&fetchprojects_from_school();
+        foreach my $pro (@projects){
+	    #print "checking $pro\n"; 
+            # check if curr_menber is admin
+            # list or replace replace
+            my @admins=&fetchadmins_from_project($pro);
+            foreach my $adm (@admins){
+		if ($adm eq $curr_member){
+                    print " *** $curr_member is admin in $pro\n";
+                    &replace_membership("admin",$pro,$curr_member,$new_member);
+                }
+            }
+            # check if curr_menber is member
+            # list or replace replace
+            my @users=&fetchmembers_by_option_from_project($pro);
+            foreach my $user (@users){
+		if ($user eq $curr_member){
+                    print "   * $curr_member is member in $pro\n";
+                    &replace_membership("member",$pro,$curr_member,$new_member);
+                }
+            }
+    }
+    exit;
+}
+
+
+# --caller and --nojoin
+if ($project ne "" and $create==0
+    and 
+    ($addmembers ne ""
+     or $removemembers ne ""
+     or $addadmins ne ""
+     or $removeadmins ne ""
+     or $addmembergroups ne ""
+     or $removemembergroups ne ""
+     or $addmemberprojects ne ""
+     or $removememberprojects ne ""
+     or defined $p_admins
+     or defined $p_members
+     or defined $p_groups
+     or defined $p_projects
+     or defined $join)
+    ){
+    print "Changing something, eh ----\n";
+    my ($a1,$a2,$a3,$a4,$join_val) = &fetchinfo_from_project($project);
+    if ($join_val==0){
+        print "Project is NOT joinable $join_val\n";
+        if ($caller eq ""){
+           print "You must use --caller name to modify such a project!\n";
+           &Sophomorix::SophomorixBase::log_script_exit(
+               "Request to modify nojoin project without --caller!",
+               1,1,0,@arguments);
+
+        } else {
+           print "I must check if $caller is allowed\n";
+           my @admins_val=&fetchadmins_from_project($project);
+           my $go_on=0;
+           if ($caller eq "root"){
+	       $go_on=1;
+               print "$caller is root!\n";
+           } else {
+               foreach my $admin_val (@admins_val){
+                   #print "Checking ---$admin_val--- and ---$caller---\n";
+                   if ($caller eq $admin_val){
+                       $go_on=1;
+                       print "$caller is admin!\n";
+                       last;
+                   }
+               }
+           }
+           if ($go_on==0){
+               print "$caller is NOT admin of $project\n";
+               print "$caller is NOT allowed to change userlist\n";
+               &Sophomorix::SophomorixBase::log_script_exit(
+               "Nonadmin tried to change nojoin project!",
+               1,1,0,@arguments);
+           }
+        }
+    }
+}
+
+
+
+
+
+# writing/reading to/from a file
+
+# --dump filename
+if ($project eq "" and $dump_all_projects ne ""){
+    &dump_all_projects("$dump_all_projects",@arguments);
+    &Sophomorix::SophomorixBase::log_script_exit(
+    "All projects dumped!",
+    0,1,0,@arguments);
+}
+
+
+# --create-from-file filename
+if ($project eq "" and $create_from_file ne ""){
+    &project_from_file($create_from_file,"--create",@arguments);
+    &Sophomorix::SophomorixBase::log_script_exit(
+    "All projects created!",
+    0,1,0,@arguments);
+}
+
+
+# --update-from-file filename
+if ($project eq "" and $update_from_file ne ""){
+    &project_from_file($update_from_file,"",@arguments);
+    &Sophomorix::SophomorixBase::log_script_exit(
+    "All projects updated!",
+    0,1,0,@arguments);
+}
+
+
+
+# --addmembers
+if ($addmembers ne "" and $project ne ""){
+    my @new_users = split(/,/,$addmembers);
+    my @old_users = 
+       &Sophomorix::SophomorixPgLdap::fetchmembers_by_option_from_project($project);
+#       &Sophomorix::SophomorixPgLdap::fetchusers_from_project($project);
+    my @users = (@old_users,@new_users);
+    $p_members=join(",",@users);
+    print "   Using: --Members=$p_members\n";
+}
+
+
+# --removemembers
+if ($removemembers ne "" and $project ne ""){
+    my @users = split(/,/,$removemembers);
+    my @old_users = 
+       &Sophomorix::SophomorixPgLdap::fetchmembers_by_option_from_project($project);
+#       &Sophomorix::SophomorixPgLdap::fetchusers_from_project($project);
+    my @new_users=&remove_duplicates_from_first_list(\@old_users,\@users);
+    $p_members=join(",",@new_users);
+    print "   Using: --Members=$p_members\n";
+}
+
+
+# --addadmins
+if ($addadmins ne "" and $project ne ""){
+    my @new_admins = split(/,/,$addadmins);
+    my @old_admins = 
+       &Sophomorix::SophomorixPgLdap::fetchadmins_from_project($project);
+    my @admins = (@old_admins,@new_admins);
+    $p_admins=join(",",@admins);
+    print "   Using: --Admins=$p_admins\n";
+}
+
+
+# --removeadmins
+if ($removeadmins ne "" and $project ne ""){
+    my @admins = split(/,/,$removeadmins);
+    my @old_admins = 
+       &Sophomorix::SophomorixPgLdap::fetchadmins_from_project($project);
+    my @new_admins=&remove_duplicates_from_first_list(\@old_admins,\@admins);
+    $p_admins=join(",",@new_admins);
+    print "   Using: --Admins=$p_admins\n";
+}
+
+
+# --addmembergroups
+if ($addmembergroups ne "" and $project ne ""){
+    my @new_groups = split(/,/,$addmembergroups);
+    my @old_groups = 
+       &Sophomorix::SophomorixPgLdap::fetchgroups_from_project($project);
+    my @groups = (@old_groups,@new_groups);
+    $p_groups=join(",",@groups);
+    print "   Using: --MemberGroups=$p_groups\n";
+}
+
+
+# --removemembergroups
+if ($removemembergroups ne "" and $project ne ""){
+    my @groups = split(/,/,$removemembergroups);
+    my @old_groups = 
+       &Sophomorix::SophomorixPgLdap::fetchgroups_from_project($project);
+    my @new_groups=&remove_duplicates_from_first_list(\@old_groups,\@groups);
+    $p_groups=join(",",@new_groups);
+    print "   Using: --MemberGroups=$p_groups\n";
+}
+
+
+# --addmemberprojects
+if ($addmemberprojects ne "" and $project ne ""){
+    my @new_projects = split(/,/,$addmemberprojects);
+    my @old_projects = 
+       &Sophomorix::SophomorixPgLdap::fetchprojects_from_project($project);
+    my @projects = (@old_projects,@new_projects);
+    $p_projects=join(",",@projects);
+    print "   Using: --MemberProjects=$p_projects\n";
+}
+
+
+# --removememberprojects
+if ($removememberprojects ne "" and $project ne ""){
+    # can contain_non_prefixed projects
+    my @projects= split(/,/,$removememberprojects);
+    foreach my $n_pro (@projects){
+        unless ($n_pro =~ m/^p\_/) { 
+            $n_pro="p_".$n_pro;
+        }
+    }
+    my @old_projects = 
+       &Sophomorix::SophomorixPgLdap::fetchprojects_from_project($project);
+    my @new_projects=&remove_duplicates_from_first_list(\@old_projects,\@projects);
+    $p_projects=join(",",@new_projects);
+    print "   Using: --MemberProjects=$p_projects\n";
+}
+
+
+# --join
+if (not defined $join){
+    $p_join="";
+} elsif ($join==0) {
+    $p_join="FALSE"; 
+} elsif ($join==1) {
+    $p_join="TRUE";
+}
+
+
+# --mailalias
+if (not defined $mailalias){
+    $p_mailalias=""; 
+} elsif ($mailalias==0){
+    $p_mailalias="FALSE"; 
+} else {
+    $p_mailalias="TRUE";
+}
+
+
+# --maillist
+if (not defined $maillist){
+    $p_maillist=""; 
+} elsif ($maillist==0){
+    $p_maillist="FALSE"; 
+} else {
+    $p_maillist="TRUE";
+}
+
+
+# parse arguments
+if (defined $p_long_name) {
+   unless ($p_long_name =~ m/^([\w-]{6,32})$/) { 
+       print "\nArgument of --longname\n";
+       print "   contains invalid characters. \n";
+       print "   or is too short or too long (6-32 characters). \n\n";
+       &log_script_exit("Invalid characters in argument!",
+                         1,1,0,@arguments);
+   }
+}
+
+if (defined $project) {
+   # append p_
+   unless ($project =~ m/^p\_/) { 
+       $project="p_".$project;
+   }
+   # parse name WITH p_ in the beginning
+   unless ($project =~ m/^([\w-]{3,16})$/) { 
+       print "\nArgument of --project\n";
+       print "   contains invalid characters. \n";
+       print "   or is too short or too long (3-14 characters after p_). \n\n";
+       &log_script_exit("Invalid characters in argument!",
+                         1,1,0,@arguments);
+   }
+}
+
+
+
+
+
+
+# ===========================================================================
+# Programmbeginn
+# ===========================================================================
+
+# repair.directories einlesen
+&get_alle_verzeichnis_rechte();
+
+# fetch permission for all homes
+&fetch_repairhome();
+
+
+# create/update project
+if ($kill==0 and $update==0){
+    &create_project($project,$create,$p_long_name,
+                    $p_add_quota,$p_add_mail_quota,
+                    $p_status,$p_join,$pg_timestamp,
+                    $p_max_members,$p_members,$p_admins,
+                    $p_groups,$p_projects,
+                    $p_mailalias,$p_maillist);
+} elsif  ($kill==1 and $update==0){
+    # remove all users from project
+    # (BEFORE removing project)
+    print "Preparing Project $project to kill (remove users)!\n";
+    &create_project($project,0,$p_long_name,
+                    0,0,
+                    "K","FALSE",$pg_timestamp,
+                    0,"","",
+                    "","",
+                    0,0);
+
+    # project_details: Eintrag löschen
+    # und files loeschen 
+    # (BEFORE removing group)
+    &remove_project($project);
+
+    # gruppe entfernen
+    &remove_class_db_entry($project);
+}
+
+if ($update==1 and $project ne ""){
+    print "updating project $project:\n";
+    &update_project($project,$pg_timestamp);
+}
+
+
+# Setting Quota if necessary
+if ($Conf::use_quota eq "yes" 
+      and (
+         defined $p_admins
+         or defined $p_groups
+         or defined $p_members
+         or defined $p_projects
+         or defined $p_add_quota
+         or defined $p_add_mail_quota
+         or $kill==1
+        ) 
+    ) {
+    # system("sophomorix-quota --students --teachers --noninteractive");
+    system("${DevelConf::executable_pfad}/sophomorix-quota --project $project --noninteractive");
+    &nscd_stop();
+} else {
+    &titel("NOT setting quota (nothing quota related changed)");
+}
+
+
+
+
+
+# Creating Mailing Aliases and Lists
+if (defined $p_admins
+    or defined $p_groups
+    or defined $p_members
+    or defined $p_projects
+    or defined $p_long_name
+    or defined $mailalias
+    or defined $maillist
+    or $kill==1
+   ) {
+    system("${DevelConf::executable_pfad}/sophomorix-mail");
+    &nscd_stop();
+} else {
+    &titel("NOT creating mailaliases/lists (nothing mail related changed)");
+}
+
+
+
+&log_script_end(@arguments);
+
+
+
+
+
+
+############################################################
+# sub
+############################################################
+
+sub replace_membership {
+    # call sophomorix commands to replace a user in a project
+    my ($type,$pro,$curr_member,$new_member) = @_;
+    my $opt="";
+    if (not defined $new_member){
+        return;
+    }
+    if ($new_member eq ""){
+        return;
+    }
+    if ($type eq "admin"){
+        $opt="admins";
+    } elsif ($type eq "member"){
+        $opt="members";
+    }
+
+    # replace membership command
+    my $rm_command="sophomorix-project -p $pro --remove$opt $curr_member > /dev/null";
+    my $add_command="sophomorix-project -p $pro --add$opt $new_member > /dev/null";
+    print "     -> $rm_command\n";
+    print "     -> $add_command\n";
+    system("$rm_command");
+    system("$add_command");
+}
+
+
+sub remove_duplicates_from_first_list {
+    my ($liste_1,$liste_2) = @_;
+    my %liste_1=();
+    my @result=();
+    # creating liste_1 hash
+    foreach my $user (@$liste_1){
+        $liste_1{$user}="seen";
+        #print "User: $user \n";
+    }
+    # remove users from list2
+    foreach my $user2 (@$liste_2){
+        if (exists $liste_1{$user2}){
+	    delete $liste_1{$user2};
+            #print "Remove User: $user2 \n";
+        }
+    }
+    # push liste_1 hash back into a list
+    while( my ($k, $v) = each(%liste_1)) {
+      push @result, $k;
+    }
+    @result = sort @result;
+    return @result;
+}
+
+
+
+sub project_from_file {
+    my ($file,$parm,@arguments)= @_;
+    #print "file: $file \n";
+    #print "parm: $parm \n";
+
+    my @pro_list=(); # list of all projects, order: file appearance
+    %all_projects=();
+
+    if (not -e $file){
+        &Sophomorix::SophomorixBase::log_script_exit(
+        "File $file does not exist.",
+        1,1,0,@arguments);
+    }
+
+    # fetch project list
+    open(PROS, "<$file");
+    while(<PROS>) {
+	if (/^\[(.*)\]/){
+            push @pro_list, $1;
+        }
+    }
+    close(PROS);
+
+    # fetch options hash
+    open(PROS, "<$file");
+    while(<PROS>) {
+        if (/^\#/){
+            next;
+        }
+        if (/^\[(.*)\]/){
+            next;
+        }
+        s/ //g;
+        if ($_ eq "\n"){
+	    next;
+        }
+
+        # in every line is now an entry
+        chomp();  
+
+        print "$_ \n";
+        my ($name,$value)=split(/=/);
+        my ($pro,$key)=split(/\./,$name);
+        #print "   PRO: ---$pro---\n";
+        #print "   PRO: ---$key---\n";
+        #print "   PRO: ---$value---\n";
+        $all_projects{$pro}{$key}=$value;
+        $unseen_projects{$pro}="not seen"; 
+    }
+    close(PROS);
+
+    # first run: find projects, without dependencies 
+    foreach my $project (@pro_list){
+        my @member_pro=&fetch_member_projects($project,$file);
+        if (defined $member_pro[0] eq ""){
+	    print "   $project  has NO dependancies, add to addorder_list\n";
+            push @addorder_list,$project;
+            $seen_projects{$project}="seen";
+            delete $unseen_projects{$project};
+        }
+    }
+
+    while ($#pro_list>$#addorder_list){
+        # not all projects sorted
+        &find_undependant_projects($file);
+    }
+
+    print "\nProjects must be added in THIS order:\n";
+    foreach my $pro (@addorder_list){
+        print "   $pro \n";
+    }
+
+    # add the projects
+    foreach my $project (@addorder_list){
+        &create_this_project($project,$parm);
+    }
+}
+
+
+
+
+
+############################################################
+# sub
+############################################################
+
+sub create_this_project {
+    my ($project,$parm) = @_;
+    my $command="sophomorix-project --project $project ";
+    # create
+    if ($parm eq "--create"){
+        my ($exists)=&fetchinfo_from_project($project);
+        if (defined $exists){
+            print "WARNING: Doing nothing, Project $project exists\n";
+            return;
+        }
+        $command.="--create ";
+    } else {
+        my ($exists)=&fetchinfo_from_project($project);
+        if (not defined $exists){
+            $command.="--create ";
+        }
+    }
+
+    # addquota
+    if ($all_projects{$project}{'addquota'} ne "quota" 
+        and $all_projects{$project}{'addquota'} ne ""){
+        $command.="--addquota  $all_projects{$project}{'addquota'} ";
+    }
+    # addmailquota
+    if ($all_projects{$project}{'addmailquota'}!=0 or 
+        $all_projects{$project}{'addmailquota'} eq ""){
+        $command.="--addmailquota $all_projects{$project}{'addmailquota'} ";
+    }
+    if ($all_projects{$project}{'admins'} ne ""){
+        $command.="--admins $all_projects{$project}{'admins'} ";
+    }
+    if ($all_projects{$project}{'members'} ne ""){
+        $command.="--members $all_projects{$project}{'members'} ";
+    }
+    if ($all_projects{$project}{'maxmembers'}!=0){
+        $command.="--maxmembers $all_projects{$project}{'maxmembers'} ";
+    }
+    if ($all_projects{$project}{'membergroups'} ne ""){
+        $command.="--membergroups $all_projects{$project}{'membergroups'} ";
+    }
+    if ($all_projects{$project}{'memberprojects'} ne ""){
+        $command.="--memberprojects $all_projects{$project}{'memberprojects'} ";
+    }
+    if ($all_projects{$project}{'maillist'}==1){
+        $command.="--maillist ";
+    }
+    if ($all_projects{$project}{'mailalias'}==1){
+        $command.="--mailalias ";
+    }
+    if ($all_projects{$project}{'joinable'}==0){
+        $command.="--nojoin ";
+    }
+    print "############################################################\n";
+    print "#  $command \n";
+    print "############################################################\n";
+    system($command);
+}
+
+
+
+
+sub fetch_member_projects {
+    my ($project,$file) = @_;
+    my $pro_string="";
+    my @projects=();
+    open(PROS, "<$file");
+    while(<PROS>) {
+	if (/$project\.memberprojects=(.*)/){
+        }
+        if (defined $1 and $1 ne ""){
+            $pro_string=$1;
+        }
+    }
+    close(PROS);
+    # print "Memberproject entry of $project is $pro_string \n";
+    @projects=split(/,/,$pro_string);
+    foreach my $pro (@projects){
+        if ($pro eq ""){
+            next;
+        }
+    # print "Memberproject of $project is $pro_string \n";
+    }
+    #print "### $project depends on project @projects \n";
+    return @projects;
+}
+
+
+
+sub find_undependant_projects {
+    my ($file) = @_;
+    while( my ($project, $v) = each(%unseen_projects)) {
+        print "### Working on $project\n";
+        my @member_pro=();
+        @member_pro=&fetch_member_projects($project,$file);
+	print "   $project depends on @member_pro \n";
+        my $can_add=1;
+        my $member;
+        foreach $member (@member_pro){
+            print "   Checking if $member has unfullfilled dependencies: ";
+            if (not exists $seen_projects{$member}){
+                print "yes\n";
+		$can_add=0;
+            } else {
+                print "no\n";
+            }
+        }
+        if ($can_add==1){
+            print "$project added to seen_projects\n";
+            push @addorder_list,$project;
+            $seen_projects{$project}="seen";
+            delete $unseen_projects{$project};
+        }
+    }
+}
+
