@@ -130,10 +130,26 @@ $Conf::log_level=1;
 my $help=0;
 my $info=0;
 my $no_sync=0;
+my $user_count=0;
+my $birthdate="1970-01-01";
+my $time_stamp_AD=&time_stamp_AD();
+my @passwort_zeichen=&get_passwd_charlist();
+my $plain_password="";
+
+
+# ou's that have been created in this script
+my $ou="";
+my $role="";
+my $school_token="";
+my %ou_created=();
+$ou_created{$ou}="created";
+
 
 my $print=0;
 my $pass="12345678";
 my $password="";
+
+
 
 # where data from workstation file is saved
 my %domcomputers_file=();
@@ -521,16 +537,65 @@ if($Conf::log_level>=2){
 # Synchronizing ExamAccounts and Workstations
 # ===========================================================================
 
+# calculate according to file
+$ou="BSZLEO";
+$school_token="bsz";
+$role="examaccount";
+
+
 if ($no_sync==0){ # $no_sync==0 -> SYNC
+    if (not exists $ou_created{$ou}){
+        # create ou
+        &AD_ou_add($ldap,$root_dse,$ou,$school_token);
+        # remember ou
+        $ou_created{$ou}="already created";
+    }
     &print_title("Killing ExamAccounts:");
     foreach my $exam_account (@killing_examaccount){
         print "   * Killing ExamAccount $exam_account ...\n";
         #system("/usr/sbin/sophomorix-kill --killuser $exam_account");
     }
     &print_title("Adding ExamAccounts:");
+    $user_count=1;
     foreach my $exam_account (@adding_examaccount){
-        my ($g,$u,@rest)=split(/;/,$exam_account);
-        print "   * Adding $u in group $g\n";
+        my ($room,$user,@rest)=split(/;/,$exam_account);
+        print "   * Adding ExamAccount $user_count: $user in group $room\n";
+        $plain_password=&get_plain_password($role,@passwort_zeichen);
+        &AD_user_create({ldap=>$ldap, 
+                         root_dse=>$root_dse,
+                         user_count=>$user_count,
+                         login=>$user,
+                         group=>$room,
+                         firstname_ascii=>"Exam",
+                         surname_ascii=>"Account",
+                         firstname_utf8=>"Exam",
+                         surname_utf8=>"Account",
+                         birthdate=>$birthdate,
+                         plain_password=>$plain_password,
+                         ou=>$ou,
+                         role=>"examaccount",
+                         type=>"room",
+                         school_token=>$school_token,
+                         creationdate=>$time_stamp_AD,
+                       });
+        $user_count++;
+        # make sure that the room exists
+        my $user_token=&AD_get_name_tokened($user,$school_token,"examaccount");
+        my $room_token=&AD_get_name_tokened($room,$school_token,"room");
+        my $examaccount_token=$school_token."-".$DevelConf::examaccount;
+        &AD_group_create({ldap=>$ldap,
+                          root_dse=>$root_dse,
+                          group=>$room_token,
+                          ou=>$ou,
+                          school_token=>$school_token,
+                          type=>"room",
+                         });
+        # add examaccount to its room
+        &AD_group_addmember({ldap => $ldap,
+                             root_dse => $root_dse, 
+                             group => $room_token,
+                             addmember => $user_token,
+                            });   
         #system("/usr/sbin/sophomorix-useradd --examaccount $u --unix-group $g");
         #system("/usr/sbin/sophomorix-passwd -u $u --random --hide");
         #system("/usr/sbin/sophomorix-quota -u $u");
