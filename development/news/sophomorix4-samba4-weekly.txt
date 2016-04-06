@@ -9,6 +9,11 @@ Info über Enwicklungs-Entscheidungen
 
 Enwicklungs-Entscheidungen, die bald anstehen/Diskussion
 ------------------------------------------------------------
+- Name computer/workstation
+  -> für einen der beiden entscheiden:
+     workstations-datei -> computers-datei?
+  Oder besser hosts
+
 - Administrator aus Gruppe teachers herauslassen
   - sonstige spezial-Accounts?
 - Klassennamen bei Multischool-Umgebungen:

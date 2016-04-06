@@ -31,11 +31,6 @@ mailalias bei user? oder kann diese Mailadresse schon eingetragen werden
 ############################################################
 Tree
 ############################################################
-- now: every user is in the group students
-- future: 
-   - every adminclass is in the group students
-   - group students and teachers are in group school 
-
 
 Forbidden OU's: SCHOOL, SOPHOMORIX
 Forbidden tokens: multi, ---
@@ -54,6 +49,9 @@ sophomorix-project
 add groups with role 'project'
   - p_name (no school_token).
   - projects can contain students of all schools
+  - project name length
+  - p_longname: Better to use a description field instead
+
 
 
 add/move/kill
