@@ -1,3 +1,9 @@
+sophomorix4 (3.3.0-1) xenial-unstable; urgency=medium
+
+  * New upstream, sophomorix-project and workstation
+
+ -- jeff <bz@adler>  Wed, 06 Apr 2016 04:30:33 +0200
+
 sophomorix4 (3.2.3-1) xenial-unstable; urgency=medium
 
   * New upsteam, use ou instead of container
