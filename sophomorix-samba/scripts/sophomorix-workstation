@@ -568,7 +568,6 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
     foreach my $exam_account (@adding_examaccount){
         my $role="examaccount";
         my ($room,$user,@rest)=split(/;/,$exam_account);
-        print "   * Adding ExamAccount $add_count: $user in group $room\n";
         $plain_password=&get_plain_password($role,@passwort_zeichen);
         &AD_user_create({ldap=>$ldap, 
                          root_dse=>$root_dse,
@@ -619,7 +618,6 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
     foreach my $computer (@adding_computer){
         my ($room,$user,@rest)=split(/;/,$computer);
         #my $u_comp=$u."\$";
-        print "   * Adding workstation $ws_count: $user in group $room\n";
         &AD_workstation_create({ldap=>$ldap, 
                                 root_dse=>$root_dse,
                                 ws_count=>$ws_count,

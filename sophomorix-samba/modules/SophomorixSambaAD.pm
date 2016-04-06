@@ -176,8 +176,19 @@ sub AD_workstation_create {
     # make name uppercase
     my $name_uppercase=$name;
     $name_uppercase=~tr/a-z/A-Z/;
-    my $display_name=$name_uppercase;
-    my $smb_name=$name_uppercase."\$";
+
+    # make school-token uppercase
+    my $school_token_uppercase=$school_token;
+    $school_token_uppercase=~tr/a-z/A-Z/;
+
+
+    # names with tokens
+    my $room_token=&AD_get_name_tokened($room,$school_token,"roomws");
+    my $name_token=&AD_get_name_tokened($name_uppercase,
+                                        $school_token_uppercase,
+                                        "workstation");
+    my $display_name=$name_token;
+    my $smb_name=$name_token."\$";
 
     # dns
     my @dns_part_stripped=(); # without 'DC='
@@ -188,28 +199,32 @@ sub AD_workstation_create {
         push @dns_part_stripped, $part;
     }
     my $dns_name = join(".",@dns_part_stripped);
-    $dns_name=$name.".".$dns_name;
+    $dns_name=$name_token.".".$dns_name;
 
-    my @service_principal_name=("HOST/".$name_uppercase,"HOST/".$dns_name);
+    my @service_principal_name=("HOST/".$name_token,
+                                "HOST/".$dns_name,
+                                "RestrictedKrbHost/".$name_token,
+                                "RestrictedKrbHost/".$dns_name,
+                               );
 
-    my $room_token=&AD_get_name_tokened($room,$school_token,"roomws");
-    my $name_token=&AD_get_name_tokened($name,$school_token,"workstation");
     my $container=&AD_get_container($role,$room_token);
     my $dn_room = $container."OU=".$ou.",".$root_dse;
-    my $dn = "cn=".$name_token.",".$container."OU=".$ou.",".$root_dse;
+    my $dn = "CN=".$name_token.",".$container."OU=".$ou.",".$root_dse;
 
     if($Conf::log_level>=1){
-        &Sophomorix::SophomorixBase::print_title("Creating workstation $name:");
+        &Sophomorix::SophomorixBase::print_title(
+              "Creating workstation $ws_count: $name");
         print "   DN:                    $dn\n";
         print "   DN(Parent):            $dn_room\n";
-        print "   Name:                  $name_uppercase\n";
-        print "   DisplayName:           $display_name\n";
-        print "   OU:                    $ou >$room_token< >$name_token< \n";
+        print "   Name:                  $name_token\n";
+        print "   Room:                  $room_token\n";
+        print "   OU:                    $ou\n";
         print "   sAMAccountName:        $smb_name\n";
         print "   dNSHostName:           $dns_name\n";
         foreach my $entry (@service_principal_name){
             print "   servicePrincipalName:  $entry\n";
         }
+        print "\n";
     }
    $ldap->add($dn_room,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     my $result = $ldap->add( $dn,
@@ -219,6 +234,8 @@ sub AD_workstation_create {
                    'dNSHostName' => $dns_name,
 #                   'givenName'   => "Workstation",
 #                   'sn'   => "Account",
+                   'cn'   => $name_token,
+                    'accountExpires' => '9223372036854775807', # means never
                    'servicePrincipalName' => \@service_principal_name,
 #                   'unicodePwd' => $uni_password,
 #                   'sophomorixExitAdminClass' => "unknown", 
@@ -234,7 +251,6 @@ sub AD_workstation_create {
                    'sophomorixCreationDate' => $creationdate, 
                    'userAccountControl' => '4096',
                    'instanceType' => '4',
-                   'accountExpires' => '0',
                    'objectclass' => ['top', 'person',
                                      'organizationalPerson',
                                      'user','computer' ],
@@ -307,7 +323,8 @@ sub AD_user_create {
 
     if($Conf::log_level>=1){
         print "\n";
-        &Sophomorix::SophomorixBase::print_title("Creating User $user_count :");
+        &Sophomorix::SophomorixBase::print_title(
+              "Creating User $user_count : $login_token");
         print "   DN:                 $dn\n";
         print "   DN(Parent):         $dn_class\n";
         print "   Surname(ASCII):     $surname_ascii\n";
