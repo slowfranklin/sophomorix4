@@ -239,6 +239,14 @@ install-developer:
 	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/sophomorix.kill-1 $(TESTDATA)
 	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/workstations-1 $(TESTDATA)
 	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/classrooms-1 $(TESTDATA)
+#	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/workstations-2 $(TESTDATA)
+#	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/classrooms-2 $(TESTDATA)
+#	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/workstations-3 $(TESTDATA)
+#	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/classrooms-3 $(TESTDATA)
+#	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/workstations-4 $(TESTDATA)
+#	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/classrooms-4 $(TESTDATA)
+	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/workstations-5 $(TESTDATA)
+	@install -oroot -groot --mode=0644 sophomorix-developer/testdata/classrooms-5 $(TESTDATA)
 # installing sources.list examples
 #	@install -d $(TOOLS)/apt/s-lists
 #	@install -oroot -groot --mode=0644 sophomorix-developer/tools/apt/s-lists/*sources.list $(TOOLS)/apt/s-lists

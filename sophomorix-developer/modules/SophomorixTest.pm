@@ -28,8 +28,44 @@ $Data::Dumper::Terse = 1;
 @EXPORT = qw(
             AD_object_nonexist
             AD_test_object
-
+            AD_workstations_any
+            AD_examaccounts_any
             );
+
+
+sub AD_workstations_any {
+    my ($ldap,$root_dse) = @_;
+    my $mesg = $ldap->search( # perform a search
+                   base   => $root_dse,
+                   scope => 'sub',
+                   filter => '(&(objectClass=computer)(sophomorixRole=workstation))',
+                   attrs => ['sAMAccountName']
+                         );
+    my $max_user = $mesg->count; 
+    is ($max_user,0,"  * All workstations are deleted");
+    for( my $index = 0 ; $index < $max_user ; $index++) {
+        my $entry = $mesg->entry($index);
+        print "   * ",$entry->get_value('sAMAccountName'),"\n";
+    }
+}
+ 
+           
+sub AD_examaccounts_any {
+    my ($ldap,$root_dse) = @_;
+    $mesg = $ldap->search( # perform a search
+                   base   => $root_dse,
+                   scope => 'sub',
+                   filter => '(&(objectClass=user)(sophomorixRole=examaccount))',
+                   attrs => ['sAMAccountName',"sophomorixAdminClass"]
+                         );
+    my $max_user = $mesg->count; 
+    is ($max_user,0,"  * All ExamAccounts are deleted");
+    for( my $index = 0 ; $index < $max_user ; $index++) {
+        my $entry = $mesg->entry($index);
+            print "   * ",$entry->get_value('sAMAccountName'),
+                  "  sophomorixAdminClass:  ".$entry->get_value('sophomorixAdminClass')."\n";
+    }
+}
 
 
 

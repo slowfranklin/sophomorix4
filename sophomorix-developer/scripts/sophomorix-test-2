@@ -26,25 +26,31 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_group_create
                                  AD_group_addmember
                                  AD_user_kill
+                                 AD_workstation_kill
                                  AD_object_search
                                  AD_get_name_tokened
                                     );
 use Sophomorix::SophomorixTest qw(
                                  AD_object_nonexist
                                  AD_test_object
+                                 AD_workstations_any
+                                 AD_examaccounts_any
                                  );
 
 $Conf::log_level=1;
 my $help=0;
 
 my $copy_wsfile_1=0;
+my $copy_wsfile_2=0;
+my $copy_wsfile_3=0;
+my $copy_wsfile_4=0;
+my $copy_wsfile_5=0;
 my $test_ws_1=0;
+my $test_ws_2=0;
+my $test_ws_3=0;
+my $test_ws_4=0;
+my $test_ws_5=0;
 
-
-my $add_ws=0;
-my $test_add_ws=0;
-my $kill_ws=0;
-my $test_kill_ws=0;
 
 
 my $ou="";
@@ -64,6 +70,14 @@ my $testopt=GetOptions(
            "verbose|v+" => \$Conf::log_level,
            "copy-wsfile-1" => \$copy_wsfile_1,
            "test-ws-1" => \$test_ws_1,
+           "copy-wsfile-2" => \$copy_wsfile_2,
+           "test-ws-2" => \$test_ws_2,
+           "copy-wsfile-3" => \$copy_wsfile_3,
+           "test-ws-3" => \$test_ws_3,
+           "copy-wsfile-4" => \$copy_wsfile_4,
+           "test-ws-4" => \$test_ws_4,
+           "copy-wsfile-5" => \$copy_wsfile_5,
+           "test-ws-5" => \$test_ws_5,
   );
 
 
@@ -97,6 +111,14 @@ Step by step Test:
   Run the tests:
       sophomorix-test-2 --test-ws-1
 
+Step 2-4 are missing
+
+  Copy EMPTY workstations/classrooms file (Step 5):
+      sophomorix-test-2 --copy-wsfile-5
+  Import the file:
+      sophomorix-workstation
+  Run the tests:
+      sophomorix-test-2 --test-ws-5
 ');
    print "\n";
    exit;
@@ -112,7 +134,16 @@ my $host_workstation=$DevelConf::path_conf_host."/workstations";
 my $host_classroom=$DevelConf::path_conf_host."/classrooms";
 my $testdata="/usr/share/sophomorix-developer/testdata";
 my $wsfile_1=$testdata."/workstations-1";
+my $wsfile_2=$testdata."/workstations-2";
+my $wsfile_3=$testdata."/workstations-3";
+my $wsfile_4=$testdata."/workstations-4";
+my $wsfile_5=$testdata."/workstations-5";
+
 my $crfile_1=$testdata."/classrooms-1";
+my $crfile_2=$testdata."/classrooms-2";
+my $crfile_3=$testdata."/classrooms-3";
+my $crfile_4=$testdata."/classrooms-4";
+my $crfile_5=$testdata."/classrooms-5";
 
 
 
@@ -126,14 +157,16 @@ my $login_token;
 my $examaccount_token;
 
 
+############################################################
+# Step 1
+############################################################
+
 # --copy-wsfile-1
 if ($copy_wsfile_1==1){
-    # copy workstations_1
+    # copy workstations-1
     system("cp -v $wsfile_1 $host_workstation");
     system("cp -v $crfile_1 $host_classroom");
 }
-
-
 
 if ($test_ws_1==1){
     # j1008p01
@@ -192,18 +225,80 @@ if ($test_ws_1==1){
                   });
 }
 
+
+############################################################
+# Step 2
+############################################################
+# --copy-wsfile-2
+if ($copy_wsfile_2==1){
+    # copy workstations-2
+    system("cp -v $wsfile_2 $host_workstation");
+    system("cp -v $crfile_2 $host_classroom");
+}
+
+
+if ($test_ws_2==1){
+
+
+}
+
+
+############################################################
+# Step 3
+############################################################
+# --copy-wsfile-3
+if ($copy_wsfile_3==1){
+    # copy workstations-3
+    system("cp -v $wsfile_3 $host_workstation");
+    system("cp -v $crfile_3 $host_classroom");
+}
+
+
+if ($test_ws_3==1){
+
+
+}
+
+
+############################################################
+# Step 4
+############################################################
+# --copy-wsfile-4
+if ($copy_wsfile_4==1){
+    # copy workstations-4
+    system("cp -v $wsfile_4 $host_workstation");
+    system("cp -v $crfile_4 $host_classroom");
+}
+
+if ($test_ws_4==1){
+
+
+}
+
+
+############################################################
+# Step 5  empty file
+############################################################
+# --copy-wsfile-5
+if ($copy_wsfile_5==1){
+    # copy workstations-5
+    system("cp -v $wsfile_5 $host_workstation");
+    system("cp -v $crfile_5 $host_classroom");
+}
+
+
+if ($test_ws_5==1){
+    &AD_workstations_any($ldap,$root_dse);
+    &AD_examaccounts_any($ldap,$root_dse);
+}
+
+
+
 ############################################################
 # Delete Accounts
 ############################################################
-# --kill-ea  
-#if ($kill_ea==1){
-#    &AD_user_kill({ldap=>$ldap,
-#                   root_dse=>$root_dse,
-#                   login=>"bsz-j1010p01",
-#                   user_count=>1,
-#                   identifier=>$identifier_to_kill
-#                  });
-#}
+
+
 ############################################################
 # Check deletion
 ############################################################
