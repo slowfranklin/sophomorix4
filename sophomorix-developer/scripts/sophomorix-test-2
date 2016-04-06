@@ -89,7 +89,7 @@ Options
   -h  / --help
 
 Step by step Test:
-  Copy workstations file (Step 1):
+  Copy workstations/classrooms file (Step 1):
       sophomorix-test-2 --copy-wsfile-1
   Import the file:
       sophomorix-workstation
@@ -108,8 +108,12 @@ Step by step Test:
 # Check preliminaries
 ############################################################
 my $host_workstation=$DevelConf::path_conf_host."/workstations";
+my $host_classroom=$DevelConf::path_conf_host."/classrooms";
 my $testdata="/usr/share/sophomorix-developer/testdata";
 my $wsfile_1=$testdata."/workstations-1";
+my $crfile_1=$testdata."/classrooms-1";
+
+
 
 my $time_stamp_AD=&time_stamp_AD();
 my @passwort_zeichen=&get_passwd_charlist();
@@ -125,6 +129,7 @@ my $examaccount_token;
 if ($copy_wsfile_1==1){
     # copy workstations_1
     system("cp -v $wsfile_1 $host_workstation");
+    system("cp -v $crfile_1 $host_classroom");
 }
 
 
