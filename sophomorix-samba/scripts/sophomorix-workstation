@@ -586,6 +586,7 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
         my $role="examaccount";
         my ($room,$user,@rest)=split(/;/,$exam_account);
         $plain_password=&get_plain_password($role,@passwort_zeichen);
+	print "USER:  $user   ROOM:  $room\n";
         &AD_user_create({ldap=>$ldap, 
                          root_dse=>$root_dse,
                          user_count=>$add_count,
@@ -605,12 +606,18 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
                        });
         $add_count++;
         # make sure that the room exists
-        my $user_token=&AD_get_name_tokened($user,$school_token,"examaccount");
-        my $room_token=&AD_get_name_tokened($room,$school_token,"room");
+#        my $user_token=&AD_get_name_tokened($user,$school_token,"examaccount");
+#        my $room_token=&AD_get_name_tokened($room,$school_token,"room");
+
+        my $room_saved=$domcomputers_file{$user}{'ROOM'};
+
+
+
         my $examaccount_token=$school_token."-".$DevelConf::examaccount;
         &AD_group_create({ldap=>$ldap,
                           root_dse=>$root_dse,
-                          group=>$room_token,
+#                          group=>$room_token,
+                          group=>$room_saved,
                           ou=>$ou,
                           school_token=>$school_token,
                           type=>"room",
@@ -618,8 +625,10 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
         # add examaccount to its room
         &AD_group_addmember({ldap => $ldap,
                              root_dse => $root_dse, 
-                             group => $room_token,
-                             addmember => $user_token,
+#                             group => $room_token,
+                             group => $room_saved,
+                             addmember => $user,
+#                             addmember => $user_token,
                             });   
         #system("/usr/sbin/sophomorix-useradd --examaccount $u --unix-group $g");
         #system("/usr/sbin/sophomorix-passwd -u $u --random --hide");

@@ -370,12 +370,15 @@ sub AD_user_create {
     my $user_principal_name = $login."\@"."linuxmuster.local";
     # dn
 
-    my $group_token=&AD_get_name_tokened($group,$school_token,$type);
-    my $login_token=&AD_get_name_tokened($login,$school_token,$role);
-    my $container=&AD_get_container($role,$group_token);
+#    my $group_token=&AD_get_name_tokened($group,$school_token,$type);
+#    my $login_token=&AD_get_name_tokened($login,$school_token,$role);
+
+#    my $container=&AD_get_container($role,$group_token);
+    my $container=&AD_get_container($role,$group);
 
     my $dn_class = $container."OU=".$ou.",".$root_dse;
-    my $dn = "cn=".$login_token.",".$container."OU=".$ou.",".$root_dse;
+#    my $dn = "cn=".$login_token.",".$container."OU=".$ou.",".$root_dse;
+    my $dn = "cn=".$login.",".$container."OU=".$ou.",".$root_dse;
  
     # password generation
     # build the conversion map from your local character set to Unicode    
@@ -385,8 +388,10 @@ sub AD_user_create {
 
     if($Conf::log_level>=1){
         print "\n";
+#        &Sophomorix::SophomorixBase::print_title(
+#              "Creating User $user_count : $login_token");
         &Sophomorix::SophomorixBase::print_title(
-              "Creating User $user_count : $login_token");
+              "Creating User $user_count : $login");
         print "   DN:                 $dn\n";
         print "   DN(Parent):         $dn_class\n";
         print "   Surname(ASCII):     $surname_ascii\n";
@@ -399,11 +404,13 @@ sub AD_user_create {
         print "   School Token:       $school_token\n"; # Organisatinal Unit
         print "   Role(User):         $role\n";
         print "   Type(Group):        $type\n";
-        print "   Group:              $group ($group_token)\n"; # lehrer oder klasse
+#        print "   Group:              $group ($group_token)\n"; # lehrer oder klasse
+        print "   Group:              $group\n"; # lehrer oder klasse
         print "   Unix-gid:           $wunsch_gid\n"; # lehrer oder klasse
         #print "   GECOS:              $gecos\n";
         #print "   Login (to check):   $login_name_to_check\n";
-        print "   Login (check OK):   $login ($login_token)\n";
+#        print "   Login (check OK):   $login ($login_token)\n";
+        print "   Login (check OK):   $login\n";
         print "   Password:           $plain_password\n";
         # sophomorix stuff
         print "   Creationdate:       $creationdate\n";
@@ -414,7 +421,8 @@ sub AD_user_create {
     $ldap->add($dn_class,attr => ['objectclass' => ['top', 'organizationalUnit']]);
     my $result = $ldap->add( $dn,
                    attr => [
-                   'sAMAccountName' => $login_token,
+#                   'sAMAccountName' => $login_token,
+                   'sAMAccountName' => $login,
                    'givenName'   => $firstname_utf8,
                    'sn'   => $surname_utf8,
                    'displayName'   => [$display_name],
@@ -423,7 +431,8 @@ sub AD_user_create {
                    'sophomorixExitAdminClass' => "unknown", 
                    'sophomorixUnid' => $unid,
                    'sophomorixStatus' => "U",
-                   'sophomorixAdminClass' => $group_token,    
+#                   'sophomorixAdminClass' => $group_token,    
+                   'sophomorixAdminClass' => $group,    
                    'sophomorixFirstPassword' => $plain_password, 
                    'sophomorixFirstnameASCII' => $firstname_ascii,
                    'sophomorixSurnameASCII'  => $surname_ascii,
