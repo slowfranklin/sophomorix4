@@ -431,12 +431,16 @@ while(<SOPHOMORIXADD>){
         $ou_created{$ou}="already created";
    }
 
+   my $group_token=&AD_get_name_tokened($class_group,$school_token,"adminclass");
+   my $login_token=&AD_get_name_tokened($login_check_ok,$school_token,$role);
    &AD_user_create({ldap=>$ldap,
                     root_dse=>$root_dse, 
                     user_count=>$user_count,
                     identifier=>$identifier,
-                    login=>$login_check_ok,
-                    group=>$class_group,
+                    login=>$login_token,
+#                    login=>$login_check_ok,
+#                    group=>$class_group,
+                    group=>$group_token,
                     firstname_ascii=>$firstname_ascii,
                     surname_ascii=>$surname_ascii,
                     firstname_utf8=>$firstname_utf8,
@@ -485,7 +489,7 @@ while(<SOPHOMORIXADD>){
 
   # 5. Add user to all groups she is in (files must exist to create links)
   #&add_newuser_to_her_projects($login_check_ok,$class_group);
-  my $group_token=&AD_get_name_tokened($class_group,$school_token,"adminclass");
+#  my $group_token=&AD_get_name_tokened($class_group,$school_token,"adminclass");
   &AD_group_create({ldap=>$ldap,
                     root_dse=>$root_dse,
                     group=>$group_token,
@@ -497,7 +501,8 @@ while(<SOPHOMORIXADD>){
   &AD_group_addmember({ldap => $ldap,
                        root_dse => $root_dse, 
                        group => $group_token,
-                       addmember => $login_check_ok,
+#                       addmember => $login_check_ok,
+                       addmember => $login_token,
                       });   
 
 #    if ($role eq "student"){
