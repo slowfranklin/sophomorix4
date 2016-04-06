@@ -460,7 +460,7 @@ if ($info==1){
 # ===========================================================================
 # checking data
 # ===========================================================================
-print "Checking $host_workstation for syntax errors ...\n";
+&print_title("Checking $host_workstation for syntax errors ...");
 if (not -e ${host_workstation}){
     print "\n$host_workstation does not exist\n\n";
     exit 1;
@@ -925,11 +925,13 @@ sub analyze_line {
         # use tokened names 
         my $host_token=&AD_get_name_tokened($host,$school_token,"examaccount");
         my $room_token=&AD_get_name_tokened($room,$school_token,"roomws");
-        my $name_ws_token=&AD_get_name_tokened($host,$school_token,"workstation");
+        my $ws_token=&AD_get_name_tokened($host,$school_token,"workstation");
+        my $ws_token_account=$ws_token."\$";
         if($Conf::log_level>=2){
             print "ExamAccount:  $host  -->  $host_token\n";
             print "Room:         $room  -->  $room_token\n";
-            print "Workstation:  $host  -->  $name_ws_token\n";
+            print "Workstation:  $host  -->  $ws_token\n";
+            print "Workstation\$: $host  -->  $ws_token_account\n";
             print "\n";
 	}
 
@@ -961,8 +963,9 @@ sub analyze_line {
         # $account_flag==1 (create account) 1and all other values
         if ($account_flag==1){
             $hosts_file{$host_token}=$line_correct;
-            my $computer=$host_token."\$";
-            $hosts_file{$computer}=$line_correct;
+            #my $computer=$host_token."\$";
+            #$hosts_file{$computer}=$line_correct;
+            $hosts_file{$ws_token_account}=$line_correct;
         } else {
             # no need to check that it should be added
             return;
@@ -981,8 +984,9 @@ sub analyze_line {
         } 
 
         # check computer account
-        my $host_computer = $host_token."\$";
-        if (not exists $domcomputers_system{$host_computer} ){
+#        my $host_computer = $host_token."\$";
+#        if (not exists $domcomputers_system{$host_computer} ){
+        if (not exists $domcomputers_system{$ws_token_account} ){
             # nonexisting --> add account
             &push_add_computer($line_correct);
         }

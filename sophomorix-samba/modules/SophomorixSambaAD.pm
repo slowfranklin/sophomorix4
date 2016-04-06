@@ -809,11 +809,13 @@ sub AD_workstation_fetch {
                    attrs => ['sAMAccountName']
                          );
     my $max_user = $mesg->count; 
-    &Sophomorix::SophomorixBase::print_title("$max_user Workstations found");
+    &Sophomorix::SophomorixBase::print_title("$max_user Workstations found in AD");
 
     for( my $index = 0 ; $index < $max_user ; $index++) {
         my $entry = $mesg->entry($index);
-        print "   * ",$entry->get_value('sAMAccountName'),"\n";
+        if($Conf::log_level>=2){
+            print "   * ",$entry->get_value('sAMAccountName'),"\n";
+        }
         $domcomputers_system{$entry->get_value('sAMAccountName')}="domcomputers";
     }
 
@@ -859,11 +861,14 @@ sub AD_workstation_fetch {
                    attrs => ['sAMAccountName',"sophomorixAdminClass"]
                          );
     $max_user = $mesg->count; 
-    &Sophomorix::SophomorixBase::print_title("$max_user ExamAccounts found");
+    &Sophomorix::SophomorixBase::print_title("$max_user ExamAccounts found in AD");
 
     for( my $index = 0 ; $index < $max_user ; $index++) {
         my $entry = $mesg->entry($index);
-        print "   * ",$entry->get_value('sAMAccountName'),"  in Room  ".$entry->get_value('sophomorixAdminClass')."\n";
+        if($Conf::log_level>=2){
+            print "   * ",$entry->get_value('sAMAccountName'),
+                  "  in Room  ".$entry->get_value('sophomorixAdminClass')."\n";
+        }
         $examaccounts_system{$entry->get_value('sAMAccountName')}=$entry->get_value('sophomorixAdminClass');
     }
 
