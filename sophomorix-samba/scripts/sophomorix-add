@@ -438,8 +438,6 @@ while(<SOPHOMORIXADD>){
                     user_count=>$user_count,
                     identifier=>$identifier,
                     login=>$login_token,
-#                    login=>$login_check_ok,
-#                    group=>$class_group,
                     group=>$group_token,
                     firstname_ascii=>$firstname_ascii,
                     surname_ascii=>$surname_ascii,
@@ -489,7 +487,6 @@ while(<SOPHOMORIXADD>){
 
   # 5. Add user to all groups she is in (files must exist to create links)
   #&add_newuser_to_her_projects($login_check_ok,$class_group);
-#  my $group_token=&AD_get_name_tokened($class_group,$school_token,"adminclass");
   &AD_group_create({ldap=>$ldap,
                     root_dse=>$root_dse,
                     group=>$group_token,
@@ -501,7 +498,6 @@ while(<SOPHOMORIXADD>){
   &AD_group_addmember({ldap => $ldap,
                        root_dse => $root_dse, 
                        group => $group_token,
-#                       addmember => $login_check_ok,
                        addmember => $login_token,
                       });   
 

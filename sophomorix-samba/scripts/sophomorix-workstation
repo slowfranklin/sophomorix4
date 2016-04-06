@@ -606,17 +606,11 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
                        });
         $add_count++;
         # make sure that the room exists
-#        my $user_token=&AD_get_name_tokened($user,$school_token,"examaccount");
-#        my $room_token=&AD_get_name_tokened($room,$school_token,"room");
-
+        # use the saved, tokened value
         my $room_saved=$domcomputers_file{$user}{'ROOM'};
-
-
-
         my $examaccount_token=$school_token."-".$DevelConf::examaccount;
         &AD_group_create({ldap=>$ldap,
                           root_dse=>$root_dse,
-#                          group=>$room_token,
                           group=>$room_saved,
                           ou=>$ou,
                           school_token=>$school_token,
@@ -625,10 +619,8 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
         # add examaccount to its room
         &AD_group_addmember({ldap => $ldap,
                              root_dse => $root_dse, 
-#                             group => $room_token,
                              group => $room_saved,
                              addmember => $user,
-#                             addmember => $user_token,
                             });   
         #system("/usr/sbin/sophomorix-useradd --examaccount $u --unix-group $g");
         #system("/usr/sbin/sophomorix-passwd -u $u --random --hide");
@@ -649,7 +641,7 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
     my $ws_count=1;
     foreach my $computer (@adding_computer){
         my ($room,$user,@rest)=split(/;/,$computer);
-        # using previously saved
+        # using saved, tokened values
         my $room_saved=$domcomputers_file{$user}{'ROOM'};
         my $ws_saved=$domcomputers_file{$user}{'WORKSTATION'};
         &AD_workstation_create({ldap=>$ldap, 
