@@ -114,6 +114,8 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_get_ou_tokened
                                  AD_get_name_tokened
                                  AD_workstation_fetch
+                                 AD_user_kill
+                                 AD_workstation_kill
                                  get_forbidden_logins
                                     );
 
@@ -568,10 +570,7 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
                        root_dse=>$root_dse,
                        login=>$exam_account,
                        user_count=>$kill_count,
-#                   identifier=>$identifier_to_kill
                      });
-
-
         #system("/usr/sbin/sophomorix-kill --killuser $exam_account");
     }
     &print_title("Adding ExamAccounts:");
@@ -620,8 +619,14 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
         #system("/usr/sbin/sophomorix-quota -u $u");
     }
     &print_title("Killing Workstations:");
+    my $count=1;
     foreach my $computer (@killing_computer){
-        print "   * Killing Workstation $computer ...\n";
+        &AD_workstation_kill({ldap=>$ldap,
+                              root_dse=>$root_dse,
+                              workstation=>$computer,
+                              count=>$count,
+                     });
+        $count++;
         #system("/usr/sbin/sophomorix-kill --killuser $computer");
     }
     &print_title("Adding Workstations:");
@@ -641,8 +646,6 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
                                 creationdate=>$time_stamp_AD,
                               });
         $ws_count++;
-
-
         #system("/usr/sbin/sophomorix-useradd --computer $u_comp");
         #system("/usr/sbin/sophomorix-passwd --force -u $u_comp --pass $pass");
     }
@@ -963,8 +966,6 @@ sub analyze_line {
         # $account_flag==1 (create account) 1and all other values
         if ($account_flag==1){
             $hosts_file{$host_token}=$line_correct;
-            #my $computer=$host_token."\$";
-            #$hosts_file{$computer}=$line_correct;
             $hosts_file{$ws_token_account}=$line_correct;
         } else {
             # no need to check that it should be added
@@ -984,8 +985,6 @@ sub analyze_line {
         } 
 
         # check computer account
-#        my $host_computer = $host_token."\$";
-#        if (not exists $domcomputers_system{$host_computer} ){
         if (not exists $domcomputers_system{$ws_token_account} ){
             # nonexisting --> add account
             &push_add_computer($line_correct);

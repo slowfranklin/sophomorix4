@@ -32,6 +32,7 @@ $Data::Dumper::Terse = 1;
             AD_workstation_create
             AD_user_move
             AD_user_kill
+            AD_workstation_kill
             AD_group_create
             AD_group_kill
             AD_group_addmember
@@ -155,6 +156,34 @@ sub AD_user_kill {
     } else {
         print "   * User $user nonexisting ($count results)\n";
         return;
+    }
+}
+
+
+sub AD_workstation_kill {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $root_dse = $arg_ref->{root_dse};
+    my $ws = $arg_ref->{workstation};
+    my $count = $arg_ref->{count};
+    &Sophomorix::SophomorixBase::print_title("Killing workstation $ws ($count):");
+    my $dn="";
+    my $filter="(&(objectClass=computer)(sophomorixRole=workstation)(sAMAccountName=".$ws."))";
+    my $mesg = $ldap->search( # perform a search
+                   base   => $root_dse,
+                   scope => 'sub',
+                   filter => $filter,
+                   attrs => ['sAMAccountName']
+                         );
+    &AD_debug_logdump($mesg,2,(caller(0))[3]);
+    my $count_result = $mesg->count;
+    if ($count_result==1){
+        my ($entry,@entries) = $mesg->entries;
+        $dn = $entry->dn();
+        print "   * DN: $dn\n";
+        my $mesg = $ldap->delete( $dn );
+    } else {
+        print "   * WARNING: $ws not found/to many items ($count_result results)\n";     
     }
 }
 
