@@ -108,6 +108,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_bind_admin
                                  AD_unbind_admin
                                  AD_user_create
+                                 AD_workstation_create
                                  AD_group_create
                                  AD_group_addmember
                                  AD_get_ou_tokened
@@ -130,7 +131,6 @@ $Conf::log_level=1;
 my $help=0;
 my $info=0;
 my $no_sync=0;
-my $user_count=0;
 my $birthdate="1970-01-01";
 my $time_stamp_AD=&time_stamp_AD();
 my @passwort_zeichen=&get_passwd_charlist();
@@ -550,20 +550,29 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
         $ou_created{$ou}="already created";
     }
     &print_title("Killing ExamAccounts:");
+    my $kill_count=1;
     foreach my $exam_account (@killing_examaccount){
         print "   * Killing ExamAccount $exam_account ...\n";
+        &AD_user_kill({ldap=>$ldap,
+                       root_dse=>$root_dse,
+                       login=>$exam_account,
+                       user_count=>$kill_count,
+#                   identifier=>$identifier_to_kill
+                     });
+
+
         #system("/usr/sbin/sophomorix-kill --killuser $exam_account");
     }
     &print_title("Adding ExamAccounts:");
-    $user_count=1;
+    my $add_count=1;
     foreach my $exam_account (@adding_examaccount){
         my $role="examaccount";
         my ($room,$user,@rest)=split(/;/,$exam_account);
-        print "   * Adding ExamAccount $user_count: $user in group $room\n";
+        print "   * Adding ExamAccount $add_count: $user in group $room\n";
         $plain_password=&get_plain_password($role,@passwort_zeichen);
         &AD_user_create({ldap=>$ldap, 
                          root_dse=>$root_dse,
-                         user_count=>$user_count,
+                         user_count=>$add_count,
                          login=>$user,
                          group=>$room,
                          firstname_ascii=>"Exam",
@@ -578,7 +587,7 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
                          school_token=>$school_token,
                          creationdate=>$time_stamp_AD,
                        });
-        $user_count++;
+        $add_count++;
         # make sure that the room exists
         my $user_token=&AD_get_name_tokened($user,$school_token,"examaccount");
         my $room_token=&AD_get_name_tokened($room,$school_token,"room");
@@ -606,10 +615,25 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
         #system("/usr/sbin/sophomorix-kill --killuser $computer");
     }
     &print_title("Adding Workstations:");
+    my $ws_count=1;
     foreach my $computer (@adding_computer){
-        my ($g,$u,@rest)=split(/;/,$computer);
-        my $u_comp=$u."\$";
-        print "   * Adding workstation $u_comp\n";
+        my ($room,$user,@rest)=split(/;/,$computer);
+        #my $u_comp=$u."\$";
+        print "   * Adding workstation $ws_count: $user in group $room\n";
+        &AD_workstation_create({ldap=>$ldap, 
+                                root_dse=>$root_dse,
+                                ws_count=>$ws_count,
+                                name=>$user,
+                                room=>$room,
+                                ou=>$ou,
+                                role=>$role,
+			        type=>"roomws",
+                                school_token=>$school_token,
+                                creationdate=>$time_stamp_AD,
+                              });
+        $ws_count++;
+
+
         #system("/usr/sbin/sophomorix-useradd --computer $u_comp");
         #system("/usr/sbin/sophomorix-passwd --force -u $u_comp --pass $pass");
     }

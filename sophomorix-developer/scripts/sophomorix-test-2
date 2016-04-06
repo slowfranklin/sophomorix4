@@ -21,6 +21,7 @@ use Sophomorix::SophomorixSambaAD qw(
                                  AD_bind_admin
                                  AD_unbind_admin
                                  AD_user_create
+                                 AD_workstation_create
                                  AD_group_create
                                  AD_group_addmember
                                  AD_user_kill
@@ -35,15 +36,15 @@ use Sophomorix::SophomorixTest qw(
 $Conf::log_level=1;
 my $help=0;
 
+my $copy_wsfile_1=0;
+my $test_ws_1=0;
+
+
 my $add_ws=0;
 my $test_add_ws=0;
 my $kill_ws=0;
 my $test_kill_ws=0;
 
-my $add_ea=0;
-my $test_add_ea=0;
-my $kill_ea=0;
-my $test_kill_ea=0;
 
 my $ou="";
 my $school_token="";
@@ -54,20 +55,18 @@ my $role="";
 
 my $login="";
 my $plain_password;
-my $user_count=0;
+my $ws_count=0;
 my $birthdate="1970-01-01";
 
 my $testopt=GetOptions(
            "help|h" => \$help,
            "verbose|v+" => \$Conf::log_level,
+           "copy-wsfile-1" => \$copy_wsfile_1,
+           "test-ws-1" => \$test_ws_1,
            "add-ws" => \$add_ws,
            "test-add-ws" => \$test_add_ws,
            "kill-ws" => \$kill_ws,
            "test-kill-ws" => \$test_kill_ws,
-           "add-ea" => \$add_ea,
-           "test-add-ea" => \$test_add_ea,
-           "kill-ea" => \$kill_ea,
-           "test-kill-ea" => \$test_kill_ea,
   );
 
 
@@ -79,7 +78,6 @@ my $testopt=GetOptions(
 
 my ($ldap,$root_dse) = &AD_bind_admin();
 
-my $testdata="/usr/share/sophomorix-developer/testdata";
 
 
 # --help
@@ -94,15 +92,13 @@ sophomorix-test-2 tests the addition of ExamAccounts and workstation accounts.
 Options
   -h  / --help
 
-  Exam Accounts
-  --add-ea  
-    add Exam Accounts
-  --test-add-ea
-    test Exam Accounts
-  --kill-ea
-    kill Exam Accounts
-  --test-kill-ea
-    test killed Exam Accounts
+Step by step Test:
+  Copy workstations file (Step 1):
+      sophomorix-test-2 --copy-wsfile-1
+  Import the file:
+      sophomorix-workstation
+  Run the tests:
+      sophomorix-test-2 --test-ws-1
 
   Workstation Accounts:
   --add-ws  
@@ -125,6 +121,10 @@ Options
 ############################################################
 # Check preliminaries
 ############################################################
+my $host_workstation=$DevelConf::path_conf_host."/workstations";
+my $testdata="/usr/share/sophomorix-developer/testdata";
+my $wsfile_1=$testdata."/workstations-1";
+
 my $time_stamp_AD=&time_stamp_AD();
 my @passwort_zeichen=&get_passwd_charlist();
 # ou's that have been created in this script
@@ -134,19 +134,75 @@ my $room_token;
 my $login_token;
 my $examaccount_token;
 
+
+# --copy-wsfile-1
+if ($copy_wsfile_1==1){
+    # copy workstations_1
+    system("cp -v $wsfile_1 $host_workstation");
+}
+
+
+
+if ($test_ws_1==1){
+    # j1010p01
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=bsz-j1008p01,OU=bsz-j1008,OU=ExamAccounts,OU=BSZLEO,".$root_dse,
+                   #####
+                   displayName=>"Exam Account",
+                   givenName=>"Exam",
+                   name=>"bsz-j1008p01",
+                   sAMAccountname=>"bsz-j1008p01",
+                   sn=>"Account",
+                   sophomorixAdminClass => "bsz-j1008",
+                   sophomorixExitAdminClass => "unknown",
+                   #sophomorixFirstPassword => "Muster!",
+                   sophomorixFirstnameASCII => "Exam",
+                   sophomorixSurnameASCII  => "Account",
+                   sophomorixRole => "examaccount",
+                   sophomorixSchoolPrefix => "bsz",
+                   sophomorixSchoolname => "BSZLEO",
+                   memberOf => "bsz-j1008",
+                   not_memberOf => "bsz-students,teachers,bsz-teachers,lin-teachers",
+                  });
+    ##### Testing the exam accounts room
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=bsz-j1008,OU=Rooms,OU=BSZLEO,".$root_dse,
+                   sAMAccountname=>"bsz-j1008",
+                   memberOf => "bsz-examaccounts",
+                   not_memberOf => "bsz-teachers",
+                  });
+    ##### Testing the examaccounts <token>-examaccounts group
+    &AD_test_object({ldap=>$ldap,
+                   dn=>"CN=bsz-examaccounts,OU=Rooms,OU=BSZLEO,".$root_dse,
+                   sAMAccountname=>"bsz-examaccounts",
+                   memberOf => "multi-examaccounts",
+                   not_memberOf => "teachers,students",
+                  });
+
+}
+
+
+
 ############################################################
 # Add Exam Accounts
 ############################################################
-# --add-ea  
-if ($add_ea==1){
+
+
+
+
+############################################################
+# Add Workstations
+############################################################
+# --add-ws  
+if ($add_ws==1){
     $ou="BSZLEO";
     $school_token="bsz";
     $room="j1010";
     $computer="p01";
-    $role="examaccount";
-    $plain_password=&get_plain_password($role,@passwort_zeichen);
+    $role="workstation";
+    #$plain_password=&get_plain_password($role,@passwort_zeichen);
     # generate
-    $user_count++;
+    $ws_count++;
     $login=$room.$computer;
 
 
@@ -159,20 +215,20 @@ if ($add_ea==1){
         $ou_created{$ou}="already created";
     }
 
-    &AD_user_create({ldap=>$ldap, 
+    &AD_workstation_create({ldap=>$ldap, 
                      root_dse=>$root_dse,
-                     user_count=>$user_count,
-                     login=>$login,
-                     group=>$room,
-                     firstname_ascii=>"Exam",
-                     surname_ascii=>"Account",
-                     firstname_utf8=>"Exam",
-                     surname_utf8=>"Account",
-                     birthdate=>$birthdate,
-                     plain_password=>$plain_password,
+                     ws_count=>$ws_count,
+                     name=>$login,
+                     room=>$room,
+#                     firstname_ascii=>"Exam",
+#                     surname_ascii=>"Account",
+#                     firstname_utf8=>"Exam",
+#                     surname_utf8=>"Account",
+#                     birthdate=>$birthdate,
+#                     plain_password=>$plain_password,
                      ou=>$ou,
-                     role=>"examaccount",
-                     type=>"room",
+                     role=>$role,
+			    type=>"roomws",
                      school_token=>$school_token,
                      creationdate=>$time_stamp_AD,
                    });
@@ -182,69 +238,23 @@ if ($add_ea==1){
   $room_token=&AD_get_name_tokened($room,$school_token,"room");
   $examaccount_token=$school_token."-".$DevelConf::examaccount;
   
-  &AD_group_create({ldap=>$ldap,
-                    root_dse=>$root_dse,
-                    group=>$room_token,
-                    ou=>$ou,
-                    school_token=>$school_token,
-                    type=>"room",
-                   });
-  # add examaccount to its room
-  &AD_group_addmember({ldap => $ldap,
-                       root_dse => $root_dse, 
-                       group => $room_token,
-                       addmember => $login_token,
-                      });   
+#  &AD_group_create({ldap=>$ldap,
+#                    root_dse=>$root_dse,
+#                    group=>$room_token,
+#                    ou=>$ou,
+#                    school_token=>$school_token,
+#                    type=>"room",
+#                   });
+#  # add examaccount to its room
+#  &AD_group_addmember({ldap => $ldap,
+#                       root_dse => $root_dse, 
+#                       group => $room_token,
+#                       addmember => $login_token,
+#                      });   
 }
 
 
 
-
-############################################################
-# Test Exam Accounts
-############################################################
-# --test-add-ea  
-if ($test_add_ea==1){    # j1010p01
-    &AD_test_object({ldap=>$ldap,
-                   dn=>"CN=bsz-j1010p01,CN=bsz-j1010,CN=ExamAccounts,OU=BSZLEO,".$root_dse,
-                   #####
-                   displayName=>"Exam Account",
-                   givenName=>"Exam",
-                   name=>"bsz-j1010p01",
-                   sAMAccountname=>"bsz-j1010p01",
-                   sn=>"Account",
-                   sophomorixAdminClass => "bsz-j1010",
-                   sophomorixExitAdminClass => "unknown",
-                   #sophomorixFirstPassword => "Muster!",
-                   sophomorixFirstnameASCII => "Exam",
-                   sophomorixSurnameASCII  => "Account",
-                   sophomorixRole => "examaccount",
-                   sophomorixSchoolPrefix => "bsz",
-                   sophomorixSchoolname => "BSZLEO",
-                   memberOf => "bsz-j1010",
-                   not_memberOf => "bsz-students,teachers,bsz-teachers,lin-teachers",
-                  });
-    ##### Testing the exam accounts room
-    &AD_test_object({ldap=>$ldap,
-                   dn=>"CN=bsz-j1010,CN=Rooms,OU=BSZLEO,".$root_dse,
-                   sAMAccountname=>"bsz-j1010",
-                   memberOf => "bsz-examaccounts",
-                   not_memberOf => "bsz-teachers",
-                  });
-    ##### Testing the examaccounts <token>-examaccounts group
-    &AD_test_object({ldap=>$ldap,
-                   dn=>"CN=bsz-examaccounts,CN=Rooms,OU=BSZLEO,".$root_dse,
-                   sAMAccountname=>"bsz-examaccounts",
-                   memberOf => "examaccounts",
-                   not_memberOf => "teachers,students",
-                  });
-
-}
-
-
-############################################################
-# Add Workstations
-############################################################
 
 
 
@@ -258,27 +268,26 @@ if ($test_add_ea==1){    # j1010p01
 # Delete Accounts
 ############################################################
 # --kill-ea  
-if ($kill_ea==1){
-    &AD_user_kill({ldap=>$ldap,
-                   root_dse=>$root_dse,
-                   login=>"bsz-j1010p01",
-                   user_count=>1,
+#if ($kill_ea==1){
+#    &AD_user_kill({ldap=>$ldap,
+#                   root_dse=>$root_dse,
+#                   login=>"bsz-j1010p01",
+#                   user_count=>1,
 #                   identifier=>$identifier_to_kill
-                  });
-
-}
+#                  });
+#}
 ############################################################
 # Check deletion
 ############################################################
 
 
-# --test-kill-ea  
-if ($test_kill_ea==1){
-
-&AD_object_nonexist($ldap,$root_dse,"user","j1010p01");
-&AD_object_nonexist($ldap,$root_dse,"user","j1010p02");
-
-}
+## --test-kill-ea  
+#if ($test_kill_ea==1){
+#
+#&AD_object_nonexist($ldap,$root_dse,"user","j1010p01");
+#&AD_object_nonexist($ldap,$root_dse,"user","j1010p02");
+#
+#}
 
 &AD_unbind_admin($ldap);
 

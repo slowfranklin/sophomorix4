@@ -28,6 +28,7 @@ $Data::Dumper::Terse = 1;
             AD_bind_admin
             AD_unbind_admin
             AD_user_create
+            AD_workstation_create
             AD_user_move
             AD_user_kill
             AD_group_create
@@ -159,6 +160,92 @@ sub AD_group_kill {
     }
 }
 
+sub AD_workstation_create {
+    my ($arg_ref) = @_;
+    my $ldap = $arg_ref->{ldap};
+    my $root_dse = $arg_ref->{root_dse};
+    my $name = $arg_ref->{name};
+    my $room = $arg_ref->{room};
+    my $role = $arg_ref->{role};
+    my $ws_count = $arg_ref->{ws_count};
+    my $ou = $arg_ref->{ou};
+    my $school_token = $arg_ref->{school_token};
+    my $creationdate = $arg_ref->{creationdate};
+
+    # calculation
+    # make name uppercase
+    my $name_uppercase=$name;
+    $name_uppercase=~tr/a-z/A-Z/;
+    my $display_name=$name_uppercase;
+    my $smb_name=$name_uppercase."\$";
+
+    # dns
+    my @dns_part_stripped=(); # without 'DC='
+    my @dns_part=split(/,/,$root_dse);
+    foreach my $part (@dns_part){
+        $part=~s/DC=//g;
+        #print "PART: $part\n";
+        push @dns_part_stripped, $part;
+    }
+    my $dns_name = join(".",@dns_part_stripped);
+    $dns_name=$name.".".$dns_name;
+
+    my @service_principal_name=("HOST/".$name_uppercase,"HOST/".$dns_name);
+
+    my $room_token=&AD_get_name_tokened($room,$school_token,"roomws");
+    my $name_token=&AD_get_name_tokened($name,$school_token,"workstation");
+    my $container=&AD_get_container($role,$room_token);
+    my $dn_room = $container."OU=".$ou.",".$root_dse;
+    my $dn = "cn=".$name_token.",".$container."OU=".$ou.",".$root_dse;
+
+    if($Conf::log_level>=1){
+        &Sophomorix::SophomorixBase::print_title("Creating workstation $name:");
+        print "   DN:                    $dn\n";
+        print "   DN(Parent):            $dn_room\n";
+        print "   Name:                  $name_uppercase\n";
+        print "   DisplayName:           $display_name\n";
+        print "   DisplayName:           $display_name\n";
+        print "   sAMAccountName:        $smb_name\n";
+        print "   dNSHostName:           $dns_name\n";
+        foreach my $entry (@service_principal_name){
+            print "   servicePrincipalName:  $entry\n";
+        }
+    }
+   $ldap->add($dn_room,attr => ['objectclass' => ['top', 'organizationalUnit']]);
+    my $result = $ldap->add( $dn,
+                   attr => [
+                   'sAMAccountName' => $smb_name,
+                   'displayName' => $display_name,
+                   'dNSHostName' => $dns_name,
+#                   'givenName'   => "Workstation",
+#                   'sn'   => "Account",
+                   'servicePrincipalName' => \@service_principal_name,
+#                   'unicodePwd' => $uni_password,
+#                   'sophomorixExitAdminClass' => "unknown", 
+#                   'sophomorixUnid' => $unid,
+#                   'sophomorixStatus' => "U",
+#                   'sophomorixAdminClass' => $group_token,    
+#                   'sophomorixFirstPassword' => $plain_password, 
+#                   'sophomorixFirstnameASCII' => $firstname_ascii,
+#                   'sophomorixSurnameASCII'  => $surname_ascii,
+                   'sophomorixRole' => "workstation",
+                   'sophomorixSchoolPrefix' => $school_token,
+                   'sophomorixSchoolname' => $ou,
+                   'sophomorixCreationDate' => $creationdate, 
+                   'userAccountControl' => '4096',
+                   'instanceType' => '4',
+                   'accountExpires' => '0',
+                   'objectclass' => ['top', 'person',
+                                     'organizationalPerson',
+                                     'user','computer' ],
+#                   'objectclass' => \@objectclass,
+                           ]
+                           );
+    $result->code && warn "Failed to add entry: ", $result->error ;
+    &AD_debug_logdump($result,2,(caller(0))[3]);
+}
+
+
 
 
 sub AD_user_create {
@@ -183,28 +270,6 @@ sub AD_user_create {
     my $role = $arg_ref->{role};
     my $type = $arg_ref->{type};
     my $creationdate = $arg_ref->{creationdate};
-
-    # Setting things for users role
-    if ($role eq "student"){
-
-    } elsif ($role eq "teacher"){
-
-    } elsif ($role eq "examaccount"){
-
-    } elsif ($role eq "workstation"){
-
-    }
-
-    # Setting things for groups type
-    if ($type eq "adminclass"){
-
-    } elsif ($type eq "project"){
-
-    } elsif ($type eq "room"){
-
-    } elsif ($type eq "roomws"){
-
-    }
 
     # set defaults if not defined
     if (not defined $identifier){
@@ -291,6 +356,7 @@ sub AD_user_create {
                    'objectclass' => ['top', 'person',
                                      'organizationalPerson',
                                      'user' ],
+#                   'objectclass' => \@objectclass,
                            ]
                            );
     $result->code && warn "Failed to add entry: ", $result->error ;
