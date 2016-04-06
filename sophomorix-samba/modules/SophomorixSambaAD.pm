@@ -232,10 +232,12 @@ sub AD_workstation_create {
 
 
     # names with tokens
-    my $room_token=&AD_get_name_tokened($room,$school_token,"roomws");
-    my $name_token=&AD_get_name_tokened($name,$school_token,"workstation");
-    my $display_name=$name_token;
-    my $smb_name=$name_token."\$";
+#    my $room_token=&AD_get_name_tokened($room,$school_token,"roomws");
+#    my $name_token=&AD_get_name_tokened($name,$school_token,"workstation");
+#    my $display_name=$name_token;
+#    my $smb_name=$name_token."\$";
+    my $display_name=$name;
+    my $smb_name=$name."\$";
 
     # dns
     my $root_dns=&AD_dns_get($root_dse);
@@ -249,25 +251,34 @@ sub AD_workstation_create {
     #}
     #my $dns_name = join(".",@dns_part_stripped);
 
-    $dns_name=$name_token.".".$root_dns;
-
-    my @service_principal_name=("HOST/".$name_token,
+#    $dns_name=$name_token.".".$root_dns;
+#    my @service_principal_name=("HOST/".$name_token,
+#                                "HOST/".$dns_name,
+#                                "RestrictedKrbHost/".$name_token,
+#                                "RestrictedKrbHost/".$dns_name,
+#                               );
+    $dns_name=$name.".".$root_dns;
+    my @service_principal_name=("HOST/".$name,
                                 "HOST/".$dns_name,
-                                "RestrictedKrbHost/".$name_token,
+                                "RestrictedKrbHost/".$name,
                                 "RestrictedKrbHost/".$dns_name,
                                );
 
-    my $container=&AD_get_container($role,$room_token);
+#     my $container=&AD_get_container($role,$room_token);
+    my $container=&AD_get_container($role,$room);
     my $dn_room = $container."OU=".$ou.",".$root_dse;
-    my $dn = "CN=".$name_token.",".$container."OU=".$ou.",".$root_dse;
+#    my $dn = "CN=".$name_token.",".$container."OU=".$ou.",".$root_dse;
+    my $dn = "CN=".$name.",".$container."OU=".$ou.",".$root_dse;
 
     if($Conf::log_level>=1){
         &Sophomorix::SophomorixBase::print_title(
               "Creating workstation $ws_count: $name");
         print "   DN:                    $dn\n";
         print "   DN(Parent):            $dn_room\n";
-        print "   Name:                  $name_token\n";
-        print "   Room:                  $room_token\n";
+#        print "   Name:                  $name_token\n";
+#        print "   Room:                  $room_token\n";
+        print "   Name:                  $name\n";
+        print "   Room:                  $room\n";
         print "   OU:                    $ou\n";
         print "   sAMAccountName:        $smb_name\n";
         print "   dNSHostName:           $dns_name\n";
@@ -284,7 +295,8 @@ sub AD_workstation_create {
                    'dNSHostName' => $dns_name,
 #                   'givenName'   => "Workstation",
 #                   'sn'   => "Account",
-                   'cn'   => $name_token,
+#                   'cn'   => $name_token,
+                   'cn'   => $name,
                     'accountExpires' => '9223372036854775807', # means never
                    'servicePrincipalName' => \@service_principal_name,
 #                   'unicodePwd' => $uni_password,
@@ -563,7 +575,13 @@ sub AD_get_name_tokened {
             $name_tokened=$name;
         } else {
             # multischool
-            $name_tokened=$school_token."-".$name;
+            if ($DevelConf::token_postfix==0){
+                # prefix
+                $name_tokened=$school_token."-".$name;
+            } elsif ($DevelConf::token_postfix==1){
+                # postfix
+                $name_tokened=$name."-".$school_token;
+            }
         }
         if ($role eq "workstation"){
             # make uppercase

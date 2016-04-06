@@ -87,6 +87,11 @@ $Term::ANSIColor::AUTORESET = 1;
 use Net::LDAP;
 use Net::MAC;
 use Date::Calc qw(check_date);
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Useqq = 1;
+$Data::Dumper::Terse = 1; 
 
 use Sophomorix::SophomorixBase qw(
                                  print_line
@@ -486,7 +491,9 @@ close(WORKSTATION);
 
 print "* No syntax errors in $host_workstation!\n";
 
-
+#print Dumper(\%domcomputers_file);
+#print Dumper(\%rooms_file);
+#print Dumper(\%examaccounts_file);
 
 
 # ===========================================================================
@@ -633,12 +640,14 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
     my $ws_count=1;
     foreach my $computer (@adding_computer){
         my ($room,$user,@rest)=split(/;/,$computer);
-        #my $u_comp=$u."\$";
+        # using previously saved
+        my $room_saved=$domcomputers_file{$user}{'ROOM'};
+        my $ws_saved=$domcomputers_file{$user}{'WORKSTATION'};
         &AD_workstation_create({ldap=>$ldap, 
                                 root_dse=>$root_dse,
                                 ws_count=>$ws_count,
-                                name=>$user,
-                                room=>$room,
+                                name=>$ws_saved,
+                                room=>$room_saved,
                                 ou=>$ou,
                                 role=>"workstation",
 			        type=>"roomws",
@@ -945,6 +954,8 @@ sub analyze_line {
         $domcomputers_file{$host_token}{"NETMASK"}=$netmask;
         $domcomputers_file{$host_token}{"ROOM"}=$room_token;
         $domcomputers_file{$host_token}{"ACCOUNT"}=$account_flag;
+        $domcomputers_file{$host_token}{"WORKSTATION"}=$ws_token;
+        $domcomputers_file{$host_token}{"WORKSTATION_DOLLAR"}=$ws_token_account;
 
         $rooms_file{$room_token}{"HOSTS"}{$host_token}="seen";
         $rooms_file{$room_token}{"MAC"}{$mac}="seen";
