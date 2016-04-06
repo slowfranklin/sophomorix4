@@ -70,11 +70,13 @@ sub AD_test_object {
     my $display_name = $arg_ref->{displayName};
     my $name = $arg_ref->{name};
     my $given_name = $arg_ref->{givenName};
+    my $upn =$arg_ref->{userPrincipalName};
     my $sam_account =$arg_ref->{sAMAccountname};
     my $account_expires =$arg_ref->{accountExpires};
     my $dns_hostname =$arg_ref->{dNSHostName};
     my $ser_pri_name =$arg_ref->{servicePrincipalName};
     my $sn =$arg_ref->{sn};
+
 
     # sophomorix user
     my $s_admin_class = $arg_ref->{sophomorixAdminClass};
@@ -136,6 +138,10 @@ sub AD_test_object {
         if (defined $sn){
             is ($entry->get_value ('sn'),$sn,
 		"  * sn is $sn");
+        }
+        if (defined $upn){
+            is ($entry->get_value ('userPrincipalName'),$upn,
+		"  * userPrincipalName is $upn");
         }
         if (defined $s_admin_class){
             is ($entry->get_value ('sophomorixAdminClass'),$s_admin_class,
