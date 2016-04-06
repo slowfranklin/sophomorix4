@@ -184,6 +184,28 @@ sub AD_user_create {
     my $type = $arg_ref->{type};
     my $creationdate = $arg_ref->{creationdate};
 
+    # Setting things for users role
+    if ($role eq "student"){
+
+    } elsif ($role eq "teacher"){
+
+    } elsif ($role eq "examaccount"){
+
+    } elsif ($role eq "workstation"){
+
+    }
+
+    # Setting things for groups type
+    if ($type eq "adminclass"){
+
+    } elsif ($type eq "project"){
+
+    } elsif ($type eq "room"){
+
+    } elsif ($type eq "roomws"){
+
+    }
+
     # set defaults if not defined
     if (not defined $identifier){
         $identifier="---";
@@ -411,9 +433,10 @@ sub AD_get_name_tokened {
             $name_tokened=$school_token."-".$name;
         }
         return $name_tokened;
-    } elsif ($role eq "project" or
-             $role eq "teacher" or
+    } elsif ($role eq "teacher" or
              $role eq "student"){
+        return $name;
+    } elsif ($role eq "project"){
         # project: no token-prefix
         unless ($name =~ m/^p\_/) { 
             # add refix to projects: p_ 
