@@ -63,6 +63,7 @@ sub AD_test_object {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
     my $dn = $arg_ref->{dn};
+    my $cn = $arg_ref->{cn};
     my $root_dse = $arg_ref->{root_dse};
 
     # user
@@ -72,6 +73,7 @@ sub AD_test_object {
     my $sam_account =$arg_ref->{sAMAccountname};
     my $account_expires =$arg_ref->{accountExpires};
     my $dns_hostname =$arg_ref->{dNSHostName};
+    my $ser_pri_name =$arg_ref->{servicePrincipalName};
     my $sn =$arg_ref->{sn};
 
     # sophomorix user
@@ -103,6 +105,10 @@ sub AD_test_object {
    
     if ($count==1){
         # Testing attributes
+        if (defined $cn){
+            is ($entry->get_value ('cn'),$cn,
+                                   "  * cn is $cn");
+        }
         if (defined $display_name){
             is ($entry->get_value ('DisplayName'),$display_name,
                                    "  * displayName is $display_name");
@@ -167,6 +173,33 @@ sub AD_test_object {
         #is ($entry->get_value ('sophomorixCreationDate'),'',
 	#	    "  * creationDate IS $entry->get_value ('sophomorixCreationDate' ");
 
+        if (defined $ser_pri_name){
+            # get servicePrincipalName data into hash
+            my %ser_pri=();
+            my @data=$entry->get_value ('servicePrincipalName');
+            my $spn_count=0;
+            foreach my $item (@data){
+                my ($spn,@rest)=split(/,/,$item);
+                #$group=~s/^CN=//;
+                #print "      * MemberOf: $group\n";
+                $ser_pri{$spn}="seen";
+                $spn_count++;
+            }
+
+            # test servicePrincipalName
+            my $test_count=0;
+            my @should_be_spn=split(/,/,$ser_pri_name);
+            foreach my $should_be_spn (@should_be_spn){
+                is (exists $ser_pri{$should_be_spn},1,
+		    "  * Entry $sam_account HAS servicePrincipalName  $should_be_spn");
+		$test_count++;
+            } 
+            # were all actual memberships tested
+            is ($spn_count,$test_count,
+                "  * $sam_account has $spn_count servicePrincipalName entries: $test_count tested");
+        }
+
+
         if (defined $member_of and $not_member_of){
             # get membership data into hash
             my %member_of=();
@@ -190,7 +223,8 @@ sub AD_test_object {
             } 
 
             # were all actual memberships tested
-            is ($membership_count,$test_count,"  * Entry $sam_account has $membership_count memberOf entries: $test_count tested");
+            is ($membership_count,$test_count,
+                "  * $sam_account has $membership_count memberOf entries: $test_count tested");
 
             # test non-membership
             my @should_not_be_member=split(/,/,$not_member_of);
@@ -198,9 +232,11 @@ sub AD_test_object {
                 is (exists $member_of{$should_not_be_member},'',
 		    "  * $sam_account IS NOT member of $should_not_be_member");
              } 
-        } else {
+        } elsif (defined $member_of or $not_member_of) {
              print "\nWARNING: Skipping memberOf and not_memberOf completely: Use BOTH in your test script!\n\n"
-        } 
+        } else {
+	    #print "Not testing any membership on $cn\n";
+        }
     } else {
         print "\nWARNING: Skipping a lot of tests\n\n";
     }
