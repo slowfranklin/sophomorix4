@@ -194,19 +194,17 @@ sub AD_workstation_create {
 
     # calculation
     # make name uppercase
-    my $name_uppercase=$name;
-    $name_uppercase=~tr/a-z/A-Z/;
+    #my $name_uppercase=$name;
+    #$name_uppercase=~tr/a-z/A-Z/;
 
     # make school-token uppercase
-    my $school_token_uppercase=$school_token;
-    $school_token_uppercase=~tr/a-z/A-Z/;
+    #my $school_token_uppercase=$school_token;
+    #$school_token_uppercase=~tr/a-z/A-Z/;
 
 
     # names with tokens
     my $room_token=&AD_get_name_tokened($room,$school_token,"roomws");
-    my $name_token=&AD_get_name_tokened($name_uppercase,
-                                        $school_token_uppercase,
-                                        "workstation");
+    my $name_token=&AD_get_name_tokened($name,$school_token,"workstation");
     my $display_name=$name_token;
     my $smb_name=$name_token."\$";
 
@@ -538,6 +536,10 @@ sub AD_get_name_tokened {
             # multischool
             $name_tokened=$school_token."-".$name;
         }
+        if ($role eq "workstation"){
+            # make uppercase
+            $name_tokened=~tr/a-z/A-Z/;
+        }
         return $name_tokened;
     } elsif ($role eq "teacher" or
              $role eq "student"){
@@ -794,11 +796,80 @@ sub AD_object_search {
 }
 
 sub AD_workstation_fetch {
+    my ($ldap,$root_dse) = @_;
+    # domcomputers
+    # key: host$ (lowercase)
+    # Value: $room (lml6: always domcomputers)
     my %domcomputers_system = ();
-    my %rooms_system = ();
-    my %examaccounts_system = ();
+    # domcomputers from ldap
+    my $mesg = $ldap->search( # perform a search
+                   base   => $root_dse,
+                   scope => 'sub',
+                   filter => '(&(objectClass=computer)(sophomorixRole=workstation))',
+                   attrs => ['sAMAccountName']
+                         );
+    my $max_user = $mesg->count; 
+    &Sophomorix::SophomorixBase::print_title("$max_user Workstations found");
 
-    print "\nWARNING: not fetching workstation data from AD\n\n";
+    for( my $index = 0 ; $index < $max_user ; $index++) {
+        my $entry = $mesg->entry($index);
+        print "   * ",$entry->get_value('sAMAccountName'),"\n";
+        $domcomputers_system{$entry->get_value('sAMAccountName')}="domcomputers";
+    }
+
+
+
+    # rooms
+    # key: room/group
+    # Value: 'seen'
+    my %rooms_system = ();
+
+# remove that later ????????????????????????????????
+   print "This rooms were manually added:\n"; 
+   $rooms_system{"bsz-j1008"}="seen";
+    $rooms_system{"bsz-j1010"}="seen";
+
+#    $mesg = $ldap->search( # perform a search
+#                   base   => $root_dse,
+#                   scope => 'sub',
+#                   filter => '(&(objectClass=group)(sophomorixType=room))',
+#                   attrs => ['sAMAccountName']
+#                         );
+#    $max_user = $mesg->count; 
+#    &Sophomorix::SophomorixBase::print_title("$max_user Rooms found");#
+#
+#    for( my $index = 0 ; $index < $max_user ; $index++) {
+#        my $entry = $mesg->entry($index);
+#        print "   * ",$entry->get_value('sAMAccountName'),"\n";
+#        $domcomputers_system{$entry->get_value('sAMAccountName')}="domcomputers";
+#    }
+
+
+
+
+    # examaccounts
+    # key:   Account name i.e. j1008p01  
+    # Value: room/group i.e. j1008
+    my %examaccounts_system = ();
+    # examaccounts from ldap
+    $mesg = $ldap->search( # perform a search
+                   base   => $root_dse,
+                   scope => 'sub',
+                   filter => '(&(objectClass=user)(sophomorixRole=examaccount))',
+                   attrs => ['sAMAccountName',"sophomorixAdminClass"]
+                         );
+    $max_user = $mesg->count; 
+    &Sophomorix::SophomorixBase::print_title("$max_user ExamAccounts found");
+
+    for( my $index = 0 ; $index < $max_user ; $index++) {
+        my $entry = $mesg->entry($index);
+        print "   * ",$entry->get_value('sAMAccountName'),"  in Room  ".$entry->get_value('sophomorixAdminClass')."\n";
+        $examaccounts_system{$entry->get_value('sAMAccountName')}=$entry->get_value('sophomorixAdminClass');
+    }
+
+
+
+
 
     return(\%domcomputers_system, 
            \%rooms_system, 

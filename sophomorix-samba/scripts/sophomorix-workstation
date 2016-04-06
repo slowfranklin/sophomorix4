@@ -273,9 +273,9 @@ Please see the sophomorix-workstation(8) man pages for full documentation
 &print_title("Asking the system for exam and computer accounts ...");
 
 #my ($ref_domcomputers,$ref_rooms,$ref_examaccounts) = &get_sys_workstations();
-my ($ref_domcomputers,$ref_rooms,$ref_examaccounts) = &AD_workstation_fetch();
+my ($ref_domcomputers,$ref_rooms,$ref_examaccounts) = &AD_workstation_fetch($ldap,$root_dse);
 
-
+#exit;
 
 
 # system
@@ -465,9 +465,15 @@ if (not -e ${host_workstation}){
     print "\n$host_workstation does not exist\n\n";
     exit 1;
 }
+
+# get this info from multischool.conf
+# ??????????????????????????????????????
+$school_token="bsz";
+
+
 open(WORKSTATION,"<${host_workstation}");
 while(<WORKSTATION>){
-    &analyze_line($_);
+    &analyze_line($_,$school_token);
 }
 
 close(WORKSTATION);
@@ -503,25 +509,30 @@ while (my ($computer,$room) = each %domcomputers_system){
 
 
 
-if($Conf::log_level>=2){
+if($no_sync==1){
     # show info about what will be done
+    print "\n";
     &print_title("Examaccounts that must be killed:");
     foreach my $ws (@killing_examaccount){
         print "KILL: $ws\n";
     }
+    print "\n";
     &print_title("Examaccounts that must be added:");
     foreach my $ws (@adding_examaccount){
         print "ADD: $ws\n";
     }
+    print "\n";
     &print_title("Workstations that must be killed:");
     foreach my $ws (@killing_computer){
         print "KILL: $ws\n";
     }
+    print "\n";
     &print_title("Workstations that must be added:");
     foreach my $ws (@adding_computer){
         print "ADD: $ws\n";
     }
-    print "\nCheck finished. Nothing changed!\n";
+    print "\n--no-sync  finished. Nothing changed!\n";
+    exit;
 } 
 
 
@@ -862,6 +873,9 @@ if ($italc_dir ne ""){
 }
 
 
+
+&AD_unbind_admin($ldap);
+
 exit 0;
 
 
@@ -873,7 +887,7 @@ exit 0;
 # subs
 # ===========================================================================
 sub analyze_line {
-    my ($line) = @_;
+    my ($line,$school_token) = @_;
     if (/^#/ or /^\s*$/){
         return 0;
     } else {
@@ -908,6 +922,22 @@ sub analyze_line {
         $pxe=&check_pxe($pxe);
         $option=&check_option($option);
 
+        # use tokened names 
+        my $host_token=&AD_get_name_tokened($host,$school_token,"examaccount");
+        my $room_token=&AD_get_name_tokened($room,$school_token,"roomws");
+        my $name_ws_token=&AD_get_name_tokened($host,$school_token,"workstation");
+        if($Conf::log_level>=2){
+            print "ExamAccount:  $host  -->  $host_token\n";
+            print "Room:         $room  -->  $room_token\n";
+            print "Workstation:  $host  -->  $name_ws_token\n";
+            print "\n";
+	}
+
+        # ???????? dirty check
+        #$host=$host_token;
+        #$room=$room_token;
+
+
         # save data into hashes for reuse
         $domcomputers_file{$host}{"HWK"}=$hwk;
         $domcomputers_file{$host}{"MAC"}=$mac;
@@ -919,7 +949,6 @@ sub analyze_line {
         $rooms_file{$room}{"HOSTS"}{$host}="seen";
         $rooms_file{$room}{"MAC"}{$mac}="seen";
         $rooms_file{$room}{"IP"}{$ip}="seen";
-
 
         # line is correct
         my $line_correct=$room.";".$host.";".$hwk.";".$mac.";".
