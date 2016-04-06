@@ -1,3 +1,9 @@
+sophomorix4 (3.3.1-1) xenial-unstable; urgency=medium
+
+  * New upstream, bugfixes in creating workstation accounts
+
+ -- jeff <bz@adler>  Wed, 06 Apr 2016 14:24:38 +0200
+
 sophomorix4 (3.3.0-1) xenial-unstable; urgency=medium
 
   * New upstream, sophomorix-project and workstation
