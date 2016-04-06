@@ -933,25 +933,20 @@ sub analyze_line {
             print "\n";
 	}
 
-        # ???????? dirty check
-        #$host=$host_token;
-        #$room=$room_token;
-
-
         # save data into hashes for reuse
-        $domcomputers_file{$host}{"HWK"}=$hwk;
-        $domcomputers_file{$host}{"MAC"}=$mac;
-        $domcomputers_file{$host}{"IP"}=$ip;
-        $domcomputers_file{$host}{"NETMASK"}=$netmask;
-        $domcomputers_file{$host}{"ROOM"}=$room;
-        $domcomputers_file{$host}{"ACCOUNT"}=$account_flag;
+        $domcomputers_file{$host_token}{"HWK"}=$hwk;
+        $domcomputers_file{$host_token}{"MAC"}=$mac;
+        $domcomputers_file{$host_token}{"IP"}=$ip;
+        $domcomputers_file{$host_token}{"NETMASK"}=$netmask;
+        $domcomputers_file{$host_token}{"ROOM"}=$room_token;
+        $domcomputers_file{$host_token}{"ACCOUNT"}=$account_flag;
 
-        $rooms_file{$room}{"HOSTS"}{$host}="seen";
-        $rooms_file{$room}{"MAC"}{$mac}="seen";
-        $rooms_file{$room}{"IP"}{$ip}="seen";
+        $rooms_file{$room_token}{"HOSTS"}{$host_token}="seen";
+        $rooms_file{$room_token}{"MAC"}{$mac}="seen";
+        $rooms_file{$room_token}{"IP"}{$ip}="seen";
 
         # line is correct
-        my $line_correct=$room.";".$host.";".$hwk.";".$mac.";".
+        my $line_correct=$room_token.";".$host_token.";".$hwk.";".$mac.";".
                          $ip.";".$netmask.";".
                          $linbo_server.";".$unused.";".
                          $sysadmin_field.";".$account_flag.";".
@@ -965,8 +960,8 @@ sub analyze_line {
         # $account_flag==0 (no account)
         # $account_flag==1 (create account) 1and all other values
         if ($account_flag==1){
-            $hosts_file{$host}=$line_correct;
-            my $computer=$host."\$";
+            $hosts_file{$host_token}=$line_correct;
+            my $computer=$host_token."\$";
             $hosts_file{$computer}=$line_correct;
         } else {
             # no need to check that it should be added
@@ -974,19 +969,19 @@ sub analyze_line {
         }
 
         # check examaccount
-        if (not exists $examaccounts_system{$host}){
+        if (not exists $examaccounts_system{$host_token}){
             # nonexisting --> add account
             &push_add_examaccount($line_correct);
         } else {
-            if ($examaccounts_system{$host} ne $room){
+            if ($examaccounts_system{$host_token} ne $room_token){
                 # exists in wrong room ---> kill/add account
-                &push_kill_examaccount($host);
+                &push_kill_examaccount($host_token);
                 &push_add_examaccount($line_correct);
             }
         } 
 
         # check computer account
-        my $host_computer = $host."\$";
+        my $host_computer = $host_token."\$";
         if (not exists $domcomputers_system{$host_computer} ){
             # nonexisting --> add account
             &push_add_computer($line_correct);
