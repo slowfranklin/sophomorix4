@@ -27,6 +27,7 @@ $Data::Dumper::Terse = 1;
 @EXPORT = qw(
             AD_bind_admin
             AD_unbind_admin
+            AD_dns_get
             AD_user_create
             AD_workstation_create
             AD_user_move
@@ -117,6 +118,25 @@ sub AD_unbind_admin {
 
 
 
+sub AD_dns_get {
+    # get dns domain from RootDSE
+    my ($root_dse) = @_;
+    my @dns_part_stripped=(); # without 'DC='
+    my @dns_part=split(/,/,$root_dse);
+    foreach my $part (@dns_part){
+        $part=~s/DC=//g;
+        push @dns_part_stripped, $part;
+    }
+    my $dns_name = join(".",@dns_part_stripped);
+    if($Conf::log_level>=2){
+        my $caller=(caller(0))[3];
+        print "$caller RootDSE: $root_dse -> DNS: $dns_name\n";
+    }
+    return $dns_name;
+}
+
+
+
 sub AD_user_kill {
     my ($arg_ref) = @_;
     my $ldap = $arg_ref->{ldap};
@@ -191,15 +211,18 @@ sub AD_workstation_create {
     my $smb_name=$name_token."\$";
 
     # dns
-    my @dns_part_stripped=(); # without 'DC='
-    my @dns_part=split(/,/,$root_dse);
-    foreach my $part (@dns_part){
-        $part=~s/DC=//g;
-        #print "PART: $part\n";
-        push @dns_part_stripped, $part;
-    }
-    my $dns_name = join(".",@dns_part_stripped);
-    $dns_name=$name_token.".".$dns_name;
+    my $root_dns=&AD_dns_get($root_dse);
+
+    #my @dns_part_stripped=(); # without 'DC='
+    #my @dns_part=split(/,/,$root_dse);
+    #foreach my $part (@dns_part){
+    #    $part=~s/DC=//g;
+    #    #print "PART: $part\n";
+    #    push @dns_part_stripped, $part;
+    #}
+    #my $dns_name = join(".",@dns_part_stripped);
+
+    $dns_name=$name_token.".".$root_dns;
 
     my @service_principal_name=("HOST/".$name_token,
                                 "HOST/".$dns_name,
@@ -230,7 +253,7 @@ sub AD_workstation_create {
     my $result = $ldap->add( $dn,
                    attr => [
                    'sAMAccountName' => $smb_name,
-                   'displayName' => $display_name,
+                   'displayName' => "Workstation ".$display_name,
                    'dNSHostName' => $dns_name,
 #                   'givenName'   => "Workstation",
 #                   'sn'   => "Account",

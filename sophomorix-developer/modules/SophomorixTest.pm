@@ -70,6 +70,8 @@ sub AD_test_object {
     my $name = $arg_ref->{name};
     my $given_name = $arg_ref->{givenName};
     my $sam_account =$arg_ref->{sAMAccountname};
+    my $account_expires =$arg_ref->{accountExpires};
+    my $dns_hostname =$arg_ref->{dNSHostName};
     my $sn =$arg_ref->{sn};
 
     # sophomorix user
@@ -81,6 +83,8 @@ sub AD_test_object {
     my $s_role = $arg_ref->{sophomorixRole};
     my $s_school_prefix = $arg_ref->{sophomorixSchoolPrefix};
     my $s_school_name = $arg_ref->{sophomorixSchoolname};
+
+
     my $member_of = $arg_ref->{memberOf};
     my $not_member_of = $arg_ref->{not_memberOf};
 
@@ -114,6 +118,14 @@ sub AD_test_object {
         if (defined $sam_account){
             is ($entry->get_value ('sAMAccountName'),$sam_account,
 		"  * sAMAccountName is $sam_account");
+        }
+        if (defined $account_expires){
+            is ($entry->get_value ('accountExpires'),$account_expires,
+		"  * account_expires is $account_expires");
+        }
+        if (defined $dns_hostname){
+            is ($entry->get_value ('dNSHostName'),$dns_hostname,
+		"  * dNSHostName is $dns_hostname");
         }
         if (defined $sn){
             is ($entry->get_value ('sn'),$sn,
