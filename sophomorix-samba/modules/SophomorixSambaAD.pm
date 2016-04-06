@@ -204,7 +204,7 @@ sub AD_workstation_create {
         print "   DN(Parent):            $dn_room\n";
         print "   Name:                  $name_uppercase\n";
         print "   DisplayName:           $display_name\n";
-        print "   DisplayName:           $display_name\n";
+        print "   OU:                    $ou >$room_token< >$name_token< \n";
         print "   sAMAccountName:        $smb_name\n";
         print "   dNSHostName:           $dns_name\n";
         foreach my $entry (@service_principal_name){

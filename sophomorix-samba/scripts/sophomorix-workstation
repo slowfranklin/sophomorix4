@@ -626,7 +626,7 @@ if ($no_sync==0){ # $no_sync==0 -> SYNC
                                 name=>$user,
                                 room=>$room,
                                 ou=>$ou,
-                                role=>$role,
+                                role=>"workstation",
 			        type=>"roomws",
                                 school_token=>$school_token,
                                 creationdate=>$time_stamp_AD,
