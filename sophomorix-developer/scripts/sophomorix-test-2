@@ -63,10 +63,6 @@ my $testopt=GetOptions(
            "verbose|v+" => \$Conf::log_level,
            "copy-wsfile-1" => \$copy_wsfile_1,
            "test-ws-1" => \$test_ws_1,
-           "add-ws" => \$add_ws,
-           "test-add-ws" => \$test_add_ws,
-           "kill-ws" => \$kill_ws,
-           "test-kill-ws" => \$test_kill_ws,
   );
 
 
@@ -99,16 +95,6 @@ Step by step Test:
       sophomorix-workstation
   Run the tests:
       sophomorix-test-2 --test-ws-1
-
-  Workstation Accounts:
-  --add-ws  
-    add workstations
-  --test-add-ws
-    test workstations
-  --kill-ws
-    kill workstations
-  --test-kill-ws
-    test killed workstations
 
 ');
    print "\n";
@@ -193,65 +179,46 @@ if ($test_ws_1==1){
 ############################################################
 # Add Workstations
 ############################################################
-# --add-ws  
-if ($add_ws==1){
-    $ou="BSZLEO";
-    $school_token="bsz";
-    $room="j1010";
-    $computer="p01";
-    $role="workstation";
-    #$plain_password=&get_plain_password($role,@passwort_zeichen);
-    # generate
-    $ws_count++;
-    $login=$room.$computer;
+# # --add-ws  
+# if ($add_ws==1){
+#     $ou="BSZLEO";
+#     $school_token="bsz";
+#     $room="j1010";
+#     $computer="p01";
+#     $role="workstation";
+#     #$plain_password=&get_plain_password($role,@passwort_zeichen);
+#     # generate
+#     $ws_count++;
+#     $login=$room.$computer;
 
 
-    ########################################################
-    # Beginn adding
-    if (not exists $ou_created{$ou}){
-        # create ou
-        &AD_ou_add($ldap,$root_dse,$ou,$school_token);
-        # remember ou
-        $ou_created{$ou}="already created";
-    }
+#     ########################################################
+#     # Beginn adding
+#     if (not exists $ou_created{$ou}){
+#         # create ou
+#         &AD_ou_add($ldap,$root_dse,$ou,$school_token);
+#         # remember ou
+#         $ou_created{$ou}="already created";
+#     }
 
-    &AD_workstation_create({ldap=>$ldap, 
-                     root_dse=>$root_dse,
-                     ws_count=>$ws_count,
-                     name=>$login,
-                     room=>$room,
-#                     firstname_ascii=>"Exam",
-#                     surname_ascii=>"Account",
-#                     firstname_utf8=>"Exam",
-#                     surname_utf8=>"Account",
-#                     birthdate=>$birthdate,
-#                     plain_password=>$plain_password,
-                     ou=>$ou,
-                     role=>$role,
-			    type=>"roomws",
-                     school_token=>$school_token,
-                     creationdate=>$time_stamp_AD,
-                   });
+#     &AD_workstation_create({ldap=>$ldap, 
+#                      root_dse=>$root_dse,
+#                      ws_count=>$ws_count,
+#                      name=>$login,
+#                      room=>$room,
+#                      ou=>$ou,
+#                      role=>$role,
+# 			    type=>"roomws",
+#                      school_token=>$school_token,
+#                      creationdate=>$time_stamp_AD,
+#                    });
 
-  # make sure that the room exists
-  $login_token=&AD_get_name_tokened($login,$school_token,"examaccount");
-  $room_token=&AD_get_name_tokened($room,$school_token,"room");
-  $examaccount_token=$school_token."-".$DevelConf::examaccount;
+#   # make sure that the room exists
+#   $login_token=&AD_get_name_tokened($login,$school_token,"examaccount");
+#   $room_token=&AD_get_name_tokened($room,$school_token,"room");
+#   $examaccount_token=$school_token."-".$DevelConf::examaccount;
   
-#  &AD_group_create({ldap=>$ldap,
-#                    root_dse=>$root_dse,
-#                    group=>$room_token,
-#                    ou=>$ou,
-#                    school_token=>$school_token,
-#                    type=>"room",
-#                   });
-#  # add examaccount to its room
-#  &AD_group_addmember({ldap => $ldap,
-#                       root_dse => $root_dse, 
-#                       group => $room_token,
-#                       addmember => $login_token,
-#                      });   
-}
+# }
 
 
 
