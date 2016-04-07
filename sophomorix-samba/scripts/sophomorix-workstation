@@ -9,12 +9,12 @@
 # pxe==alle anderen -> pxe, accounts nach field 10    (option ml)
 #
 
-# field 6, old netmask option, not used anymore
-# netztsegment: string: [a-z0-9-.]
+# field 6, MS-Office-Key
+# string: xxxxx-yyyyy-zzzzz-vvvvv-uuuuu
 
 
-# field 7, first bpbatch option
-# linbo server ip:  ip server, falls ip, normale ip falls integer
+# field 7, MS-Windows-Key
+# string: xxxxx-yyyyy-zzzzz-vvvvv-uuuuu
 
 # field 8:
 # unused, fuer linuxmuster.net reserviert [0-9a-zA-Z_-.,]
@@ -215,6 +215,11 @@ my @killing_computer=();
 
 my %pxe = qw(ml ok
             );
+
+my %ms_key_ok = ();
+$ms_key_ok{"---"}="ok";
+$ms_key_ok{""}="ok";
+
 
 
 # Parsen der Optionen
@@ -489,7 +494,7 @@ close(WORKSTATION);
 #return 0;
 # systax ERROR -> 1
 
-print "* No syntax errors in $host_workstation!\n";
+&print_title("... No syntax errors in $host_workstation!");
 
 #print Dumper(\%domcomputers_file);
 #print Dumper(\%rooms_file);
@@ -913,8 +918,8 @@ sub analyze_line {
             $hwk,
             $mac,
             $ip,
-            $netmask,
-            $linbo_server,
+            $ms_office_key,
+            $ms_windows_key,
             $unused,
             $sysadmin_field,
             $account_flag,
@@ -926,9 +931,8 @@ sub analyze_line {
         $hwk=&check_hwk($hwk);
         $mac=&check_mac($mac);
         $ip=&check_ip($ip);
-        #$netmask=&check_netmask($netmask);
-        # linbo server can contain an integer as well
-        #$linbo_server=&check_ip($linbo_server);
+        $ms_office_key=&check_ms_software_key($ms_office_key,"MS-OFFICE-KEY",$host);
+        $ms_windows_key=&check_ms_software_key($ms_windows_key,"MS-WINDOWS-KEY",$host);
 #        print "   UNUSED:  $unused\n";
 #        print "   SYSADM:  $sysadmin_field\n";
         $account_flag=&check_account_flag($account_flag);
@@ -952,7 +956,8 @@ sub analyze_line {
         $domcomputers_file{$host_token}{"HWK"}=$hwk;
         $domcomputers_file{$host_token}{"MAC"}=$mac;
         $domcomputers_file{$host_token}{"IP"}=$ip;
-        $domcomputers_file{$host_token}{"NETMASK"}=$netmask;
+        $domcomputers_file{$host_token}{"MS_OFFICE_KEY"}=$ms_office_key;
+        $domcomputers_file{$host_token}{"MS_WINDOWS_KEY"}=$ms_windows_key;
         $domcomputers_file{$host_token}{"ROOM"}=$room_token;
         $domcomputers_file{$host_token}{"ACCOUNT"}=$account_flag;
         $domcomputers_file{$host_token}{"WORKSTATION"}=$ws_token;
@@ -964,8 +969,8 @@ sub analyze_line {
 
         # line is correct
         my $line_correct=$room_token.";".$host_token.";".$hwk.";".$mac.";".
-                         $ip.";".$netmask.";".
-                         $linbo_server.";".$unused.";".
+                         $ip.";".$ms_office_key.";".
+                         $ms_windows_key.";".$unused.";".
                          $sysadmin_field.";".$account_flag.";".
                          $pxe.";".$option.";";
 
@@ -1133,34 +1138,35 @@ sub check_ip {
 
 
 
-sub check_netmask {
-    my ($netmask) = @_;
-    if($Conf::log_level>=3){
-        print "   NETMASK: $netmask";
+sub check_ms_software_key {
+    my ($ms_software_key,$name,$host) = @_;
+    if (exists $ms_key_ok{$ms_software_key}){
+        # skip tests, when tagged as 'no key'
+        return $ms_software_key;
     }
-    # check for 3 .
-    my $dots_in_string=$netmask=~tr/\.//;
     if($Conf::log_level>=3){
-        print " ($dots_in_string dots)\n";
-    }
-    if ($dots_in_string!=3){
-        print "\nERROR: ->$netmask<- does not contain 3 dots\n\n";
-        exit 1;        
+        print "   $name: $ms_software_key";
     }
 
-    my @octets = split(/\./,$netmask);
-    foreach my $octet (@octets){
+    my $minus_in_string=$ms_software_key=~tr/-//;
+    if($Conf::log_level>=3){
+        print " ($minus_in_string minus signs)\n";
+    }
+    if ($minus_in_string!=4){
+        print "\nWARNING $host: <$ms_software_key> $name: Not containing 4 minus signs\n\n";
+    }
+
+    my @parts = split(/-/,$ms_software_key);
+    foreach my $part (@parts){
         if($Conf::log_level>=3){
-            print "      Octet:    $octet\n";
+            print "      Part: <$part> (Length ".length($part).")\n";
         }
-        if ( int($octet) < 0 or int($octet) > 255) {
-            print "\nERROR: ->$netmask<- is invalid Option in netmask\n\n";
-            exit 1;
-        } else {
-
-        }
+        if (length($part)!=5 ) {
+            print "\nWARNING $host: <$ms_software_key> Not a $name:\n";
+            print "   * Part: $part (Length ".length($part)." : Not 5 chacters long)\n\n";
+        } 
     }
-    return $netmask;
+    return $ms_software_key;
 }
 
 
