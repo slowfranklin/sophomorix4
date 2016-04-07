@@ -926,7 +926,7 @@ sub analyze_line {
         $hwk=&check_hwk($hwk);
         $mac=&check_mac($mac);
         $ip=&check_ip($ip);
-        $netmask=&check_netmask($netmask);
+        #$netmask=&check_netmask($netmask);
         # linbo server can contain an integer as well
         #$linbo_server=&check_ip($linbo_server);
 #        print "   UNUSED:  $unused\n";
